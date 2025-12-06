@@ -1,0 +1,188 @@
+/* General Page Layout */
+.attendance-page1 {
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: #f8f9fa; /* Light background behind the card */
+  min-height: 100vh;
+}
+
+.page-title {
+  color: #343a40;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+/* White Card Container */
+.table-container {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Subtle shadow */
+  border: 1px solid #e9ecef;
+  padding: 10px 20px;
+  overflow-x: auto; /* Handles responsiveness */
+}
+
+/* Table Styling */
+.attendance-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px; /* Ensures table doesn't squish on small screens */
+}
+
+/* Header Styling */
+.attendance-table th {
+  text-align: left;
+  padding: 20px 10px;
+  color: #8898aa; /* Light gray text for headers */
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  border-bottom: 1px solid #e9ecef;
+  letter-spacing: 0.5px;
+}
+
+/* Specific Header fix for 'Task Description' to match image casing */
+.attendance-table th.th-task {
+  text-transform: none; /* The image shows 'Task Description' not capitalized like others */
+  font-weight: 700;
+  color: #adb5bd; /* Slightly lighter gray */
+}
+
+/* Row Styling */
+.attendance-table td {
+  padding: 25px 10px; /* Generous padding like the screenshot */
+  border-bottom: 1px solid #f5f5f5;
+  color: #32325d; /* Dark text for content */
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+/* Remove border from last row */
+.attendance-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Column Width Adjustments (Optional, to mimic spacing) */
+.th-employee { width: 25%; }
+.th-date { width: 15%; }
+.th-time { width: 15%; }
+.th-task1 { width: 30%; }
+
+
+
+
+
+
+
+
+
+/* Existing styles... */
+
+/* --- NEW FILTER STYLES --- */
+.filter-container1 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #ffffff;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  flex-wrap: wrap; /* Allows wrapping on mobile */
+  gap: 15px;
+}
+
+.filter-inputs {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.search-input {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  width: 200px;
+}
+
+.date-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #555;
+}
+
+.date-input {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.clear-btn {
+  padding: 8px 15px;
+  background-color: #e9ecef;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #495057;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.clear-btn:hover {
+  background-color: #dee2e6;
+}
+
+.download-btn {
+  padding: 10px 20px;
+  background-color: #4CAF50; /* Green */
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.3s;
+}
+
+.download-btn:hover {
+  background-color: #45a049;
+}
+
+
+/* Add this to your Attendance.css file */
+
+.th-action, .td-action {
+  text-align: center;
+}
+
+
+/* Add to Attendance.css */
+
+.delete-btn {
+  background-color: #ff4d4d; /* Red color */
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.delete-btn:hover {
+  background-color: #cc0000; /* Darker red on hover */
+}
+
+.th-action, .td-action {
+  width: 100px; /* Optional: Set a fixed width for the action column */
+}

@@ -1,0 +1,307 @@
+/* * EmployeeDetail.css - Styling for the EmployeeDetails component
+ *
+ * This CSS implements a responsive, clean, and card-based design 
+ * using a modern palette and subtle shadows for depth.
+ */
+
+:root {
+    --color-primary: #ff4500; /* Tailwind blue-500 */
+    --color-primary-hover: #2563eb; /* Tailwind blue-600 */
+    --color-delete: #ef4444; /* Tailwind red-500 */
+    --color-delete-hover: #dc2626; /* Tailwind red-600 */
+    --color-edit: #10b981; /* Tailwind emerald-500 */
+    --color-edit-hover: #059669; /* Tailwind emerald-600 */
+    --color-text-dark: #1f2937; /* Tailwind gray-800 */
+    --color-text-medium: #4b5563; /* Tailwind gray-600 */
+    --color-background: #f8fafc; /* Tailwind slate-50 */
+    --color-card-background: #ffffff;
+    --color-border: #e5e7eb; /* Tailwind gray-200 */
+}
+
+/* 1. Global Container & Wrapper */
+.details-container {
+    padding: 2rem 1rem;
+    min-height: 100vh;
+    background-color: var(--color-background);
+    font-family: 'Inter', sans-serif;
+}
+
+.details-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    background-color: var(--color-card-background);
+    border-radius: 16px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* 2. Header & Actions */
+.details-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.header-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.back-btn, .edit-btn, .delete-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.back-btn {
+    background-color: transparent;
+    color: var(--color-text-medium);
+    
+}
+
+.back-btn:hover {
+    background-color: #f3f4f6;
+}
+
+.edit-btn {
+    background-color: var(--color-edit);
+    color: white;
+}
+
+.edit-btn:hover {
+    background-color: var(--color-edit-hover);
+}
+
+.delete-btn {
+    background-color: var(--color-delete);
+    color: white;
+}
+
+.delete-btn:hover {
+    background-color: var(--color-delete-hover);
+}
+
+/* 3. Profile Section */
+.profile-section {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.profile-image-container {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    overflow: hidden;
+    box-shadow: 0 0 0 5px var(--color-border);
+}
+
+.profile-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.profile-placeholder {
+    width: 100%;
+    height: 100%;
+    background-color: #f3f4f6;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.employee-name {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-text-dark);
+    margin: 0 0 0.25rem 0;
+}
+
+.employee-designation {
+    font-size: 1.1rem;
+    color: var(--color-text-medium);
+    margin: 0 0 0.75rem 0;
+}
+
+.role-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    background-color: #dbeafe; /* Light blue */
+    color: var(--color-primary);
+}
+
+/* 4. Details Grid & Cards */
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.detail-card {
+    padding: 1.5rem;
+    background-color: #f9f9fb;
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+}
+
+.card-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-text-dark);
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--color-primary);
+}
+
+.icon-blue1 {
+    color: #ff4500;
+}
+
+/* 5. Detail Rows */
+.details-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px dashed var(--color-border);
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.detail-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    color: var(--color-text-medium);
+    font-size: 0.95rem;
+}
+
+.detail-value {
+    font-weight: 600;
+    color: var(--color-text-dark);
+    text-align: right;
+    word-break: break-all; /* Handles long strings like emails/IDs */
+}
+
+/* Password Toggle Button */
+.eye-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-medium);
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: color 0.2s, background-color 0.2s;
+}
+
+.eye-btn:hover {
+    color: var(--color-primary);
+    background-color: #eff6ff; /* Lightest blue */
+}
+
+/* Loading and Error States */
+.loading-text, .error-box {
+    text-align: center;
+    padding: 2rem;
+    font-size: 1.25rem;
+    border-radius: 8px;
+    margin-top: 5rem;
+}
+
+.loading-text {
+    color: var(--color-primary);
+}
+
+.error-box {
+    background-color: #fee2e2; /* Light red */
+    color: var(--color-delete);
+    border: 1px solid var(--color-delete);
+}
+
+
+/* 6. Responsiveness */
+@media (max-width: 768px) {
+    .details-wrapper {
+        padding: 1rem;
+    }
+
+    .details-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .header-actions {
+        width: 100%;
+        justify-content: stretch;
+        gap: 0.5rem;
+    }
+
+    .edit-btn, .delete-btn {
+        flex-grow: 1;
+        justify-content: center;
+    }
+
+    .profile-section {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+
+    .profile-info {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .employee-name {
+        font-size: 1.75rem;
+    }
+
+    .details-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .detail-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+
+    .detail-value {
+        text-align: left;
+        width: 100%;
+        margin-top: 0.25rem;
+        padding-left: 2rem; /* Indent value slightly for clarity */
+    }
+}

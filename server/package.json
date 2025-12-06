@@ -1,0 +1,31 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "server": "nodemon index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@digitalpersona/devices": "^0.2.6",
+    "@digitalpersona/fingerprint": "^1.0.0",
+    "@simplewebauthn/server": "^13.2.2",
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-session": "^1.18.2",
+    "fs": "^0.0.1-security",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.20.0",
+    "multer": "^2.0.2",
+    "nodemailer": "^7.0.10",
+    "nodemon": "^3.1.11",
+    "path": "^0.12.7"
+  }
+}
