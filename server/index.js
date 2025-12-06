@@ -16,7 +16,7 @@
 // connectDB(); 
 // const __filename = fileURLToPath(import.meta.url);
 // const __dirname = path.dirname(__filename);
-// const allowedOrigins = ["http://localhost:5174", "http://localhost:5173"];
+// const allowedOrigins = ["https://your-vercel-app-name.vercel.app","http://localhost:5174", "http://localhost:5173"];
 
 // app.use(express.json()); // Parses JSON (for login, etc.)
 // app.use(cookieparser());
