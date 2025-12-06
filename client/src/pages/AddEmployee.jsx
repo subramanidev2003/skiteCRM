@@ -69,7 +69,7 @@ const AddEmployee = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:4000/api/auth/register', {
+      const response = await fetch('https://your-vercel-app-name.vercel.app/auth/register', {
         method: 'POST',
         body: dataToSend
       });
