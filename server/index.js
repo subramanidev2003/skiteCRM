@@ -21,7 +21,7 @@ const __dirname = path.dirname(__filename);
 
 // CORS settings
 // **MUST REPLACE THIS PLACEHOLDER with your actual Vercel URL**
-const allowedOrigins = ["https://your-vercel-app-name.vercel.app","http://localhost:5174", "http://localhost:5173"];
+const allowedOrigins = ["https://skite-crm-woad.vercel.app/"];
 app.use(cors({
   origin: allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
