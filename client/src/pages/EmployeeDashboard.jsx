@@ -9,7 +9,7 @@ import { toast } from 'react-toastify';
 
 // --- CONFIGURATION ---
 const API_BASE = 'http://localhost:4000/api';
-const API_UPLOAD = 'http://localhost:4000/uploads';
+const API_UPLOAD = 'http://localhost:4000/api/uploads';
 const ATTENDANCE_URL = `${API_BASE}/attendance`;
 const TASKS_URL = `${API_BASE}/tasks`;
 

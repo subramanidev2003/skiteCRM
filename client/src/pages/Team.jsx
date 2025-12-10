@@ -7,7 +7,7 @@ import { ArrowLeft } from "lucide-react";
 
 const API_BASE = "http://localhost:4000/api";
 // ✅ FIXED: Correct upload URL without /uploads path
-const UPLOADS_URL = "http://localhost:4000/uploads";
+const UPLOADS_URL = "http://localhost:4000/api/uploads";
 
 const Team = () => {
   const navigate = useNavigate();

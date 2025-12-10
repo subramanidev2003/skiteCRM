@@ -8,7 +8,7 @@ import './EditEmployee.css';
 import { toast } from 'react-toastify';
 
 const API_BASE = 'http://localhost:4000/api';
-const API_UPLOAD = 'http://localhost:4000/uploads';
+const API_UPLOAD = 'http://localhost:4000/api/uploads';
 
 const EditEmployee = () => {
   const { id } = useParams();

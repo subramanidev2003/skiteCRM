@@ -43,75 +43,82 @@ const AddEmployee = () => {
   };
 
   // Handle Form Submission
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+ // In AddEmployee.jsx, update the handleSubmit function:
 
-    const dataToSend = new FormData();
-    
-    // Append all fields exactly as backend expects
-    dataToSend.append('name', formData.name);
-    dataToSend.append('email', formData.email);
-    dataToSend.append('password', formData.password);
-    dataToSend.append('role', formData.role);
-    dataToSend.append('designation', formData.designation);
-    dataToSend.append('dob', formData.dob);
-    dataToSend.append('joiningDate', formData.joiningDate);
-    dataToSend.append('panNumber', formData.panNumber);
-    dataToSend.append('aadharNumber', formData.aadharNumber);
-    dataToSend.append('bankName', formData.bankName);
-    dataToSend.append('accountNumber', formData.accountNumber);
-    dataToSend.append('ifscCode', formData.ifscCode);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
 
-    // Append Image with correct field name that matches multer config
-    if (formData.profileImage) {
-      dataToSend.append('image', formData.profileImage); // Changed from 'profileImage' to 'image'
+  const dataToSend = new FormData();
+  
+  // Append all fields
+  dataToSend.append('name', formData.name);
+  dataToSend.append('email', formData.email);
+  dataToSend.append('password', formData.password);
+  dataToSend.append('role', formData.role);
+  dataToSend.append('designation', formData.designation);
+  dataToSend.append('dob', formData.dob);
+  dataToSend.append('joiningDate', formData.joiningDate);
+  dataToSend.append('panNumber', formData.panNumber);
+  dataToSend.append('aadharNumber', formData.aadharNumber);
+  dataToSend.append('bankName', formData.bankName);
+  dataToSend.append('accountNumber', formData.accountNumber);
+  dataToSend.append('ifscCode', formData.ifscCode);
+
+  if (formData.profileImage) {
+    dataToSend.append('image', formData.profileImage);
+  }
+
+  try {
+    const response = await fetch(`https://skite-crm.onrender.com/api/auth/register`, {
+      method: 'POST',
+      body: dataToSend
+    });
+
+    console.log('Response Status:', response.status);
+    console.log('Response Headers:', response.headers.get('content-type'));
+
+    // Check if response is JSON
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text();
+      console.error('Non-JSON Response:', text);
+      throw new Error('Server returned an invalid response. Please check server logs.');
     }
 
-    try {
-      const response = await fetch('https://your-vercel-app-name.vercel.app/auth/register', {
-        method: 'POST',
-        body: dataToSend
+    const data = await response.json();
+    console.log('Response Data:', data);
+
+    if (response.ok) {
+      alert('Employee Added Successfully!');
+      setFormData({
+        name: '',
+        email: '',
+        password: '',
+        designation: '',
+        role: '',
+        joiningDate: '',
+        dob: '',
+        panNumber: '',
+        aadharNumber: '',
+        bankName: '',
+        accountNumber: '',
+        ifscCode: '',
+        profileImage: null
       });
-
-      const data = await response.json();
-      
-      // Enhanced error logging
-      console.log('Response Status:', response.status);
-      console.log('Response Data:', data);
-
-      if (response.ok) {
-        alert('Employee Added Successfully!');
-        // Reset form
-        setFormData({
-          name: '',
-          email: '',
-          password: '',
-          designation: '',
-          role: '',
-          joiningDate: '',
-          dob: '',
-          panNumber: '',
-          aadharNumber: '',
-          bankName: '',
-          accountNumber: '',
-          ifscCode: '',
-          profileImage: null
-        });
-        setImagePreview(null);
-      } else {
-        // Show specific error message from backend
-        const errorMsg = data.message || data.msg || 'Failed to add employee';
-        alert(`Error: ${errorMsg}`);
-        console.error('Backend Error:', data);
-      }
-    } catch (error) {
-      console.error('Network Error:', error);
-      alert('Network Error: Could not connect to server. Make sure backend is running on port 4000.');
-    } finally {
-      setLoading(false);
+      setImagePreview(null);
+    } else {
+      const errorMsg = data.message || 'Failed to add employee';
+      alert(`Error: ${errorMsg}`);
+      console.error('Backend Error:', data);
     }
-  };
+  } catch (error) {
+    console.error('Request Error:', error);
+    alert(`Error: ${error.message}`);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div
@@ -125,9 +132,18 @@ const AddEmployee = () => {
       <button
         className="btn-primary1"
         onClick={() => navigate("/admin-dashboard")}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "0.5rem",
+          padding: "0.5rem 1rem",
+          marginBottom: "1rem",
+          cursor: "pointer"
+        }}
       >
         <ArrowLeft size={20} /> Back To Dashboard
       </button>
+      
       <div
         style={{
           maxWidth: "900px",
@@ -282,6 +298,7 @@ const AddEmployee = () => {
                 name="role"
                 onChange={handleChange}
                 value={formData.role}
+                required
                 style={inputStyle}
               >
                 <option value="">Select Role</option>
@@ -292,15 +309,16 @@ const AddEmployee = () => {
 
             <FormGroup icon={<Briefcase size={16} />} label="Designation">
               <input
-                type="text" // <-- Changed the element type
+                type="text"
                 name="designation"
                 onChange={handleChange}
                 value={formData.designation}
                 required
-                placeholder="Enter Designation" // Added a placeholder for better UX
+                placeholder="Enter Designation"
                 style={inputStyle}
               />
             </FormGroup>
+
             <FormGroup icon={<Calendar size={16} />} label="Joining Date">
               <input
                 type="date"

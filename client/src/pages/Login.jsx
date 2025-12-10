@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import skitelogo from '../assets/skitelogo.png';
 import './Login.css';
 
-const API_BASE = 'https://skite-crm-woad.vercel.app/';
+const API_BASE = 'http://localhost:4000/api';
 
 const Login = () => {
     const navigate = useNavigate();

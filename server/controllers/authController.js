@@ -11,70 +11,82 @@ import userModel from "../models/userModel.js";
 // ================================
 // 1. REGISTER EMPLOYEE
 // ================================
+// ================================
+// 1. REGISTER EMPLOYEE (FIXED)
+// ================================
 export const registerEmployee = async (req, res) => {
   try {
-    const { 
-      name, email, password, role, designation, 
-      dob, joiningDate, panNumber, aadharNumber,
-      bankName, accountNumber, ifscCode 
-    } = req.body;
-
-    // ... (Existing checks for existingUser) ...
-
-    const userData = {
+    const {
       name,
       email,
       password,
-    };
+      role,
+      designation,
+      dob,
+      joiningDate,
+      panNumber,
+      aadharNumber,
+      bankName,
+      accountNumber,
+      ifscCode
+    } = req.body;
 
-    // ... (Existing optional fields logic) ...
-    if (role) userData.role = role;
-    if (designation) userData.designation = designation;
-    if (dob) userData.dob = new Date(dob);
-    
-    // ... (Joining Date logic) ...
-    if (joiningDate) {
-      const parsedDate = new Date(joiningDate);
-      if (!isNaN(parsedDate.getTime())) {
-        userData.joiningDate = parsedDate;
-      }
+    console.log('📝 Registration Request Body:', req.body);
+    console.log('📷 Uploaded File:', req.file);
+
+    // ✅ FIXED: Changed User to userModel
+    const existingUser = await userModel.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email already registered' 
+      });
     }
 
-    if (panNumber) userData.panNumber = panNumber;
-    if (aadharNumber) userData.aadharNumber = aadharNumber;
+    // ✅ Get uploaded image filename
+    const image = req.file ? req.file.filename : '';
 
-    // ✅ FIX 1: CHANGE THIS BLOCK
-    // Your schema expects 'image', not 'profileImage'
-    // Also, store 'filename' so it matches your other working images
-    if (req.file) {
-      userData.image = req.file.filename; 
-    }
+    // ✅ FIXED: Changed User to userModel
+    const newUser = new userModel({
+      name,
+      email,
+      password, // Will be hashed by the model's pre-save hook
+      role: role || 'employee',
+      designation,
+      dob,
+      joiningDate,
+      panNumber,
+      aadharNumber,
+      bankName,
+      accountNumber,
+      ifscCode,
+      image // ✅ Save the image filename
+    });
 
-    // ... (Bank details logic) ...
-    if (bankName || accountNumber || ifscCode) {
-      userData.bankDetails = {
-        bankName: bankName || '',
-        accountNumber: accountNumber || '',
-        ifscCode: ifscCode || ''
-      };
-    }
+    await newUser.save();
 
-    const newUser = await userModel.create(userData);
+    console.log('✅ User created successfully:', newUser._id);
 
-    res.status(201).json({ 
+    res.status(201).json({
+      success: true,
       message: 'Employee registered successfully',
-      user: newUser
+      user: {
+        id: newUser._id,
+        name: newUser.name,
+        email: newUser.email,
+        image: newUser.image
+      }
     });
 
   } catch (error) {
-    console.error('Registration Error:', error);
+    console.error('❌ Registration Error:', error);
     res.status(500).json({ 
-      message: error.message || 'Error registering employee',
-      error: error.errors || error
+      success: false, 
+      message: 'Server error during registration',
+      error: error.message 
     });
   }
 };
-
 // ================================
 // 2. LOGIN EMPLOYEE
 // ================================
