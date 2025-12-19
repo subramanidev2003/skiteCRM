@@ -1,71 +1,286 @@
-/* --- Team.css (Save in the same directory as Team.jsx) --- */
+/* ============= Team.css - Full Mobile Responsive ============= */
 
+/* Container */
 .team-page-container {
-    padding: 30px;
-    max-width: 1200px;
-    margin: 0 auto;
-    font-family: Arial, sans-serif;
+  padding: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: 'Arial', sans-serif;
+  background: #f9f9f9;
+  min-height: 100vh;
 }
 
+/* Title */
 .team-page-title {
-    font-size: 2rem;
-    color: #333;
-    margin-bottom: 30px;
-    border-bottom: 2px solid #ff4500;
-    padding-bottom: 10px;
+  font-size: 2rem;
+  color: #333;
+  margin-bottom: 30px;
+  border-bottom: 3px solid #ff4500;
+  padding-bottom: 10px;
+  font-weight: 700;
 }
 
-/* Base table styles (for Team.jsx) */
+/* Back Button */
+.btn-primary1 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #ff4500;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 20px;
+}
+
+.btn-primary1:hover {
+  background: #e63e00;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 69, 0, 0.3);
+}
+
+.mb-4 {
+  margin-bottom: 1.5rem;
+}
+
+/* Table Styles */
 .team-list-table {
-    width: 100%;
-    border-collapse: collapse;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-    background-color: #fff;
-    border-radius: 8px;
-    overflow: hidden;
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
 }
 
 .table-header {
-    background-color: #ff4500;
-    color: white;
-    padding: 15px 20px;
-    text-align: left;
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 0.9rem;
+  background: linear-gradient(135deg, #ff4500 0%, #ff6b35 100%);
+  color: white;
+  padding: 16px 20px;
+  text-align: left;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
 }
 
 .table-row {
-    border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #f0f0f0;
+  transition: all 0.2s ease;
 }
 
-.table-cell {
-    padding: 12px 20px;
-    color: #555;
-    font-size: 0.95rem;
-}
-
-/* Crucial style for making rows interactive */
 .employee-clickable-row {
-    cursor: pointer;
-    transition: background-color 0.2s;
+  cursor: pointer;
 }
 
 .employee-clickable-row:hover {
-    background-color: #f7f7f7; /* Light hover effect */
+  background-color: #fff5f0;
+  transform: scale(1.01);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
+.table-cell {
+  padding: 16px 20px;
+  color: #555;
+  font-size: 0.95rem;
+  vertical-align: middle;
+}
+
+/* Profile Images */
 .table-profile-image {
-    width: 35px;
-    height: 35px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 1px solid #ddd;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #ff4500;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
-.table-profile-placeholder {
-    width: 35px;
-    height: 35px;
-    border-radius: 50%;
-    background: #e0e0e0;
+/* Delete Button */
+.delete-btn {
+  background: #ff4d4d;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
 }
+
+.delete-btn:hover {
+  background: #e63e3e;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(255, 77, 77, 0.3);
+}
+
+/* Error and Loading Messages */
+.error-message {
+  background: #fee;
+  color: #c00;
+  padding: 12px 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border-left: 4px solid #c00;
+  font-weight: 500;
+}
+
+.no-data-message {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+  font-size: 1.1rem;
+}
+
+/* ============= MOBILE RESPONSIVE (Tablets) ============= */
+@media screen and (max-width: 768px) {
+  .team-page-container {
+    padding: 20px;
+  }
+
+  .team-page-title {
+    font-size: 1.6rem;
+  }
+
+  .btn-primary1 {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+  }
+
+  /* Hide table headers on mobile */
+  .team-list-table thead {
+    display: none;
+  }
+
+  /* Stack table rows as cards */
+  .team-list-table,
+  .team-list-table tbody,
+  .team-list-table tr,
+  .team-list-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .table-row {
+    margin-bottom: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    padding: 20px;
+    background: white;
+    border: none;
+  }
+
+  .table-cell {
+    padding: 10px 0;
+    text-align: left;
+    position: relative;
+    padding-left: 50%;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .table-cell:last-child {
+    border-bottom: none;
+  }
+
+  /* Add labels before each cell */
+  .table-cell::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 0;
+    width: 45%;
+    padding-left: 10px;
+    font-weight: 700;
+    color: #333;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+  }
+
+  /* Name cell with image */
+  .table-cell:first-child {
+    padding-left: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #ff4500;
+  }
+
+  .table-cell:first-child::before {
+    display: none;
+  }
+
+  .table-profile-image {
+    width: 50px;
+    height: 50px;
+  }
+
+  .delete-btn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 12px;
+  }
+}
+
+/* ============= MOBILE RESPONSIVE (Phones) ============= */
+@media screen and (max-width: 480px) {
+    .employee-table1{
+        /* border: 3px solid black; */
+        width:250px !important;
+        margin-left: -10px !important;
+    }
+    .employee-name{
+        font-size: 20px;
+    }
+  .team-page-container {
+    padding: 15px;
+  }
+
+  .team-page-title {
+    font-size: 1.4rem;
+    margin-bottom: 20px;
+  }
+
+  .btn-primary1 {
+    width: 100%;
+    justify-content: center;
+    padding: 12px;
+  }
+
+  .table-row {
+    padding: 15px;
+  }
+
+  .table-cell {
+    font-size: 0.9rem;
+    padding: 8px 0;
+    padding-left: 45%;
+  }
+
+  .table-cell::before {
+    font-size: 0.7rem;
+  }
+
+  .table-profile-image {
+    width: 45px;
+    height: 45px;
+  }
+}
+
+/* ============= DATA LABELS FOR MOBILE ============= */
+/* Add these data-label attributes in your JSX for mobile view */
+/*
+Example in JSX:
+<td className="table-cell" data-label="Designation">{emp.designation}</td>
+<td className="table-cell" data-label="Email">{emp.email}</td>
+<td className="table-cell" data-label="DOB">{formatDate(emp.dob)}</td>
+<td className="table-cell" data-label="Actions">
+  <button className="delete-btn">Delete</button>
+</td>
+*/

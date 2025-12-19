@@ -1,11 +1,44 @@
-/* General Page Layout */
+/* ===============================================
+   ATTENDANCE PAGE - COMPLETE RESPONSIVE STYLES
+   =============================================== */
+
+/* === ROOT & VARIABLES === */
+:root {
+  --primary-blue: #4CAF50;
+  --primary-blue-hover: #45a049;
+  --danger-red: #ff4d4d;
+  --danger-red-hover: #cc0000;
+  --text-dark: #32325d;
+  --text-gray: #8898aa;
+  --text-light: #adb5bd;
+  --bg-page: #f8f9fa;
+  --bg-white: #ffffff;
+  --border-light: #f5f5f5;
+  --border-gray: #e9ecef;
+  --border-input: #ddd;
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --radius-sm: 4px;
+  --radius-md: 5px;
+  --radius-lg: 8px;
+  --transition: all 0.2s ease;
+}
+
+/* === RESET & BASE === */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* === MAIN CONTAINER === */
 .attendance-page1 {
   padding: 20px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background-color: #f8f9fa; /* Light background behind the card */
+  background-color: var(--bg-page);
   min-height: 100vh;
 }
 
+/* === PAGE TITLE === */
 .page-title {
   color: #343a40;
   margin-bottom: 20px;
@@ -13,101 +46,78 @@
   font-weight: 600;
 }
 
-/* White Card Container */
-.table-container {
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Subtle shadow */
-  border: 1px solid #e9ecef;
+/* === BACK BUTTON === */
+.btn-primary1 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   padding: 10px 20px;
-  overflow-x: auto; /* Handles responsiveness */
-}
-
-/* Table Styling */
-.attendance-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 800px; /* Ensures table doesn't squish on small screens */
-}
-
-/* Header Styling */
-.attendance-table th {
-  text-align: left;
-  padding: 20px 10px;
-  color: #8898aa; /* Light gray text for headers */
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  border-bottom: 1px solid #e9ecef;
-  letter-spacing: 0.5px;
-}
-
-/* Specific Header fix for 'Task Description' to match image casing */
-.attendance-table th.th-task {
-  text-transform: none; /* The image shows 'Task Description' not capitalized like others */
-  font-weight: 700;
-  color: #adb5bd; /* Slightly lighter gray */
-}
-
-/* Row Styling */
-.attendance-table td {
-  padding: 25px 10px; /* Generous padding like the screenshot */
-  border-bottom: 1px solid #f5f5f5;
-  color: #32325d; /* Dark text for content */
-  font-size: 0.95rem;
+  background: var(--bg-white);
+  color: var(--text-dark);
+  border: 1px solid var(--border-gray);
+  border-radius: var(--radius-md);
+  font-size: 14px;
   font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
 }
 
-/* Remove border from last row */
-.attendance-table tr:last-child td {
-  border-bottom: none;
+.btn-primary1:hover {
+  background: var(--bg-page);
+  border-color: var(--text-gray);
+  transform: translateX(-2px);
 }
 
-/* Column Width Adjustments (Optional, to mimic spacing) */
-.th-employee { width: 25%; }
-.th-date { width: 15%; }
-.th-time { width: 15%; }
-.th-task1 { width: 30%; }
+.mb-4 {
+  margin-bottom: 1.5rem;
+}
 
-
-
-
-
-
-
-
-
-/* Existing styles... */
-
-/* --- NEW FILTER STYLES --- */
+/* === FILTER CONTAINER (White Card) === */
 .filter-container1 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #ffffff;
+  background-color: var(--bg-white);
   padding: 15px;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   margin-bottom: 20px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  flex-wrap: wrap; /* Allows wrapping on mobile */
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-gray);
+  flex-wrap: wrap;
   gap: 15px;
 }
 
+/* Filter Inputs Group */
 .filter-inputs {
   display: flex;
   align-items: center;
   gap: 15px;
   flex-wrap: wrap;
+  flex: 1;
 }
 
+/* Search Input */
 .search-input {
   padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-sm);
   font-size: 14px;
   width: 200px;
+  transition: var(--transition);
 }
 
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+.search-input::placeholder {
+  color: var(--text-light);
+}
+
+/* Date Group */
 .date-group {
   display: flex;
   align-items: center;
@@ -116,73 +126,609 @@
   color: #555;
 }
 
-.date-input {
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
+.date-group label {
+  font-weight: 500;
+  white-space: nowrap;
 }
 
+.date-input {
+  padding: 8px;
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  transition: var(--transition);
+  min-width: 140px;
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+/* Clear Button */
 .clear-btn {
   padding: 8px 15px;
-  background-color: #e9ecef;
+  background-color: var(--border-gray);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   color: #495057;
   font-weight: 500;
-  transition: background 0.2s;
+  font-size: 14px;
+  transition: var(--transition);
+  white-space: nowrap;
 }
 
 .clear-btn:hover {
   background-color: #dee2e6;
 }
 
-.download-btn {
-  padding: 10px 20px;
-  background-color: #4CAF50; /* Green */
+/* Delete Button */
+.delete-btn {
+  background-color: var(--danger-red);
   color: white;
   border: none;
-  border-radius: 5px;
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  font-weight: bold;
+  font-size: 14px;
+  font-weight: 600;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.delete-btn:hover:not(:disabled) {
+  background-color: var(--danger-red-hover);
+}
+
+.delete-btn:disabled {
+  background-color: var(--text-light);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Download Button */
+.download-btn {
+  padding: 10px 20px;
+  background-color: var(--primary-blue);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-weight: 600;
   font-size: 14px;
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: background 0.3s;
+  transition: var(--transition);
+  white-space: nowrap;
 }
 
 .download-btn:hover {
-  background-color: #45a049;
+  background-color: var(--primary-blue-hover);
 }
 
+/* === TABLE CONTAINER (White Card) === */
+.table-container {
+  background-color: var(--bg-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-gray);
+  padding: 0;
+  overflow-x: auto;
+}
 
-/* Add this to your Attendance.css file */
+/* === TABLE STYLING === */
+.attendance-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px;
+}
 
-.th-action, .td-action {
+/* Table Header */
+.attendance-table thead {
+  background-color: var(--bg-white);
+}
+
+.attendance-table th {
+  text-align: left;
+  padding: 20px 10px;
+  color: var(--text-gray);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border-gray);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+/* Column Width Distribution */
+.th-employee { width: 25%; }
+.th-date { width: 15%; }
+.th-time { width: 15%; }
+.th-task1 { width: 30%; }
+
+/* Table Body Rows */
+.attendance-table tbody tr {
+  transition: var(--transition);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.attendance-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.attendance-table tbody tr:hover {
+  background-color: var(--bg-page);
+}
+
+/* Table Cells */
+.attendance-table td {
+  padding: 25px 10px;
+  color: var(--text-dark);
+  font-size: 0.95rem;
+  font-weight: 500;
+  vertical-align: middle;
+}
+
+/* Specific Cell Styling */
+.td-employee {
+  font-weight: 600;
+}
+
+.td-date,
+.td-time {
+  color: #495057;
+  white-space: nowrap;
+}
+
+.td-task {
+  color: #6c757d;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Empty State */
+.attendance-table tbody tr td[colspan="5"] {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-light);
+  font-style: italic;
+  font-size: 1rem;
+}
+
+/* === LOADING & ERROR STATES === */
+.attendance-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50vh;
+  font-size: 1.1rem;
+  color: var(--text-gray);
+  padding: 20px;
+}
+
+.error-text {
+  color: var(--danger-red);
+  font-weight: 500;
   text-align: center;
 }
 
+/* ===============================================
+   RESPONSIVE DESIGN
+   =============================================== */
 
-/* Add to Attendance.css */
+/* === TABLETS (768px and below) === */
+@media (max-width: 768px) {
+  .attendance-page1 {
+    padding: 15px;
+  }
 
-.delete-btn {
-  background-color: #ff4d4d; /* Red color */
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
+  .page-title {
+    font-size: 1.25rem;
+    margin-bottom: 15px;
+  }
+
+  /* Back Button - Full Width */
+  .btn-primary1 {
+    width: 100%;
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
+
+  /* Filter Container - Stack Vertically */
+  .filter-container1 {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px;
+  }
+
+  .filter-inputs {
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;
+  }
+
+  .search-input {
+    width: 100%;
+  }
+
+  .date-group {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .date-input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .clear-btn,
+  .delete-btn,
+  .download-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Table - Horizontal Scroll */
+  .table-container {
+    border-radius: var(--radius-sm);
+    padding: 0;
+  }
+
+  .attendance-table {
+    font-size: 0.875rem;
+  }
+
+  .attendance-table th {
+    padding: 15px 8px;
+    font-size: 0.7rem;
+  }
+
+  .attendance-table td {
+    padding: 15px 8px !important;
+    font-size: 0.875rem !important;
+  }
+}
+
+/* ... Keep your existing Root, Reset, Main Container, Filter styles ... */
+
+/* ===============================================
+   MOBILE CARD VIEW TRANSFORMATION
+   =============================================== */
+
+/* Applies to Tablets and Mobile Phones */
+@media (max-width: 768px) {
+  
+  /* 1. Layout Adjustments */
+  .attendance-page1 {
+    padding: 10px;
+  }
+  
+  .filter-container1 {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .filter-inputs, .date-group, .search-input, .date-input, .btn-primary1, .delete-btn, .download-btn, .clear-btn {
+    width: 100%;
+  }
+
+  /* 2. Force Table to behave like Block Elements */
+  .attendance-table, 
+  .attendance-table thead, 
+  .attendance-table tbody, 
+  .attendance-table th, 
+  .attendance-table td, 
+  .attendance-table tr { 
+    display: block; 
+    width: 100%;
+  }
+
+  /* 3. Hide Table Headers */
+  .attendance-table thead { 
+    display: none; /* Hide standard table headers */
+  }
+
+  /* 4. Style Rows as Cards */
+  .attendance-table tbody tr {
+    margin-bottom: 15px;
+    background-color: var(--bg-white);
+    border: 1px solid var(--border-gray);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: 15px;
+  }
+
+  /* 5. Style Cells inside Cards */
+  .attendance-table td {
+    display: flex;
+    justify-content: space-between; /* Label left, Value right */
+    align-items: center;
+    text-align: right;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-light);
+    font-size: 0.9rem;
+  }
+
+  .attendance-table td:last-child {
+    border-bottom: none;
+  }
+
+  /* 6. Add Labels using data-label attribute */
+  .attendance-table td::before {
+    content: attr(data-label); /* Grabs the text from JSX */
+    float: left;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-gray);
+    font-size: 0.75rem;
+    margin-right: 15px;
+  }
+
+  /* Specific Styles for Card Content */
+  .td-task {
+    display: block !important; /* Task takes full width below label */
+    text-align: left;
+    margin-top: 5px;
+  }
+  
+  .td-task::before {
+    display: block;
+    margin-bottom: 5px;
+  }
+  
+  /* Reset min-width so it doesn't force scroll */
+  .attendance-table {
+    min-width: unset; 
+  }
+  
+  .table-container {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
+}
+
+/* === LARGE SCREENS (1440px and above) === */
+@media (min-width: 1440px) {
+  .attendance-page1 {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 30px;
+  }
+
+  .page-title {
+    font-size: 1.75rem;
+  }
+
+  .filter-container1 {
+    padding: 20px;
+  }
+
+  .table-container {
+    padding: 0;
+  }
+
+  .attendance-table th {
+    padding: 24px 15px;
+    font-size: 0.8rem;
+  }
+
+  .attendance-table td {
+    padding: 28px 15px;
+    font-size: 1rem;
+  }
+}
+
+/* === PRINT STYLES === */
+@media print {
+  .btn-primary1,
+  .filter-container1 {
+    display: none !important;
+  }
+
+  .attendance-page1 {
+    padding: 0;
+    background: white;
+  }
+
+  .table-container {
+    box-shadow: none;
+    border: 1px solid #000;
+  }
+
+  .attendance-table tbody tr {
+    break-inside: avoid;
+  }
+}
+
+/* === ACCESSIBILITY === */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus States for Keyboard Navigation */
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--primary-blue);
+  outline-offset: 2px;
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  :root {
+    --border-gray: #000000;
+    --text-gray: #000000;
+  }
+}
+
+/* === UTILITY CLASSES === */
+.text-center {
+  text-align: center;
+}
+
+.text-muted {
+  color: var(--text-light);
+}
+
+.font-weight-bold {
+  font-weight: 600;
+}
+
+.mt-3 {
+  margin-top: 1rem;
+}
+
+.mb-3 {
+  margin-bottom: 1rem;
+}
+
+
+/* ... Existing CSS ... */
+
+/* --- Clickable Rows --- */
+.att-clickable-row {
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
   transition: background-color 0.2s ease;
 }
 
-.delete-btn:hover {
-  background-color: #cc0000; /* Darker red on hover */
+.att-clickable-row:hover td {
+  background-color: #f1f3f5;
 }
 
-.th-action, .td-action {
-  width: 100px; /* Optional: Set a fixed width for the action column */
+/* --- MODAL STYLES --- */
+.att-modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+  display: flex; justify-content: center; align-items: center;
+  z-index: 2000; padding: 20px;
+}
+
+.att-modal-box {
+  background: white;
+  width: 100%; max-width: 450px;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  overflow: hidden;
+  animation: attSlideUp 0.3s ease-out;
+}
+
+@keyframes attSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.att-modal-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 15px 20px; border-bottom: 1px solid #eee; background: #f8f9fa;
+}
+
+.att-modal-title { font-weight: 700; font-size: 1.1rem; color: #333; }
+.att-modal-close { background: none; border: none; cursor: pointer; color: #999; }
+.att-modal-close:hover { color: #ff4d4d; }
+
+.att-modal-content { padding: 25px; }
+
+.att-profile-section {
+  display: flex; flex-direction: column; align-items: center; margin-bottom: 25px;
+}
+
+.att-avatar {
+  width: 60px; height: 60px; background: #e9ecef; color: #495057;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; font-weight: 700; margin-bottom: 10px;
+  border: 3px solid #dee2e6;
+}
+
+.att-emp-name { font-size: 1.2rem; color: #343a40; font-weight: 600; }
+
+.att-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;
+}
+
+.att-item {
+  background: #fff; border: 1px solid #eee; padding: 10px; border-radius: 8px;
+}
+
+.att-item:last-child { grid-column: span 2; } /* Make Check Out full width if needed, or adjust grid */
+
+.att-label {
+  display: flex; align-items: center; gap: 6px; font-size: 0.75rem; 
+  font-weight: 700; color: #8898aa; text-transform: uppercase; margin-bottom: 5px;
+}
+
+.att-value { font-size: 1rem; font-weight: 500; color: #333; }
+.text-green { color: #2dce89; }
+.text-red { color: #f5365c; }
+
+.att-section { margin-bottom: 20px; }
+
+.att-desc-box {
+  background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e9ecef;
+  max-height: 150px; overflow-y: auto;
+}
+
+.att-desc-text {
+  font-size: 0.95rem; color: #525f7f; line-height: 1.5; white-space: pre-wrap;
+}
+
+.att-modal-footer {
+  display: flex; justify-content: flex-end;
+}
+
+.att-btn-close {
+  background: #e9ecef; color: #333; border: none; padding: 10px 20px;
+  border-radius: 6px; font-weight: 600; cursor: pointer; transition: background 0.2s;
+}
+.att-btn-close:hover { background: #dee2e6; }
+
+.filter-container1 {
+  display: flex;
+  justify-content: space-between; /* This pushes filters to left and buttons to right */
+  align-items: center;
+  margin-bottom: 20px;
+  background: #fff;
+  padding: 15px;
+  border-radius: 8px;
+  flex-wrap: wrap; /* Ensures buttons don't disappear on smaller screens */
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.delete-btn {
+  background-color: #ef4444;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.download-btn {
+  background-color: #3b82f6;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.delete-btn:disabled, .download-btn:disabled {
+  background-color: #d1d5db;
+  cursor: not-allowed;
 }

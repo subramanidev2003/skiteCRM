@@ -59,7 +59,7 @@ const userAuth = async (req, res, next) => {
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    console.log('🔓 Token decoded:', decoded);
+    // console.log('🔓 Token decoded:', decoded);
     
     // Get user from database to get the latest role
     const user = await userModel.findById(decoded.id).select('_id role name email');
@@ -75,9 +75,9 @@ const userAuth = async (req, res, next) => {
     req.userRole = user.role; // This is crucial for adminAuth
     req.user = user; // Optional: attach full user object
     
-    console.log('✅ userAuth: User authenticated');
-    console.log('   User ID:', req.userId);
-    console.log('   User Role:', req.userRole);
+    // console.log('✅ userAuth: User authenticated');
+    // console.log('   User ID:', req.userId);
+    // console.log('   User Role:', req.userRole);
     
     next(); // Proceed to next middleware or route handler
     

@@ -5,7 +5,7 @@ import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 import skitelogo from '../assets/skitelogo.png'; 
 import './AdminDashboard.css'; 
 
-const API_BASE = 'http://localhost:4000/api';
+const API_BASE = 'https://skitecrm.onrender.com/api';
 
 // --- SVG Icons (EXPORTED for use in Task.jsx) ---
 export const LogoutIcon = () => (
@@ -112,7 +112,7 @@ const AdminDashboard = () => {
                      <div className="logo-container">
                          <img src={skitelogo} alt="Skite Logo" className="logo" />
                      </div>
-                     <div className="header-title">Admin Dashboard</div>
+                     <div className="header-title">Wellcome back sasiprakash!</div>
                  </div>
                  <button className="logout-button" onClick={handleLogout}>
                      Logout <LogoutIcon />

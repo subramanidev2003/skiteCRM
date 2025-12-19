@@ -6,33 +6,26 @@ import {
     updateTaskStatus, 
     deleteTask 
 } from "../controllers/taskController.js";
-// Assuming you have an authentication middleware for protected routes
 import userAuth from "../middleware/userAuth.js"; 
 import adminAuth from "../middleware/adminAuth.js";
 
 const taskRouter = express.Router();
-// POST /api/tasks/create - Create a new task (Admin/Manager role typically)
-taskRouter.post("/create", userAuth,adminAuth, createTask); 
-// --- Employee Routes (Used by EmployeeDashboard.jsx) ---
-// GET /api/tasks/all - Fetch all tasks, potentially with filters (Admin view)
-// Note: This route must be listed *after* the GET /:userId route to prevent "/all" from being interpreted as a userId
-taskRouter.get("/all", userAuth,adminAuth, getAllTasks); 
-// GET /api/tasks/:userId - Fetch all tasks assigned to a specific user
-// The EmployeeDashboard uses this route to fetch tasks: `${TASKS_URL}/${EMPLOYEE_ID}`
-taskRouter.get("/:userId", userAuth, adminAuth,getEmployeeTasks); 
 
-// PATCH /api/tasks/:taskId/status - Toggle task status 
-// The EmployeeDashboard uses this route to complete/uncomplete tasks: `${TASKS_URL}/${taskId}/status`
-taskRouter.post("/:taskId/status", userAuth, updateTaskStatus); 
+// 1. Create Task - Now allowed for Admin AND Manager (via your updated adminAuth)
+taskRouter.post("/create", userAuth, createTask); 
+
+// 2. Get All Tasks - Used by Admin/Manager Dashboards
+// Order matters: Keep "/all" ABOVE "/:userId"
+taskRouter.get("/all", userAuth, adminAuth, getAllTasks); 
+
+// 3. Delete Task
 taskRouter.delete("/delete/:id", userAuth, adminAuth, deleteTask);
 
-// --- Admin/Management Routes ---
+// 4. Employee Specific Tasks (Employee Dashboard)
+// We REMOVE adminAuth here because a regular employee needs to access their own tasks
+taskRouter.get("/:userId", userAuth, getEmployeeTasks); 
 
-
-
-
-
-// DELETE /api/tasks/:taskId - Delete a task (Admin/Manager role typically)
-// taskRouter.delete("/:taskId", userAuth, deleteTask);
+// 5. Update Task Status (Employee Dashboard)
+taskRouter.post("/:taskId/status", userAuth, updateTaskStatus); 
 
 export default taskRouter;

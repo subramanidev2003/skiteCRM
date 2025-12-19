@@ -7,8 +7,8 @@ import {
 import './EditEmployee.css';
 import { toast } from 'react-toastify';
 
-const API_BASE = 'http://localhost:4000/api';
-const API_UPLOAD = 'http://localhost:4000/api/uploads';
+const API_BASE = 'https://skitecrm.onrender.com/api';
+const API_UPLOAD = 'https://skitecrm.onrender.com/api/uploads';
 
 const EditEmployee = () => {
   const { id } = useParams();
@@ -189,8 +189,8 @@ const handleSubmit = async (e) => {
   if (loading) return <div className="loading-text">Loading...</div>;
 
   return (
-    <div className="details-container">
-      <div className="details-wrapper">
+    <div className="details-container1">
+      <div className="details-wrapper1">
         
         <div className="details-header">
           <button className="back-btn" onClick={() => navigate(-1)} type="button">

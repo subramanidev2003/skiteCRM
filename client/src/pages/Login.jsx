@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import skitelogo from '../assets/skitelogo.png';
+import skitelogo from '../assets/skitelogo.png'; // Ensure this path is correct
 import './Login.css';
 
 const API_BASE = 'http://localhost:4000/api';
@@ -29,16 +29,13 @@ const Login = () => {
         e.preventDefault();
         
         console.log('Login attempt started');
-        console.log('Form data:', formData);
         
         setStatus({ loading: true, error: '' });
 
         // ✅ CLEAR ALL PREVIOUS AUTH DATA BEFORE LOGIN
-        localStorage.clear(); // Clear everything to be safe
+        localStorage.clear(); 
         
         try {
-            console.log('Sending request to:', `${API_BASE}/auth/login`);
-            
             const res = await fetch(`${API_BASE}/auth/login`, {
                 method: 'POST',
                 headers: {
@@ -59,6 +56,7 @@ const Login = () => {
                 
                 setStatus({ loading: false, error: '' });
 
+                // Ensure role is compared in lowercase to match your logic
                 const role = data.user.role.toLowerCase();
                 
                 // ✅ SAVE WITH ROLE-SPECIFIC KEYS
@@ -66,27 +64,29 @@ const Login = () => {
                     localStorage.setItem('adminToken', data.token);
                     localStorage.setItem('adminUser', JSON.stringify(data.user));
                     
-                    console.log('Admin credentials stored');
-                    console.log('Stored adminToken:', localStorage.getItem('adminToken'));
-                    console.log('Stored adminUser:', localStorage.getItem('adminUser'));
-                    
-                    // ✅ Wait a bit for localStorage to sync, then navigate
                     setTimeout(() => {
-                        console.log('Navigating to admin dashboard');
                         navigate('/admin-dashboard', { replace: true });
                     }, 100);
                     
-                } else if (role === 'employee') {
+                } 
+                // 👇 NEW MANAGER LOGIC ADDED HERE 👇
+                else if (role === 'manager') {
+                    localStorage.setItem('managerToken', data.token);
+                    localStorage.setItem('managerUser', JSON.stringify(data.user));
+
+                    console.log('Manager credentials stored');
+                    
+                    setTimeout(() => {
+                        console.log('Navigating to manager dashboard');
+                        navigate('/manager-dashboard', { replace: true });
+                    }, 100);
+                } 
+                // 👆 END NEW MANAGER LOGIC 👆
+                else if (role === 'employee') {
                     localStorage.setItem('employeeToken', data.token);
                     localStorage.setItem('employeeUser', JSON.stringify(data.user));
                     
-                    console.log('Employee credentials stored');
-                    console.log('Stored employeeToken:', localStorage.getItem('employeeToken'));
-                    console.log('Stored employeeUser:', localStorage.getItem('employeeUser'));
-                    
-                    // ✅ Wait a bit for localStorage to sync, then navigate
                     setTimeout(() => {
-                        console.log('Navigating to employee dashboard');
                         navigate('/employee-dashboard', { replace: true });
                     }, 100);
                     
@@ -109,7 +109,7 @@ const Login = () => {
             console.error('Login error:', err);
             setStatus({
                 loading: false,
-                error: 'Network error. Please check if the server is running on port 4000.'
+                error: 'Network error. Please check if the server is running.'
             });
         }
     };
@@ -118,7 +118,7 @@ const Login = () => {
         <div className="login-page">
             <div className="login-card">
                 <img src={skitelogo} alt="Skite Logo" className="login-logo" />
-                <h2 className="login-title">Employee Login</h2>
+                <h2 className="login-title">Skite Login</h2>
 
                 <form onSubmit={handleLogin}>
 

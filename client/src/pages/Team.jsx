@@ -5,9 +5,9 @@ import "./Team.css";
 import { toast } from "react-toastify";
 import { ArrowLeft } from "lucide-react";
 
-const API_BASE = "http://localhost:4000/api";
+const API_BASE = "https://skitecrm.onrender.com/api";
 // ✅ FIXED: Correct upload URL without /uploads path
-const UPLOADS_URL = "http://localhost:4000/api/uploads";
+const UPLOADS_URL = "https://skitecrm.onrender.com/api/uploads";
 
 const Team = () => {
   const navigate = useNavigate();
@@ -52,9 +52,9 @@ const Team = () => {
 
       if (res.ok) {
         // ✅ DEBUG: Log employee data to check image field
-        console.log("📸 Employee data received:", data);
-        data.forEach(emp => {
-          console.log(`Employee: ${emp.name}, Image: ${emp.image}`);
+        // console.log("📸 Employee data received:", data);
+        data.forEach((emp) => {
+          // console.log(`Employee: ${emp.name}, Image: ${emp.image}`);
         });
         setEmployees(data);
         setStatus({ loading: false, error: "" });
@@ -128,32 +128,34 @@ const Team = () => {
   // ✅ NEW: Helper function to get the correct image URL
   const getImageUrl = (imagePath) => {
     if (!imagePath) {
-      console.log('⚠️ No image path provided');
+      // console.log("⚠️ No image path provided");
       return null;
     }
-    
-    console.log('🔍 Original image path:', imagePath);
-    
+
+    // console.log("🔍 Original image path:", imagePath);
+
     // If imagePath already includes full URL, return as is
-    if (imagePath.startsWith('http')) {
-      console.log('✅ Full URL detected:', imagePath);
+    if (imagePath.startsWith("http")) {
+      console.log("✅ Full URL detected:", imagePath);
       return imagePath;
     }
-    
+
     // Remove leading slash if present
-    const cleanPath = imagePath.startsWith('/') ? imagePath.slice(1) : imagePath;
-    
+    const cleanPath = imagePath.startsWith("/")
+      ? imagePath.slice(1)
+      : imagePath;
+
     // Construct full URL
     const fullUrl = `${UPLOADS_URL}/${cleanPath}`;
-    console.log('🖼️ Constructed image URL:', fullUrl);
+    // console.log("🖼️ Constructed image URL:", fullUrl);
     return fullUrl;
   };
 
   // ✅ NEW: Handle image load errors
   const handleImageError = (e) => {
-    console.error('Image failed to load:', e.target.src);
-    e.target.style.display = 'none';
-    e.target.nextSibling.style.display = 'flex'; // Show placeholder
+    console.error("Image failed to load:", e.target.src);
+    e.target.style.display = "none";
+    e.target.nextSibling.style.display = "flex"; // Show placeholder
   };
 
   if (status.loading) {
@@ -168,7 +170,7 @@ const Team = () => {
   return (
     <div className="team-page-container">
       <button
-        className="btn-primary1 mb-4"
+        className="task-btn-back mb-4"
         onClick={() => navigate("/admin-dashboard")}
       >
         <ArrowLeft size={20} /> Back To Dashboard
@@ -177,7 +179,7 @@ const Team = () => {
 
       {status.error && <div className="error-message">{status.error}</div>}
 
-      <table className="employee-table team-list-table">
+      <table className="employee-table1 team-list-table">
         <thead>
           <tr>
             <th className="table-header">Name</th>
@@ -191,16 +193,20 @@ const Team = () => {
         <tbody>
           {employees.map((emp) => {
             const imageUrl = getImageUrl(emp.image);
-            
+
             return (
               <tr
                 key={emp._id}
                 className="table-row employee-clickable-row"
                 onClick={() => handleEmployeeClick(emp._id)}
               >
-                <td className="table-cell">
+                <td className="table-cell" data-label="Name">
                   <div
-                    style={{ display: "flex", alignItems: "center", gap: "10px" }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                    }}
                   >
                     {/* ✅ FIXED: Improved image rendering with error handling */}
                     {imageUrl ? (
@@ -255,22 +261,20 @@ const Team = () => {
                   </div>
                 </td>
 
-                <td className="table-cell">{emp.designation}</td>
-                <td className="table-cell">{emp.email}</td>
-                <td className="table-cell">{formatDate(emp.dob)}</td>
+                <td className="table-cell" data-label="Designation">
+                  {emp.designation}
+                </td>
+                <td className="table-cell" data-label="Email">
+                  {emp.email}
+                </td>
+                <td className="table-cell" data-label="DOB">
+                  {formatDate(emp.dob)}
+                </td>
 
-                <td className="table-cell">
+                <td className="table-cell" data-label="Actions">
                   <button
                     className="delete-btn"
                     onClick={(e) => handleDelete(e, emp._id, emp.name)}
-                    style={{
-                      background: "#ff4d4d",
-                      color: "white",
-                      border: "none",
-                      padding: "5px 10px",
-                      borderRadius: "5px",
-                      cursor: "pointer",
-                    }}
                   >
                     Delete
                   </button>

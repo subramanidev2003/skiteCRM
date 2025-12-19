@@ -251,10 +251,19 @@
 
 /* 6. Responsiveness */
 @media (max-width: 768px) {
+    .hide-btn{
+        display: none;
+    }
     .details-wrapper {
+        /* border: 3px solid red; */
+        margin-left: -20px !important;
+        width: 250px;
         padding: 1rem;
     }
-
+    .details-container1{
+        /* border: 3px solid red; */
+        width: 250px;
+    }
     .details-header {
         flex-direction: column;
         align-items: flex-start;

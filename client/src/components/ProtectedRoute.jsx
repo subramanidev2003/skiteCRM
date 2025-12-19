@@ -4,41 +4,36 @@ import { Navigate, Outlet, useNavigate } from 'react-router-dom';
 const ProtectedRoute = ({ allowedRoles }) => {
   const navigate = useNavigate();
   
-  // console.log('🔒 ProtectedRoute checking...', { allowedRoles });
-  
-  // ✅ Get role-specific credentials
-  const employeeToken = localStorage.getItem('employeeToken');
-  const employeeUserStr = localStorage.getItem('employeeUser');
+  // 1. Get ALL possible role credentials from LocalStorage
   const adminToken = localStorage.getItem('adminToken');
   const adminUserStr = localStorage.getItem('adminUser');
   
-  // console.log('📦 LocalStorage check:', {
-  //   employeeToken: employeeToken ? 'exists' : 'missing',
-  //   employeeUser: employeeUserStr ? 'exists' : 'missing',
-  //   adminToken: adminToken ? 'exists' : 'missing',
-  //   adminUser: adminUserStr ? 'exists' : 'missing'
-  // });
+  const managerToken = localStorage.getItem('managerToken');
+  const managerUserStr = localStorage.getItem('managerUser');
   
-  // Determine which credentials to use
+  const employeeToken = localStorage.getItem('employeeToken');
+  const employeeUserStr = localStorage.getItem('employeeUser');
+
+  // 2. Determine which set of credentials to use
   let token = null;
   let userStr = null;
-  
-  if (employeeToken && employeeUserStr) {
-    token = employeeToken;
-    userStr = employeeUserStr;
-    // console.log('✅ Using employee credentials');
-  } else if (adminToken && adminUserStr) {
+
+  if (adminToken && adminUserStr) {
     token = adminToken;
     userStr = adminUserStr;
-    // console.log('✅ Using admin credentials');
+  } else if (managerToken && managerUserStr) {
+    token = managerToken;
+    userStr = managerUserStr;
+  } else if (employeeToken && employeeUserStr) {
+    token = employeeToken;
+    userStr = employeeUserStr;
   }
-  
-  // Parse user object safely
+
+  // 3. Parse user object safely
   let user = null;
   if (userStr) {
     try {
       user = JSON.parse(userStr);
-      // console.log('👤 User parsed:', { name: user.name, role: user.role });
     } catch (error) {
       console.error('❌ Error parsing user data:', error);
       localStorage.clear();
@@ -46,62 +41,50 @@ const ProtectedRoute = ({ allowedRoles }) => {
     }
   }
 
-  // Check if user is logged in
+  // 4. Check if user is logged in at all
   if (!token || !user) {
-    console.log('❌ No valid credentials found, redirecting to login');
+    console.log('❌ No valid session found, redirecting to login');
     return <Navigate to="/" replace />;
   }
 
-  // ✅ ADD THIS: Listen for storage changes (logout in another tab)
+  // 5. Handle cross-tab logout (Storage Sync)
   useEffect(() => {
     const handleStorageChange = () => {
-      // console.log('🔄 Storage changed, re-checking credentials...');
-      
-      const empToken = localStorage.getItem('employeeToken');
-      const admToken = localStorage.getItem('adminToken');
-      
-      // If the current user's credentials are gone, redirect
-      if (user.role.toLowerCase() === 'employee' && !empToken) {
-        console.log('⚠️ Employee credentials removed, redirecting...');
-        navigate('/', { replace: true });
-      } else if (user.role.toLowerCase() === 'admin' && !admToken) {
-        console.log('⚠️ Admin credentials removed, redirecting...');
+      const admT = localStorage.getItem('adminToken');
+      const mngT = localStorage.getItem('managerToken');
+      const empT = localStorage.getItem('employeeToken');
+
+      // If the user's specific token is cleared, boot them out
+      const role = user.role.toLowerCase();
+      if ((role === 'admin' && !admT) || 
+          (role === 'manager' && !mngT) || 
+          (role === 'employee' && !empT)) {
         navigate('/', { replace: true });
       }
     };
 
     window.addEventListener('storage', handleStorageChange);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, [navigate, user]);
 
-  // Check Role Permissions
+  // 6. Role-Based Access Control (RBAC)
   if (allowedRoles && allowedRoles.length > 0) {
-    const userRole = user.role;
-    const isAllowed = allowedRoles.some(role => 
-      role.toLowerCase() === userRole.toLowerCase()
-    );
-
-    // console.log('🔐 Role check:', { 
-    //   userRole, 
-    //   allowedRoles, 
-    //   isAllowed 
-    // });
+    const userRole = user.role.toLowerCase();
+    const isAllowed = allowedRoles.some(role => role.toLowerCase() === userRole);
 
     if (!isAllowed) {
-      console.log('⚠️ User not allowed, redirecting based on role');
-      if (userRole.toLowerCase() === 'admin') {
-        return <Navigate to="/admin-dashboard" replace />;
-      } else if (userRole.toLowerCase() === 'employee') {
-        return <Navigate to="/employee-dashboard" replace />;
-      }
+      console.log(`⚠️ Access Denied for role: ${userRole}. Required: ${allowedRoles}`);
+      
+      // Redirect to their specific "Home" dashboard if they try to access a forbidden area
+      if (userRole === 'admin') return <Navigate to="/admin-dashboard" replace />;
+      if (userRole === 'manager') return <Navigate to="/manager-dashboard" replace />;
+      if (userRole === 'employee') return <Navigate to="/employee-dashboard" replace />;
+      
       return <Navigate to="/" replace />;
     }
   }
 
-  // console.log('✅ Access granted!');
+  // If everything is fine, render the requested page
   return <Outlet />;
 };
 

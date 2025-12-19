@@ -53,7 +53,7 @@ const userSchema = new mongoose.Schema({
     trim: true
   },
   password: {
-    type: String,
+    type: String, 
     required: [true, 'Password is required'],
     minlength: [6, 'Password must be at least 6 characters']
   },
@@ -61,7 +61,7 @@ const userSchema = new mongoose.Schema({
   // OPTIONAL FIELDS (can be added later via edit)
   role: {
     type: String,
-    enum: ['Admin', 'employee'],
+    enum: ['Admin', 'employee', 'Manager'],
     default: 'employee'
   },
   designation: {

@@ -1,423 +1,278 @@
-// D:/Desktop/skite/client/src/pages/Task.jsx
-
-import React, { useState, useEffect } from "react";
-import { TaskCloseIcon } from "./AdminDashboard.jsx";
+import React, { useState, useEffect, useRef } from "react";
 import "./Task.css";
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from "lucide-react";
-import { toast } from 'react-toastify'; // Make sure this is imported
+import { ArrowLeft, X, Trash2 } from "lucide-react"; 
+import { toast } from 'react-toastify'; 
 
 const API_BASE = 'http://localhost:4000/api';
 
 const Task = () => {
   const navigate = useNavigate();
+  
+  // ✅ AUTH & ROLE LOGIC
+  const adminToken = localStorage.getItem("adminToken");
+  const managerToken = localStorage.getItem("managerToken");
+  const token = adminToken || managerToken;
+  
+  const adminUser = JSON.parse(localStorage.getItem('adminUser'));
+  const managerUser = JSON.parse(localStorage.getItem('managerUser'));
+  
+  const isAdmin = !!adminUser; 
+  const isManager = !!managerUser;
+
+  const allowedDesignations = ['Web Developer', 'Web Developer(intern)', 'SEO(intern)'];
+
   const [employees, setEmployees] = useState([]);
   const [tasks, setTasks] = useState([]);
+  const prevTasksRef = useRef([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
-  // ✅ NEW: State for bulk deletion
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
 
-  // ================================
-  // 1. FILTER STATE
-  // ================================
-  const [filters, setFilters] = useState({
-    searchAssignee: "",
-    fromDate: "",
-    toDate: "",
-  });
-
-  // Form Data for New Task
-  const [taskData, setTaskData] = useState({
-    title: "",
-    description: "",
-    priority: "Medium",
-    assignedTo: "",
-    dueDate: "",
-  });
-
-  const [employeeStatus, setEmployeeStatus] = useState({ loading: true, error: "" });
+  const [filters, setFilters] = useState({ searchAssignee: "", fromDate: "", toDate: "" });
+  const [taskData, setTaskData] = useState({ title: "", description: "", priority: "Medium", assignedTo: "", dueDate: "" });
   const [status, setStatus] = useState({ loading: false, error: "", success: "" });
 
-  // ================================
-  // 2. FETCH EMPLOYEES (Run once)
-  // ================================
+  // --- DATA FETCHING ---
+
   useEffect(() => {
     const fetchEmployees = async () => {
       try {
-        setEmployeeStatus({ loading: true, error: "" });
-        const token = localStorage.getItem("adminToken");
-        if (!token) return;
-
         const res = await fetch(`${API_BASE}/user/all`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
-
         const data = await res.json();
-
-        if (!res.ok) {
-          setEmployeeStatus({ loading: false, error: data.message || "Failed" });
-          return;
+        if (res.ok) {
+          let fetchedEmployees = data.employees || data.users || data;
+          if (isManager) {
+            fetchedEmployees = fetchedEmployees.filter(emp => allowedDesignations.includes(emp.designation));
+          }
+          setEmployees(fetchedEmployees);
+          if (fetchedEmployees.length > 0) {
+            setTaskData(prev => ({ ...prev, assignedTo: fetchedEmployees[0]._id }));
+          }
         }
-
-        // Normalize data structure
-        let fetchedEmployees = [];
-        if (Array.isArray(data)) fetchedEmployees = data;
-        else if (data.employees && Array.isArray(data.employees)) fetchedEmployees = data.employees;
-        else if (data.users && Array.isArray(data.users)) fetchedEmployees = data.users;
-        else if (data.data && Array.isArray(data.data)) fetchedEmployees = data.data;
-
-        setEmployees(fetchedEmployees);
-        setEmployeeStatus({ loading: false, error: "" });
-
-        // Set default assignee for the "Add Task" modal
-        if (fetchedEmployees.length > 0) {
-          setTaskData((prev) => ({ ...prev, assignedTo: fetchedEmployees[0]._id }));
-        }
-      } catch (error) {
-        console.error("Network error:", error);
-      }
+      } catch (error) { console.error("Employee fetch error:", error); }
     };
+    if (token) fetchEmployees();
+  }, [token, isManager]);
 
-    fetchEmployees();
-  }, []);
-
-  // ================================
-  // 3. FETCH TASKS (Updated with Filters)
-  // ================================
   const fetchTasks = async () => {
     try {
-      const token = localStorage.getItem("adminToken");
-      
-      console.log("Filter values:", filters);
-      console.log("searchAssignee value:", filters.searchAssignee);
-      
       const params = new URLSearchParams();
+      if (filters.searchAssignee) params.append("assignedTo", filters.searchAssignee.trim());
+      if (filters.fromDate) params.append("fromDate", filters.fromDate);
+      if (filters.toDate) params.append("toDate", filters.toDate);
       
-      if (filters.searchAssignee && filters.searchAssignee.trim() !== "" && filters.searchAssignee !== "all") {
-        params.append("assignedTo", filters.searchAssignee.trim());
-      }
-      
-      if (filters.fromDate && filters.fromDate.trim() !== "") {
-        params.append("fromDate", filters.fromDate.trim());
-      }
-      
-      if (filters.toDate && filters.toDate.trim() !== "") {
-        params.append("toDate", filters.toDate.trim());
-      }
-      
-      const queryString = params.toString();
-      const url = `${API_BASE}/tasks/all${queryString ? `?${queryString}` : ""}`;
-      console.log("Fetching URL:", url);
-      
-      const res = await fetch(url, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+      const res = await fetch(`${API_BASE}/tasks/all?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      
       const data = await res.json();
-      console.log("Tasks fetched:", data);
-      
-      if (!res.ok) {
-        console.error("Failed to fetch tasks:", data.message);
-        setTasks([]);
-        return;
+      if (!res.ok) { setTasks([]); return; }
+
+      let currentTasks = Array.isArray(data) ? data : [];
+      if (isManager) {
+        currentTasks = currentTasks.filter(task => allowedDesignations.includes(task.assignedTo?.designation));
       }
-      
-      setTasks(data);
-    } catch (error) {
-      console.log("Error fetching tasks", error);
-      setTasks([]);
-    }
+      setTasks(currentTasks);
+    } catch (error) { setTasks([]); }
   };
 
-  // Re-fetch tasks whenever filters change
   useEffect(() => {
     fetchTasks();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters]); 
+    const intervalId = setInterval(fetchTasks, 5000);
+    return () => clearInterval(intervalId);
+  }, [filters, token]);
 
-  // ================================
-  // ✅ NEW: DELETE FUNCTIONS
-  // ================================
-  
-  // Helper function to delete a single task
-  const deleteSingleTask = async (id) => {
-    const token = localStorage.getItem("adminToken");
+  // --- HANDLERS ---
+
+  const handleDeleteTask = async (taskId, e) => {
+    e.stopPropagation(); 
+    if (!window.confirm("Are you sure you want to delete this task?")) return;
+
     try {
-      const response = await fetch(`${API_BASE}/tasks/delete/${id}`, { 
+      const res = await fetch(`${API_BASE}/tasks/delete/${taskId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
-      return response.ok;
-    } catch (err) {
-      console.error(`Error deleting task ID ${id}:`, err);
-      return false;
-    }
-  };
 
-  // Bulk Delete Function for Filtered Tasks
-  const deleteAllFilteredTasks = async () => {
-    if (tasks.length === 0) {
-      alert("There are no tasks to delete.");
-      return;
-    }
-
-    const confirmation = window.confirm(
-      `Are you sure you want to delete ALL ${tasks.length} task(s) currently shown in the table?`
-    );
-    if (!confirmation) {
-      return;
-    }
-
-    setIsDeleting(true);
-    let successfulDeletions = 0;
-    const failedIds = [];
-
-    // 1. Get all IDs to delete
-    const idsToDelete = tasks.map(task => task._id).filter(id => id);
-
-    // 2. Iterate and delete each task
-    for (const id of idsToDelete) {
-      const success = await deleteSingleTask(id);
-      if (success) {
-        successfulDeletions++;
+      if (res.ok) {
+        toast.success("Task deleted successfully");
+        fetchTasks();
       } else {
-        failedIds.push(id);
+        const err = await res.json();
+        toast.error(err.message || "Failed to delete task");
       }
-    }
-
-    setIsDeleting(false);
-
-    // 3. Refresh the task list
-    if (successfulDeletions > 0) {
-      await fetchTasks(); // Refresh to get updated list
-    }
-
-    // 4. Alert user
-    if (failedIds.length === 0) {
-      toast.success(`Successfully deleted ${successfulDeletions} task(s).`);
-    } else {
-      toast.warning(`Deleted ${successfulDeletions} task(s). ${failedIds.length} failed to delete.`);
+    } catch (error) {
+      toast.error("Network error while deleting.");
     }
   };
 
-  // ================================
-  // HELPER FUNCTIONS
-  // ================================
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US');
-  };
+  const handleInputChange = (e) => setTaskData({ ...taskData, [e.target.name]: e.target.value });
+  const handleFilterChange = (e) => setFilters({ ...filters, [e.target.name]: e.target.value });
+  const resetFilters = () => setFilters({ searchAssignee: "", fromDate: "", toDate: "" });
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => { setIsModalOpen(false); setStatus({ loading: false, error: "", success: "" }); setTaskData({ 
+      title: "", 
+      description: "", 
+      priority: "Medium", 
+      dueDate: "", 
+      // Reset assignedTo to the first employee if available, otherwise empty
+      assignedTo: employees.length > 0 ? employees[0]._id : "" 
+    }); };
+  const openViewModal = (task) => { setSelectedTask(task); setIsViewModalOpen(true); };
+  const closeViewModal = () => { setIsViewModalOpen(false); setSelectedTask(null); };
 
-  const handleInputChange = (e) => {
-    setTaskData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  // Handle Filter Inputs
-  const handleFilterChange = (e) => {
-    setFilters((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  const resetFilters = () => {
-    setFilters({ searchAssignee: "", fromDate: "", toDate: "" });
-  };
-
-  // ================================
-  // ASSIGN TASK (CREATE)
-  // ================================
   const handleAssignTask = async (e) => {
     e.preventDefault();
     setStatus({ loading: true, error: "", success: "" });
-
     try {
-      const token = localStorage.getItem("adminToken");
       const res = await fetch(`${API_BASE}/tasks/create`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(taskData),
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setStatus({ loading: false, error: data.message || "Failed", success: "" });
-        return;
+      if (res.ok) {
+        setStatus({ loading: false, error: "", success: "Task assigned successfully!" });
+        fetchTasks(); 
+        setTimeout(closeModal, 1500);
+      } else {
+        const err = await res.json();
+        setStatus({ loading: false, error: err.message || "Failed to assign" });
       }
-
-      setStatus({ loading: false, error: "", success: "Task assigned successfully!" });
-
-      // Refresh list
-      fetchTasks();
-
-      // Reset Form
-      setTaskData({
-        title: "",
-        description: "",
-        priority: "Medium",
-        dueDate: "",
-        assignedTo: employees.length > 0 ? employees[0]._id : "",
-      });
-
-      setTimeout(() => closeModal(), 1500);
-    } catch (error) {
-      setStatus({ loading: false, error: "Network error.", success: "" });
-    }
+    } catch (error) { setStatus({ loading: false, error: "Network error." }); }
   };
 
-  // ================================
-  // MODAL CONTROL
-  // ================================
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setStatus({ loading: false, error: "", success: "" });
-  };
-
-  // ================================
-  // UI RENDER
-  // ================================
   return (
-    <div className="task-page-container">
-      <button className="btn-primary1 mb-4" onClick={() => navigate('/admin-dashboard')}>
-        <ArrowLeft size={20} /> Back To Dashboard
-      </button>
-      
-      {/* HEADER SECTION */}
-      <div className="task-header">
-        <h2>All Assignments</h2>
-        <button className="btn-primary1" onClick={openModal}>
+    <div className="task-mgr-container">
+      <div className="action-btn gap-3">
+        <button
+          className="task-btn-back mb-4"
+          onClick={() =>
+            navigate(isAdmin ? "/admin-dashboard" : "/manager-dashboard")
+          }
+        >
+          <ArrowLeft size={20} /> Back To Dashboard
+        </button>
+        <button className="task-btn-primary1" onClick={openModal}>
           + Assign Task
         </button>
       </div>
 
-      {/* FILTER SECTION */}
-      <div className="filter1-container">
+      <div className="task-mgr-header">
+        <h2 className="task-mgr-title">
+          {isManager ? "Team Assignments" : "All Assignments"}
+        </h2>
+      </div>
+
+      <div className="task-filters-wrapper">
         <select
           name="searchAssignee"
           value={filters.searchAssignee}
           onChange={handleFilterChange}
-          className="filter-input"
+          className="task-filter-input"
         >
-          <option value="">All Employees</option>
+          <option value="">All Team Members</option>
           {employees.map((emp) => (
             <option key={emp._id} value={emp._id}>
-              {emp.name}
+              {emp.name} ({emp.designation})
             </option>
           ))}
         </select>
-
         <input
           type="date"
           name="fromDate"
           value={filters.fromDate}
           onChange={handleFilterChange}
-          className="filter-input"
-          placeholder="From Date"
+          className="task-filter-input"
         />
-
         <input
           type="date"
           name="toDate"
           value={filters.toDate}
           onChange={handleFilterChange}
-          className="filter-input"
-          placeholder="To Date"
+          className="task-filter-input"
         />
-
-        <button className="btn-reset" onClick={resetFilters}>
+        <button className="task-btn-reset" onClick={resetFilters}>
           Reset
-        </button>
-
-        {/* ✅ NEW: BULK DELETE BUTTON */}
-        <button
-          className="delete-btn"
-          onClick={deleteAllFilteredTasks}
-          disabled={isDeleting || tasks.length === 0}
-          style={{
-            backgroundColor: isDeleting || tasks.length === 0 ? '#ccc' : '#ff4d4d',
-            cursor: isDeleting || tasks.length === 0 ? 'not-allowed' : 'pointer',
-            padding: '8px 16px',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            fontWeight: '500',
-          }}
-        >
-          {isDeleting
-            ? "Deleting..."
-            : `Delete All ${tasks.length}`}
         </button>
       </div>
 
-      {/* TABLE SECTION */}
-      <div className="task-table-container">
-        <table className="task-table">
+      <div className="task-table-wrapper">
+        <table className="task-mgr-table">
           <thead>
             <tr>
-              <th className="th-task">TASK</th>
-              <th className="th-assignee">ASSIGNEE</th>
-              <th className="th-priority">PRIORITY</th>
-              <th className="th-status">STATUS</th>
-              <th className="th-date">DUE DATE</th>
+              <th>TASK</th>
+              <th>ASSIGNEE</th>
+              <th>STATUS</th>
+              <th>ASSIGNED DATE</th>
+              <th>DUE DATE</th>
+              {/* ✅ FIX: Use ternary operator to avoid whitespace/boolean issues in table */}
+              {isAdmin ? <th>ACTION</th> : null}
             </tr>
           </thead>
           <tbody>
             {tasks.length === 0 ? (
               <tr>
-                <td colSpan="5" className="empty-state">
-                  No tasks found matching criteria.
+                <td colSpan={isAdmin ? "5" : "4"} className="task-empty-state">
+                  No relevant tasks found.
                 </td>
               </tr>
             ) : (
-              tasks.map((task, index) => (
-                <tr key={task._id || index}>
-                  {/* Task Title & Desc */}
-                  <td>
-                    <div className="task-info">
-                      <span className="task-title">{task.title}</span>
-                      <span className="task-desc">
-                        {task.description && task.description.length > 40
-                          ? task.description.substring(0, 40) + "..."
-                          : task.description}
+              tasks.map((task) => (
+                <tr
+                  key={task._id}
+                  className="task-table-row task-clickable-row"
+                  onClick={() => openViewModal(task)}
+                >
+                  <td className="task-cell-main">{task.title}</td>
+                  <td className="task-cell">
+                    <div className="task-assignee-cell">
+                      <span className="task-assignee-name">
+                        {task.assignedTo?.name}
                       </span>
+                      <br />
+                      <small className="task-assignee-designation">
+                        {task.assignedTo?.designation}
+                      </small>
                     </div>
                   </td>
-
-                  {/* Assignee */}
-                  <td className="assignee-cell">
-                    {task.assignedTo?.name || task.assignedTo || "Unassigned"}
-                  </td>
-
-                  {/* Priority Badge */}
-                  <td>
-                    <span className={`badge priority-${task.priority?.toLowerCase()}`}>
-                      {task.priority}
-                    </span>
-                  </td>
-
-                  {/* Status Badge */}
-                  <td>
-                    <span className={`badge status-${task.status?.toLowerCase() || 'pending'}`}>
+                  <td className="task-cell">
+                    <span
+                      className={`task-badge task-status-${
+                        task.status?.toLowerCase().replace(/\s+/g, "-") ||
+                        "pending"
+                      }`}
+                    >
                       {task.status || "Pending"}
                     </span>
                   </td>
-
-                  {/* Due Date */}
-                  <td className="date-cell">
-                    {formatDate(task.dueDate)}
+                  <td className="task-cell">
+                    {task.createdAt
+                      ? new Date(task.createdAt).toLocaleDateString()
+                      : "-"}
                   </td>
+                  <td className="task-cell">
+                    {new Date(task.dueDate).toLocaleDateString()}
+                  </td>
+
+                  {/* ✅ FIX: Use ternary operator here as well */}
+                  {isAdmin ? (
+                    <td className="task-cell">
+                      <button
+                        className="task-delete-icon-btn"
+                        onClick={(e) => handleDeleteTask(task._id, e)}
+                        style={{
+                          color: "#dc2626",
+                          border: "none",
+                          background: "none",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </td>
+                  ) : null}
                 </tr>
               ))
             )}
@@ -425,98 +280,138 @@ const Task = () => {
         </table>
       </div>
 
-      {/* ================= MODAL ================= */}
+      {/* ASSIGN TASK MODAL */}
       {isModalOpen && (
-        <div className="modal-backdrop">
-          <div className="modal-content">
-            <div className="modal-header">
-              <span className="modal-title">Assign New Task</span>
-              <button className="close-button" onClick={closeModal}>
-                <TaskCloseIcon />
+        <div className="task-modal-overlay">
+          <div className="task-modal-box">
+            <div className="task-modal-header">
+              <span className="task-modal-title">Assign New Task</span>
+              <button className="task-modal-close" onClick={closeModal}>
+                <X size={24} />
               </button>
             </div>
 
-            {status.error && <div className="error-message">{status.error}</div>}
-            {status.success && <div className="success-message">{status.success}</div>}
+            {status.error && (
+              <div
+                className="task-msg-error"
+                style={{ color: "red", marginBottom: "10px" }}
+              >
+                {status.error}
+              </div>
+            )}
+            {status.success && (
+              <div
+                className="task-msg-success"
+                style={{ color: "green", marginBottom: "10px" }}
+              >
+                {status.success}
+              </div>
+            )}
 
-            <form onSubmit={handleAssignTask}>
-              <div className="form-group">
-                <label className="form-label">Task Title</label>
+            <form onSubmit={handleAssignTask} className="task-form">
+              <div className="task-form-group">
+                <label>Task Title</label>
                 <input
                   type="text"
                   name="title"
                   value={taskData.title}
                   onChange={handleInputChange}
-                  className="form-input"
                   required
+                  placeholder="Enter task title"
                 />
               </div>
-
-              <div className="form-group">
-                <label className="form-label">Task Description</label>
+              <div className="task-form-group">
+                <label>Task Description</label>
                 <textarea
                   name="description"
                   value={taskData.description}
                   onChange={handleInputChange}
-                  className="form-input"
                   rows="3"
                   required
-                ></textarea>
+                  placeholder="Describe the task details"
+                />
               </div>
-
-              <div className="row-group">
-                <div className="form-group half">
-                  <label className="form-label">Priority</label>
-                  <select
-                    name="priority"
-                    value={taskData.priority}
-                    onChange={handleInputChange}
-                    className="form-input"
-                  >
-                    <option value="High">High</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Low">Low</option>
-                  </select>
-                </div>
-
-                <div className="form-group half">
-                  <label className="form-label">Due Date</label>
+              <div className="task-form-row">
+                <div className="task-form-group half">
+                  <label>Due Date</label>
                   <input
                     type="date"
                     name="dueDate"
                     value={taskData.dueDate}
                     onChange={handleInputChange}
-                    className="form-input"
                     required
                   />
                 </div>
               </div>
-
-              <div className="form-group">
-                <label className="form-label">Assign To</label>
+              <div className="task-form-group">
+                <label>Assign To</label>
                 <select
                   name="assignedTo"
                   value={taskData.assignedTo}
                   onChange={handleInputChange}
-                  className="form-input"
                   required
                 >
                   {employees.map((emp) => (
                     <option key={emp._id} value={emp._id}>
-                      {emp.name} ({emp.role})
+                      {emp.name} ({emp.designation})
                     </option>
                   ))}
                 </select>
               </div>
-
               <button
                 type="submit"
-                className="submit-button"
+                className="task-btn-submit"
                 disabled={status.loading}
               >
                 {status.loading ? "Assigning..." : "Confirm Assignment"}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* VIEW DETAILS MODAL */}
+      {isViewModalOpen && selectedTask && (
+        <div className="task-modal-overlay">
+          <div className="task-modal-box task-view-mode">
+            <div className="task-modal-header">
+              <span className="task-modal-title">Task Details</span>
+              <button className="task-modal-close" onClick={closeViewModal}>
+                <X size={24} />
+              </button>
+            </div>
+            <div className="task-view-content">
+              <h3>{selectedTask.title}</h3>
+              <div className="task-view-section">
+                <label>Description</label>
+                <p>{selectedTask.description}</p>
+              </div>
+              <div className="task-view-footer">
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "5px",
+                    fontSize: "0.9rem",
+                    color: "#555",
+                  }}
+                >
+                  <span>
+                    <strong>Assigned:</strong>{" "}
+                    {selectedTask.createdAt
+                      ? new Date(selectedTask.createdAt).toLocaleDateString()
+                      : "N/A"}
+                  </span>
+                  <span>
+                    <strong>Due Date:</strong>{" "}
+                    {new Date(selectedTask.dueDate).toLocaleDateString()}
+                  </span>
+                </div>
+                <button className="task-btn-back" onClick={closeViewModal}>
+                  Close
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

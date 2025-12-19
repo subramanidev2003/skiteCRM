@@ -1,3 +1,39 @@
+// import express from 'express';
+// import cookieparser from 'cookie-parser';
+// import cors from 'cors';
+// import 'dotenv/config';
+// import connectDB from './config/mongodb.js';
+// import authRouter from './routes/authRoutes.js';
+// import userRouter from './routes/userRoutes.js';
+// import attendanceRoutes from './routes/attendanceRoutes.js';
+// import taskRouter from "./routes/taskRoutes.js";
+
+// const app = express();
+// const PORT = process.env.PORT || 4000;
+
+// connectDB();
+
+// app.use(express.json());
+// app.use(cookieparser());
+// app.use(cors({
+//   origin: ['http://localhost:5173', 'https://skitecrm.onrender.com'],
+//   credentials: true
+// }));
+
+// app.get('/', (req, res) => {
+//   res.json({ message: 'API is working!', version: '1.0.0' });
+// });
+
+// app.use('/api/auth', authRouter); 
+// app.use('/api/user', userRouter); 
+// app.use('/api/attendance', attendanceRoutes);
+// app.use('/api/tasks', taskRouter);
+
+
+// app.listen(PORT, () => {
+//   console.log(`🚀 Server running on port ${PORT}`);
+//   // console.log(`🎯 Product API: http://localhost:${PORT}/api/product-price`);
+// });
 import express from 'express';
 import cookieparser from 'cookie-parser';
 import cors from 'cors';
@@ -25,9 +61,10 @@ const __dirname = path.dirname(__filename);
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
-  console.log('✅ Uploads directory created at:', uploadsDir);
+  // console.log('✅ Uploads directory created at:', uploadsDir);
 } else {
-  console.log('✅ Uploads directory exists at:', uploadsDir);
+  // console.log('✅ Uploads directory exists at:', uploadsDir);
+
 }
 
 // ✅ CORS CONFIGURATION - UPDATED WITH PRODUCTION URL
@@ -61,7 +98,7 @@ app.use(cookieparser()); // Parse cookies
 
 // ✅ SERVE STATIC FILES - Images accessible via /api/uploads/filename.jpg
 app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
-console.log('✅ Static files served from /api/uploads');
+// console.log('✅ Static files served from /api/uploads');
 
 // ✅ ROOT ENDPOINT
 app.get('/', (req, res) => {
@@ -106,9 +143,9 @@ app.use((req, res) => {
 app.listen(PORT, () => {
   console.log('🚀 Server is running');
   console.log(`📍 Port: ${PORT}`);
-  console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`📁 Uploads Directory: ${uploadsDir}`);
-  console.log(`🔒 CORS Allowed Origins:`, allowedOrigins);
+  // console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+  // console.log(`📁 Uploads Directory: ${uploadsDir}`);
+  // console.log(`🔒 CORS Allowed Origins:`, allowedOrigins);
 });
 
 // ✅ HANDLE UNHANDLED REJECTIONS
@@ -125,3 +162,43 @@ process.on('uncaughtException', (err) => {
   console.error('❌ Uncaught Exception:', err);
   process.exit(1);
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

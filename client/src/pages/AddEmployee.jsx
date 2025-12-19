@@ -4,6 +4,7 @@ import {
   CreditCard, FileText, Upload, Save, ArrowLeft, Image as ImageIcon 
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import './Addemployee.css';
 
 const AddEmployee = () => {
   const navigate = useNavigate();
@@ -43,187 +44,105 @@ const AddEmployee = () => {
   };
 
   // Handle Form Submission
- // In AddEmployee.jsx, update the handleSubmit function:
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setLoading(true);
+    const dataToSend = new FormData();
+    
+    // Append all fields
+    dataToSend.append('name', formData.name);
+    dataToSend.append('email', formData.email);
+    dataToSend.append('password', formData.password);
+    dataToSend.append('role', formData.role);
+    dataToSend.append('designation', formData.designation);
+    dataToSend.append('dob', formData.dob);
+    dataToSend.append('joiningDate', formData.joiningDate);
+    dataToSend.append('panNumber', formData.panNumber);
+    dataToSend.append('aadharNumber', formData.aadharNumber);
+    dataToSend.append('bankName', formData.bankName);
+    dataToSend.append('accountNumber', formData.accountNumber);
+    dataToSend.append('ifscCode', formData.ifscCode);
 
-  const dataToSend = new FormData();
-  
-  // Append all fields
-  dataToSend.append('name', formData.name);
-  dataToSend.append('email', formData.email);
-  dataToSend.append('password', formData.password);
-  dataToSend.append('role', formData.role);
-  dataToSend.append('designation', formData.designation);
-  dataToSend.append('dob', formData.dob);
-  dataToSend.append('joiningDate', formData.joiningDate);
-  dataToSend.append('panNumber', formData.panNumber);
-  dataToSend.append('aadharNumber', formData.aadharNumber);
-  dataToSend.append('bankName', formData.bankName);
-  dataToSend.append('accountNumber', formData.accountNumber);
-  dataToSend.append('ifscCode', formData.ifscCode);
-
-  if (formData.profileImage) {
-    dataToSend.append('image', formData.profileImage);
-  }
-
-  try {
-    const response = await fetch(`https://skite-crm.onrender.com/api/auth/register`, {
-      method: 'POST',
-      body: dataToSend
-    });
-
-    console.log('Response Status:', response.status);
-    console.log('Response Headers:', response.headers.get('content-type'));
-
-    // Check if response is JSON
-    const contentType = response.headers.get('content-type');
-    if (!contentType || !contentType.includes('application/json')) {
-      const text = await response.text();
-      console.error('Non-JSON Response:', text);
-      throw new Error('Server returned an invalid response. Please check server logs.');
+    if (formData.profileImage) {
+      dataToSend.append('image', formData.profileImage);
     }
 
-    const data = await response.json();
-    console.log('Response Data:', data);
-
-    if (response.ok) {
-      alert('Employee Added Successfully!');
-      setFormData({
-        name: '',
-        email: '',
-        password: '',
-        designation: '',
-        role: '',
-        joiningDate: '',
-        dob: '',
-        panNumber: '',
-        aadharNumber: '',
-        bankName: '',
-        accountNumber: '',
-        ifscCode: '',
-        profileImage: null
+    try {
+      const response = await fetch(`http://localhost:4000/api/auth/register`, {
+        method: 'POST',
+        body: dataToSend
       });
-      setImagePreview(null);
-    } else {
-      const errorMsg = data.message || 'Failed to add employee';
-      alert(`Error: ${errorMsg}`);
-      console.error('Backend Error:', data);
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('Non-JSON Response:', text);
+        throw new Error('Server returned an invalid response. Please check server logs.');
+      }
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert('Employee Added Successfully!');
+        setFormData({
+          name: '',
+          email: '',
+          password: '',
+          designation: '',
+          role: '',
+          joiningDate: '',
+          dob: '',
+          panNumber: '',
+          aadharNumber: '',
+          bankName: '',
+          accountNumber: '',
+          ifscCode: '',
+          profileImage: null
+        });
+        setImagePreview(null);
+      } else {
+        const errorMsg = data.message || 'Failed to add employee';
+        alert(`Error: ${errorMsg}`);
+      }
+    } catch (error) {
+      console.error('Request Error:', error);
+      alert(`Error: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error('Request Error:', error);
-    alert(`Error: ${error.message}`);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #ffffffff 0%, #ffffffff 100%)",
-        padding: "2rem",
-        fontFamily: "system-ui, -apple-system, sans-serif",
-      }}
-    >
+    <div className="add-emp-page-container">
       <button
-        className="btn-primary1"
+        className="task-btn-back"
         onClick={() => navigate("/admin-dashboard")}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "0.5rem",
-          padding: "0.5rem 1rem",
-          marginBottom: "1rem",
-          cursor: "pointer"
-        }}
       >
         <ArrowLeft size={20} /> Back To Dashboard
       </button>
-      
-      <div
-        style={{
-          maxWidth: "900px",
-          margin: "0 auto",
-          background: "white",
-          borderRadius: "20px",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
-          overflow: "hidden",
-        }}
-      >
+
+      <div className="add-emp-form-card">
         {/* Header */}
-        <div
-          style={{
-            background: "linear-gradient(135deg, #ff4500 0%, #ffffffff 100%)",
-            padding: "2rem",
-            color: "white",
-          }}
-        >
-          <h2 style={{ margin: 0, fontSize: "1.8rem", fontWeight: "600" }}>
-            Add New Employee
-          </h2>
-          <p style={{ margin: "0.5rem 0 0 0", opacity: 0.9 }}>
+        <div className="add-emp-form-header">
+          <h2 className="add-emp-form-title">Add New Employee</h2>
+          <p className="add-emp-form-subtitle">
             Fill in the details below to register a new employee
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ padding: "2rem" }}>
+        <form onSubmit={handleSubmit} className="add-emp-form-body">
           {/* Profile Image Section */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              marginBottom: "2rem",
-            }}
-          >
-            <div style={{ textAlign: "center" }}>
-              <div
-                style={{
-                  width: "120px",
-                  height: "120px",
-                  borderRadius: "50%",
-                  border: "4px solid #ff4500",
-                  overflow: "hidden",
-                  margin: "0 auto 1rem",
-                  background: "#f1f5f9",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
+          <div className="add-emp-image-section">
+            <div className="add-emp-image-container">
+              <div className="add-emp-image-preview">
                 {imagePreview ? (
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                    }}
-                  />
+                  <img src={imagePreview} alt="Preview" />
                 ) : (
-                  <ImageIcon size={40} color="#cbd5e1" />
+                  <ImageIcon size={40} />
                 )}
               </div>
-              <label
-                htmlFor="profileImage"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                  padding: "0.5rem 1rem",
-                  background: "#ff4500",
-                  color: "white",
-                  borderRadius: "8px",
-                  cursor: "pointer",
-                  fontSize: "0.9rem",
-                  fontWeight: "500",
-                  transition: "all 0.2s",
-                }}
-              >
+              <label htmlFor="profileImage" className="add-emp-upload-label">
                 <Upload size={16} /> Upload Photo
               </label>
               <input
@@ -231,20 +150,13 @@ const handleSubmit = async (e) => {
                 id="profileImage"
                 accept="image/*"
                 onChange={handleImageChange}
-                style={{ display: "none" }}
+                className="add-emp-upload-input"
               />
             </div>
           </div>
 
           {/* Form Grid */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-              gap: "1.5rem",
-              marginBottom: "1.5rem",
-            }}
-          >
+          <div className="add-emp-form-grid">
             {/* Personal Details */}
             <FormGroup icon={<User size={16} />} label="Full Name">
               <input
@@ -254,7 +166,7 @@ const handleSubmit = async (e) => {
                 required
                 onChange={handleChange}
                 value={formData.name}
-                style={inputStyle}
+                className="add-emp-form-input"
               />
             </FormGroup>
 
@@ -266,7 +178,7 @@ const handleSubmit = async (e) => {
                 required
                 onChange={handleChange}
                 value={formData.email}
-                style={inputStyle}
+                className="add-emp-form-input"
               />
             </FormGroup>
 
@@ -278,7 +190,7 @@ const handleSubmit = async (e) => {
                 required
                 onChange={handleChange}
                 value={formData.password}
-                style={inputStyle}
+                className="add-emp-form-input"
               />
             </FormGroup>
 
@@ -288,7 +200,7 @@ const handleSubmit = async (e) => {
                 name="dob"
                 onChange={handleChange}
                 value={formData.dob}
-                style={inputStyle}
+                className="add-emp-form-input"
               />
             </FormGroup>
 
@@ -299,9 +211,11 @@ const handleSubmit = async (e) => {
                 onChange={handleChange}
                 value={formData.role}
                 required
-                style={inputStyle}
+                className="add-emp-form-select"
               >
                 <option value="">Select Role</option>
+                {/* Added Manager Option Below */}
+                <option value="Manager">Manager</option>
                 <option value="employee">Employee</option>
                 <option value="Admin">Admin</option>
               </select>
@@ -315,7 +229,7 @@ const handleSubmit = async (e) => {
                 value={formData.designation}
                 required
                 placeholder="Enter Designation"
-                style={inputStyle}
+                className="add-emp-form-input"
               />
             </FormGroup>
 
@@ -325,7 +239,7 @@ const handleSubmit = async (e) => {
                 name="joiningDate"
                 onChange={handleChange}
                 value={formData.joiningDate}
-                style={inputStyle}
+                className="add-emp-form-input"
               />
             </FormGroup>
 
@@ -337,7 +251,7 @@ const handleSubmit = async (e) => {
                 placeholder="ABCDE1234F"
                 onChange={handleChange}
                 value={formData.panNumber}
-                style={inputStyle}
+                className="add-emp-form-input"
               />
             </FormGroup>
 
@@ -348,40 +262,20 @@ const handleSubmit = async (e) => {
                 placeholder="1234 5678 9012"
                 onChange={handleChange}
                 value={formData.aadharNumber}
-                style={inputStyle}
+                className="add-emp-form-input"
               />
             </FormGroup>
           </div>
 
           {/* Bank Details Divider */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              margin: "2rem 0 1.5rem",
-              gap: "1rem",
-            }}
-          >
-            <div
-              style={{ flex: 1, height: "1px", background: "#e2e8f0" }}
-            ></div>
-            <span style={{ color: "#64748b", fontWeight: "600" }}>
-              Bank Details
-            </span>
-            <div
-              style={{ flex: 1, height: "1px", background: "#e2e8f0" }}
-            ></div>
+          <div className="add-emp-divider-section">
+            <div className="add-emp-divider-line"></div>
+            <span className="add-emp-divider-text">Bank Details</span>
+            <div className="add-emp-divider-line"></div>
           </div>
 
           {/* Bank Details */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-              gap: "1.5rem",
-              marginBottom: "2rem",
-            }}
-          >
+          <div className="add-emp-bank-grid">
             <FormGroup icon={<Briefcase size={16} />} label="Bank Name">
               <input
                 type="text"
@@ -389,7 +283,7 @@ const handleSubmit = async (e) => {
                 placeholder="HDFC Bank"
                 onChange={handleChange}
                 value={formData.bankName}
-                style={inputStyle}
+                className="add-emp-form-input"
               />
             </FormGroup>
 
@@ -400,7 +294,7 @@ const handleSubmit = async (e) => {
                 placeholder="Account No."
                 onChange={handleChange}
                 value={formData.accountNumber}
-                style={inputStyle}
+                className="add-emp-form-input"
               />
             </FormGroup>
 
@@ -411,39 +305,17 @@ const handleSubmit = async (e) => {
                 placeholder="HDFC0001234"
                 onChange={handleChange}
                 value={formData.ifscCode}
-                style={inputStyle}
+                className="add-emp-form-input"
               />
             </FormGroup>
           </div>
 
           {/* Submit Button */}
-          <div
-            style={{ display: "flex", justifyContent: "center", gap: "1rem" }}
-          >
+          <div className="add-emp-form-actions">
             <button
               type="submit"
               disabled={loading}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                padding: "0.75rem 2rem",
-                background: loading
-                  ? "#94a3b8"
-                  : "linear-gradient(135deg, #9238d3ff 0%, #ff4500 100%)",
-                color: "white",
-                border: "none",
-                borderRadius: "10px",
-                fontSize: "1rem",
-                fontWeight: "600",
-                cursor: loading ? "not-allowed" : "pointer",
-                transition: "transform 0.2s",
-                boxShadow: "0 4px 15px rgba(102, 126, 234, 0.4)",
-              }}
-              onMouseOver={(e) =>
-                !loading && (e.target.style.transform = "translateY(-2px)")
-              }
-              onMouseOut={(e) => (e.target.style.transform = "translateY(0)")}
+              className={`add-emp-btn-submit ${loading ? "loading" : ""}`}
             >
               {loading ? (
                 "Saving..."
@@ -462,31 +334,12 @@ const handleSubmit = async (e) => {
 
 // Helper Component
 const FormGroup = ({ icon, label, children }) => (
-  <div>
-    <label style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: '0.5rem',
-      marginBottom: '0.5rem',
-      color: '#475569',
-      fontSize: '0.9rem',
-      fontWeight: '500'
-    }}>
+  <div className="add-emp-form-group">
+    <label className="add-emp-form-label">
       {icon} {label}
     </label>
     {children}
   </div>
 );
-
-const inputStyle = {
-  width: '100%',
-  padding: '0.75rem',
-  border: '2px solid #e2e8f0',
-  borderRadius: '8px',
-  fontSize: '0.95rem',
-  transition: 'all 0.2s',
-  outline: 'none',
-  fontFamily: 'inherit'
-};
 
 export default AddEmployee;
