@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import './Addemployee.css';
 
 
-const API_BASE = 'http://localhost:4000/api'
+const API_BASE = 'https://skitecrm.onrender.com/api'
 
 
 const AddEmployee = () => {

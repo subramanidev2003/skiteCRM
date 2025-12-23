@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
-  ArrowLeft, Check, X, Phone, User, Briefcase, Calendar, 
-  CreditCard, Activity, Tag, ClipboardCheck, MessageSquare 
+  ArrowLeft, Check, X, Phone, User, Briefcase, MapPin, Calendar, 
+  CreditCard, Activity, Tag, ClipboardCheck, MessageSquare, Lock 
 } from 'lucide-react';
 import { toast } from 'react-toastify';
-import './LeadPageModern.css'; // ✅ Uses the Modern CSS
+import './LeadPageModern.css'; 
 
-// --- MODERN EDITABLE ROW COMPONENT ---
-const ActionRow = ({ label, icon: Icon, name, value, type = "text", options = [], onSave }) => {
+// --- UPDATED ACTION ROW COMPONENT (With Disabled Logic) ---
+const ActionRow = ({ label, icon: Icon, name, value, type = "text", options = [], onSave, colorClass = "", disabled = false }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [tempValue, setTempValue] = useState(value);
 
@@ -17,9 +17,16 @@ const ActionRow = ({ label, icon: Icon, name, value, type = "text", options = []
     setIsEditing(false);
   };
 
+  const handleEditClick = () => {
+    if (!disabled) {
+      setIsEditing(true);
+    } else {
+      toast.info("Complete Call Status, Follow Up, and Lead Status to unlock this field.");
+    }
+  };
+
   return (
     <div className="action-row">
-      
       <div className="row-label">
         {Icon && <Icon size={18} color="#9ca3af" />}
         <span>{label}</span>
@@ -39,8 +46,15 @@ const ActionRow = ({ label, icon: Icon, name, value, type = "text", options = []
           <button className="action-btn cancel-btn" onClick={() => { setIsEditing(false); setTempValue(value); }}><X size={16} /></button>
         </div>
       ) : (
-        <div className="editable-value-container" onClick={() => setIsEditing(true)}>
-          <div className="value-pill">{value || 'Set Value'}</div>
+        <div 
+            className={`editable-value-container ${disabled ? 'disabled' : ''}`} 
+            onClick={handleEditClick}
+            title={disabled ? "Locked" : "Click to Edit"}
+        >
+          <div className={`value-pill ${colorClass}`}>
+            {value || (disabled ? 'Locked' : 'Set Value')}
+          </div>
+          {disabled && <Lock size={14} className="lock-icon" />}
         </div>
       )}
     </div>
@@ -55,23 +69,35 @@ const LeadPage = () => {
   const [isEditingPriority, setIsEditingPriority] = useState(false);
   const [tempPriority, setTempPriority] = useState(currentLead?.priority);
 
-  // Define Service Options
   const serviceOptions = [
-    "Web Development", 
-    "SEO", 
-    "Paid Campaigns", 
-    "Personal Branding", 
-    "Full Digital Marketing"
+    "Web Development", "SEO", "Paid Campaigns", "Personal Branding", "Full Digital Marketing"
   ];
 
   if (!currentLead) return null;
+
+  // --- HELPER: DETERMINE COLOR ---
+  const getStatusColor = (val) => {
+    if (!val) return '';
+    const v = val.toLowerCase();
+    if (v === 'attend' || v === 'yes' || v === 'okay') return 'green';
+    if (v === 'not attend' || v === 'no' || v === 'not') return 'red';
+    if (v === 'callback') return 'blue';
+    return '';
+  };
+
+  // --- LOGIC GATE ---
+  // The rows are unlocked ONLY if these 3 conditions are met
+  const isPaymentUnlocked = 
+    currentLead.callStatus === 'Attend' && 
+    currentLead.followUpStatus === 'Yes' && 
+    currentLead.leadStatus === 'Okay';
 
   const updateField = async (fieldName, newValue) => {
     try {
         const id = currentLead._id || currentLead.id;
         const updatedData = { ...currentLead, [fieldName]: newValue };
 
-        const response = await fetch(`http://localhost:4000/api/leads/update/${id}`, {
+        const response = await fetch(`https://skitecrm.onrender.com/api/leads/update/${id}`, {
              method: 'PUT',
              headers: { 'Content-Type': 'application/json' },
              body: JSON.stringify(updatedData)
@@ -131,12 +157,11 @@ const LeadPage = () => {
       {/* 2. GRID LAYOUT */}
       <div className="details-grid-layout">
         
-        {/* LEFT COL: CLIENT PROFILE CARD */}
+        {/* LEFT COL: CLIENT PROFILE */}
         <div className="info-card">
             <div className="card-heading">
                 <User size={20} color="#ff7f50"/> Client Profile
             </div>
-            
             <div className="info-list">
                 <div className="info-row">
                     <span className="info-label">Full Name</span>
@@ -165,7 +190,7 @@ const LeadPage = () => {
             </div>
         </div>
 
-        {/* RIGHT COL: ACTION CONSOLE */}
+        {/* RIGHT COL: LEAD CONSOLE */}
         <div className="info-card">
              <div className="card-heading">
                 <Activity size={20} color="#ff7f50"/> Lead Console
@@ -173,53 +198,64 @@ const LeadPage = () => {
 
             <div className="action-list">
                 
-                {/* 1. Service Type */}
                 <ActionRow 
                     label="Service Type" icon={Briefcase} name="serviceType" 
                     value={currentLead.serviceType} type="select" options={serviceOptions} onSave={updateField} 
                 />
                 
-                {/* 2. Call Status */}
                 <ActionRow 
                     label="Call Status" icon={Phone} name="callStatus" 
-                    value={currentLead.callStatus} type="select" options={['Attend', 'Not Attend', 'Callback']} onSave={updateField} 
+                    value={currentLead.callStatus} 
+                    type="select" options={['Attend', 'Not Attend', 'Callback']} 
+                    onSave={updateField} 
+                    colorClass={getStatusColor(currentLead.callStatus)} 
                 />
                 
-                {/* 3. Follow Up Status */}
                 <ActionRow 
                     label="Follow Up Status" icon={ClipboardCheck} name="followUpStatus" 
-                    value={currentLead.followUpStatus} type="select" options={['Yes', 'No']} onSave={updateField} 
+                    value={currentLead.followUpStatus} 
+                    type="select" options={['Yes', 'No']} 
+                    onSave={updateField} 
+                    colorClass={getStatusColor(currentLead.followUpStatus)}
                 />
 
-                {/* 4. Lead Status */}
                 <ActionRow 
                     label="Lead Status" icon={Tag} name="leadStatus" 
-                    value={currentLead.leadStatus} type="select" options={['Okay', 'Not']} onSave={updateField} 
+                    value={currentLead.leadStatus} 
+                    type="select" options={['Okay', 'Not']} 
+                    onSave={updateField} 
+                    colorClass={getStatusColor(currentLead.leadStatus)}
                 />
                 
-                {/* 5. Callback Remainder */}
                 <ActionRow 
                     label="Callback Remainder" icon={Calendar} name="callbackDate" 
                     value={currentLead.callbackDate} type="text" onSave={updateField} 
                 />
                 
-                {/* 6. Remainder */}
                 <ActionRow 
                     label="Remainder" icon={MessageSquare} name="requirement" 
                     value={currentLead.requirement} type="text" onSave={updateField} 
                 />
-                
-                {/* 7. Payment */}
                 <ActionRow 
                     label="Advance Payment" icon={CreditCard} name="payment" 
-                    value={currentLead.payment} type="number" onSave={updateField} 
+                    value={currentLead.payment} type="number" onSave={updateField}
+                    colorClass="green"
+                    // disabled={!isPaymentUnlocked} 
                 />
                 
-                {/* 8. Closing */}
+                <div style={{margin: '15px 0', borderTop: '1px dashed #e5e7eb'}}></div>
+
+                {/* 7. Payment (Disabled if logic not met) */}
+                
+                
+                {/* 8. Closing (Disabled if logic not met) */}
                 <ActionRow 
                     label="Deal Closed?" icon={Check} name="closing" 
                     value={currentLead.closing} type="select" options={['Yes', 'No']} onSave={updateField} 
+                    colorClass={getStatusColor(currentLead.closing)}
+                    disabled={!isPaymentUnlocked}
                 />
+
             </div>
         </div>
 

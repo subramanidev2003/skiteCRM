@@ -8,7 +8,7 @@ import "./SalesDashboard.css"; // ✅ Uses the new CSS below
 import { toast } from "react-toastify";
 
 // --- CONFIGURATION ---
-const API_BASE = 'http://localhost:4000/api';
+const API_BASE = 'https://skitecrm.onrender.com/api';
 const ATTENDANCE_URL = `${API_BASE}/attendance`;
 
 const SalesDashboard = () => {
@@ -57,7 +57,7 @@ const SalesDashboard = () => {
 
       if (userId) {
         // Fetch Leads
-        fetch(`http://localhost:4000/api/leads/common/all`)
+        fetch(`https://skitecrm.onrender.com/api/leads/common/all`)
           .then((res) => (res.ok ? res.json() : []))
           .then((data) => {
             const validLeads = Array.isArray(data) ? data : [];
@@ -167,7 +167,7 @@ const SalesDashboard = () => {
     e.preventDefault();
     const agentId = user?._id || user?.id;
     try {
-      const res = await fetch("http://localhost:4000/api/leads/add", {
+      const res = await fetch("https://skitecrm.onrender.com/api/leads/add", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...formData, salesAgentId: agentId }),
       });

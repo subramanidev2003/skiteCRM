@@ -239,3 +239,132 @@
     .clickable-row td:nth-of-type(7)::before { content: "Closing"; }
     .clickable-row td:nth-of-type(8)::before { content: "Action"; }
 }
+
+
+
+
+/* --- AllLeadPage.css --- */
+
+/* Main container for the inline bar */
+.inline-filter-container {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px; /* Space between groups */
+  padding: 15px 20px;
+  background-color: #fff;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+/* Group for Label + Input pair */
+.inline-group {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Space between Label and Input */
+}
+
+/* Labels (From, To, Service) */
+.inline-label {
+  font-weight: 600;
+  color: #555;
+  font-size: 14px;
+  white-space: nowrap; /* Prevent label from breaking lines */
+}
+
+/* Shared Input Styles */
+.inline-input, 
+.inline-select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #333;
+  outline: none;
+  background-color: #fff;
+  transition: all 0.2s ease;
+}
+
+.inline-input:focus, 
+.inline-select:focus {
+  border-color: #2563eb; /* Blue border on focus */
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.inline-input {
+  width: 130px; /* Fixed width for dates to keep them neat */
+}
+
+.inline-select {
+  min-width: 150px;
+}
+
+/* Action Buttons Group */
+.inline-actions {
+  display: flex;
+  gap: 10px;
+  margin-left: auto; /* Pushes buttons to the right (optional) */
+}
+
+/* Buttons */
+.inline-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-primary {
+  background-color: #2563eb;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #1d4ed8;
+}
+
+.btn-secondary {
+  background-color: #f3f4f6;
+  color: #4b5563;
+  border: 1px solid #e5e7eb;
+}
+
+.btn-secondary:hover {
+  background-color: #e5e7eb;
+  color: #111;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .inline-filter-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .inline-group {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .inline-input, .inline-select {
+    width: 100%;
+  }
+  
+  .inline-actions {
+    margin-left: 0;
+    justify-content: space-between;
+  }
+  
+  .inline-btn {
+    flex: 1;
+    justify-content: center;
+  }
+}

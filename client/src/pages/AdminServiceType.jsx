@@ -4,7 +4,7 @@ import { ArrowLeft, Trash2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import './AdminServiceType.css'; 
 
-const API_BASE = 'http://localhost:4000/api';
+const API_BASE = 'https://skitecrm.onrender.com/api';
 
 const AdminServiceType = () => {
     const { serviceName } = useParams();

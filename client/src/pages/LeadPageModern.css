@@ -214,3 +214,79 @@
 @media (max-width: 900px) {
     .details-grid-layout { grid-template-columns: 1fr; }
 }
+
+
+/* --- LeadPageModern.css Updates --- */
+
+/* Base Style for the Pill */
+.value-pill {
+  padding: 6px 12px;
+  background-color: #f3f4f6;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #374151;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  text-align: center;
+  min-width: 80px;
+}
+
+/* Green Variant (Attend, Yes, Okay) */
+.value-pill.green {
+  background-color: #d1fae5;
+  color: #065f46;
+  border-color: #34d399;
+}
+
+/* Red Variant (Not Attend, No, Not) */
+.value-pill.red {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border-color: #f87171;
+}
+
+/* Blue Variant (Callback) */
+.value-pill.blue {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border-color: #60a5fa;
+}
+
+/* Animation for Payment Row appearing */
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
+
+
+
+
+/* --- LeadPageModern.css Updates --- */
+
+/* ... (Keep your existing pill styles: green, red, blue) ... */
+
+/* Disabled State for ActionRow */
+/* .editable-value-container.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #e5e7eb; /* Darker grey */
+  /* border: 1px dashed #9ca3af; */
+/* } */
+
+/* Lock Icon Styling */
+/* .lock-icon {
+  margin-left: 6px;
+  opacity: 0.6;
+} */
+
+/* Prevent clicking on disabled elements */
+/* .disabled-wrapper {
+  pointer-events: none;
+} */

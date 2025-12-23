@@ -16,7 +16,7 @@ const ServiceType = () => {
     }
 
     // ✅ FIX: Use the same API as the Dashboard to ensure counts match
-    fetch(`http://localhost:4000/api/leads/common/all`) 
+    fetch(`https://skitecrm.onrender.com/api/leads/common/all`) 
       .then(res => res.ok ? res.json() : [])
       .then(data => {
         if (Array.isArray(data)) {

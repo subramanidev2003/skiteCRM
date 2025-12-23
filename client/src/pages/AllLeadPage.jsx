@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Filter, X, Trash2, Calendar, Briefcase } from 'lucide-react'; 
+import { ArrowLeft, Filter, X, Trash2 } from 'lucide-react'; 
 import './AllLeadPage.css';
 import { toast } from 'react-toastify'; 
 
@@ -23,7 +23,7 @@ const AllLeadPage = () => {
   const isAdmin = location.pathname.includes('admin');
 
   useEffect(() => {
-    fetch("http://localhost:4000/api/leads/common/all")
+    fetch("https://skitecrm.onrender.com/api/leads/common/all")
       .then((res) => (res.ok ? res.json() : []))
       .then((data) => {
         if (Array.isArray(data)) {
@@ -40,7 +40,7 @@ const AllLeadPage = () => {
     if (!window.confirm("Delete this lead permanently?")) return;
 
     try {
-        const response = await fetch(`http://localhost:4000/api/leads/delete/${leadId}`, {
+        const response = await fetch(`https://skitecrm.onrender.com/api/leads/delete/${leadId}`, {
             method: 'DELETE',
         });
 
@@ -92,44 +92,54 @@ const AllLeadPage = () => {
                 </button>
                 <div className="header-text">
                     <h2 className="page-title">All Leads Overview</h2>
-                    <p className="page-subtitle">Manage and track your sales leads</p>
+                    {/* <p className="page-subtitle">Manage and track your sales leads</p> */}
                 </div>
             </div>
         </div>
 
-        {/* 2. FILTER BAR */}
-        <div className="filter-bar">
+        {/* 2. NEW INLINE FILTER BAR */}
+        <div className="inline-filter-container">
             
-            {/* Grouped Date Inputs for Single Line Layout */}
-            <div className="filter-group date-row">
-                <Calendar size={18} className="filter-icon" />
+            {/* From Date */}
+            <div className="inline-group">
+                <span className="inline-label">From:</span>
                 <input 
                     type="date" 
-                    className="date-input"
+                    className="inline-input"
                     value={fromDate} 
                     onChange={(e) => setFromDate(e.target.value)} 
                 />
-                <span className="separator">to</span>
+            </div>
+
+            {/* To Date */}
+            <div className="inline-group">
+                <span className="inline-label">To:</span>
                 <input 
                     type="date" 
-                    className="date-input"
+                    className="inline-input"
                     value={toDate} 
                     onChange={(e) => setToDate(e.target.value)} 
                 />
             </div>
 
-            <div className="filter-group service-select">
-                <Briefcase size={18} className="filter-icon" />
-                <select value={selectedService} onChange={(e) => setSelectedService(e.target.value)}>
+            {/* Service Select */}
+            <div className="inline-group">
+                <span className="inline-label">Service:</span>
+                <select 
+                    className="inline-select"
+                    value={selectedService} 
+                    onChange={(e) => setSelectedService(e.target.value)}
+                >
                     {serviceOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                 </select>
             </div>
 
-            <div className="filter-actions">
-                <button className="btn-filter" onClick={handleFilter}>
+            {/* Buttons */}
+            <div className="inline-actions">
+                <button className="inline-btn btn-primary" onClick={handleFilter}>
                     <Filter size={16} /> Filter
                 </button>
-                <button className="btn-reset" onClick={resetFilters}>
+                <button className="inline-btn btn-secondary" onClick={resetFilters}>
                     <X size={16} /> Reset
                 </button>
             </div>

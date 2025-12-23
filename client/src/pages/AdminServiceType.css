@@ -70,6 +70,7 @@
 
 /* --- TABLE STYLES --- */
 .ad-leads-table {
+    padding: 0px 120px;
     width: 100%;
     border-collapse: separate; 
     border-spacing: 0 15px;    
@@ -207,3 +208,12 @@
         text-align: left;
     }
 }
+
+
+
+
+
+
+
+
+

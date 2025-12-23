@@ -48,7 +48,7 @@ const AdminSalesDashboard = () => {
       setAdmin(JSON.parse(storedAdmin));
       
       // A. Fetch All Leads
-      fetch("http://localhost:4000/api/leads/admin/all")
+      fetch("https://skitecrm.onrender.com/api/leads/admin/all")
         .then((res) => (res.ok ? res.json() : []))
         .then((data) => {
           const validLeads = Array.isArray(data) ? data : [];
@@ -90,7 +90,7 @@ const AdminSalesDashboard = () => {
     }
 
     try {
-      const response = await fetch("http://localhost:4000/api/leads/add", {
+      const response = await fetch("https://skitecrm.onrender.com/api/leads/add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         // Send finalAgentId as the owner of the lead

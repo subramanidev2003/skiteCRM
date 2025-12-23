@@ -1,550 +1,15 @@
 :root {
-          --primary: #4f46e5;
-          --bg-light: #f3f4f6;
-          --white: #ffffff;
-          --text-dark: #1f2937;
-          --text-gray: #6b7280;
-          --success: #10b981;
-          --danger: #ef4444;
-          --warning-bg: #fef3c7;
-          --warning-text: #92400e;
-        }
-        .dashboard-container1 {
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-          background-color: var(--bg-light);
-          min-height: 100vh;
-          padding: 2rem;
-          color: var(--text-dark);
-        }
-        .dashboard-wrapper { max-width: 1200px; margin: 0 auto; }
-        
-        .dashboard-header {
-          display: flex; justify-content: space-between; align-items: center;
-          margin-bottom: 2rem; background: var(--white); padding: 1rem 1.5rem;
-          border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-        .welcome-text { display: flex; align-items: center; gap: 0.75rem; font-size: 1.1rem; }
-        .btn-logout1 {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #fee2e2;
-  color: #991b1b;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  width: 100px;
-  height: 40px;
-  padding: 0;
-}
-        .btn-logout1:hover { background-color: #fecaca; }
-        
-        .card1 {
-          background: var(--white); border-radius: 16px; padding: 1.5rem;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border: 1px solid rgba(0,0,0,0.03);
-        }
-        
-        /* Time Management */
-        .time-card { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
-        .time-left-section { display: flex; gap: 3rem; align-items: center; flex: 1; }
-        .time-info { display: flex; flex-direction: column; gap: 0.25rem; }
-        .section-title { display: flex; align-items: center; gap: 0.5rem; color: var(--text-gray); font-size: 0.9rem; font-weight: 600; text-transform: uppercase; }
-
-        
-        .task-input-container { flex: 1; max-width: 500px; }
-        .task-input {
-          width: 100%; padding: 0.85rem 1.2rem; border: 1px solid #e5e7eb;
-          border-radius: 10px; font-size: 1rem; outline: none; background: #f9fafb;
-        }
-        .task-input:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
-        
-        .time-actions button {
-          display: flex; align-items: center; gap: 0.6rem; padding: 0.85rem 1.75rem;
-          border: none; border-radius: 10px; font-weight: 600; cursor: pointer; color: white;
-          font-size: 1rem; transition: transform 0.1s;
-        }
-        .btn-primary { background-color: var(--primary); }
-        .btn-primary:hover { background-color: #4338ca; }
-        .btn-danger { background-color: var(--danger); }
-        .btn-danger:hover { background-color: #dc2626; }
-
-        /* Grid Layout */
-        .dashboard-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; }
-        .section-header { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; }
-        .section-header1 { display: flex; justify-content: start; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; }
-        .section-header h2 { font-size: 1.4rem; font-weight: 700; margin: 0; color: #111827; }
-        .section-header1 h2 { font-size: 1.4rem; font-weight: 700; margin: 0; color: #111827; }
-        .icon-blue { color: var(--primary); }
-
-        /* Stats */
-        .stats-row3 { display: flex; justify-content: space-around; margin-bottom: 1.5rem; padding: 1.25rem; }
-        .stat-item3 { text-align: center; }
-        .stat-number3 { font-size: 1.75rem; font-weight: 800; line-height: 1; margin-bottom: 0.25rem; }
-        .stat-label3 { font-size: 0.85rem; color: var(--text-gray); font-weight: 500; }
-        .text-green { color: var(--success); }
-        .text-blue { color: var(--primary); }
-
-        /* Tasks */
-        .task-list { display: flex; flex-direction: column; gap: 1rem; }
-        .task-item {
-          display: flex; justify-content: space-between; align-items: center;
-          padding: 1rem 1.25rem; background: #f9fafb; border-radius: 12px;
-          border: 1px solid transparent; transition: all 0.2s;
-        }
-        .task-item:hover { border-color: #e5e7eb; background: #ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        .task-info h3 { font-size: 1rem; font-weight: 600; margin: 0 0 0.4rem 0; color: #374151; }
-        .task-meta { display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: #6b7280; }
-        .task-actions { display: flex; align-items: center; gap: 1rem; }
-        .status-badge {
-          padding: 0.3rem 0.8rem; border-radius: 999px; font-size: 0.75rem;
-          font-weight: 700; text-transform: uppercase;
-        }
-        .status-success { background: #d1fae5; color: #065f46; }
-        .status-pending { background: var(--warning-bg); color: var(--warning-text); }
-        
-        .check-btn {
-          background: none; border: none; cursor: pointer; padding: 0.2rem;
-          display: flex; align-items: center; transition: transform 0.2s;
-        }
-        .check-btn:hover { transform: scale(1.1); }
-        .circle-outline { color: #d1d5db; }
-        .circle-filled { color: var(--success); }
-
-        /* Attendance */
-        .attendance-card { padding: 0; overflow: hidden; }
-        .att-header {
-          background: #f9fafb; padding: 1rem 1.5rem; display: flex;
-          justify-content: space-between; align-items: center; border-bottom: 1px solid #f3f4f6;
-        }
-        .att-header h3 { font-size: 1rem; margin: 0; font-weight: 700; }
-        .badge-late {
-          background: #fee2e2; color: #991b1b; padding: 0.25rem 0.6rem;
-          border-radius: 6px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
-        }
-        .att-details { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
-        .att-row { display: flex; align-items: center; gap: 0.75rem; font-size: 0.95rem; font-weight: 500; }
-        .icon-in { color: var(--success); }
-        .icon-out { color: var(--danger); }
-        .att-location { 
-          display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; 
-          color: var(--text-gray); margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px dashed #e5e7eb;
-        }
-
-        @media (max-width: 768px) {
-          .hide-btn{
-            display: none !important;
-          }
-          .btn-logout1{
-    width: 35px;
-    height: 35px;
-    margin-left: auto;
-  }
-          .btn-logout1 span{
-            display: none;
-          }
-          .dashboard-grid { grid-template-columns: 1fr; }
-          .time-card, .time-left-section { flex-direction: column; align-items: stretch; gap: 1.5rem; }
-          .task-input-container { max-width: 100%; }
-        }
-
-
-
-
-        /* Clock Styles */
-.clock-display {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 15px;
-  text-align: center;
-}
-
-.clock-time {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #2563eb;
-  letter-spacing: 2px;
-  margin-bottom: 5px;
-}
-
-.clock-date {
-  font-size: 1rem;
-  color: #6b7280;
-  font-weight: 500;
-}
-
-/* Attendance Card Styles */
-.att-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 30px 20px;
-  text-align: center;
-}
-
-.att-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-  padding: 8px 0;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.att-row:last-child {
-  border-bottom: none;
-  margin-bottom: 0;
-}
-
-/* Today's Session Card Styles */
-.attendance-card {
-  padding: 20px;
-}
-
-.att-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid #e2e8f0;
-}
-
-.att-header h3 {
-  margin: 0;
-  font-size: 1.2rem;
-  color: #1e293b;
-}
-
-.badge-active {
-  background-color: #10b981;
-  color: white;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.badge-completed {
-  background-color: #3b82f6;
-  color: white;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.att-details {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.att-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.att-row:last-child {
-  border-bottom: none;
-}
-
-.icon-in {
-  color: #10b981;
-}
-
-.icon-out {
-  color: #ef4444;
-}
-
-.task-summary {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  background-color: #f0f9ff;
-  border-radius: 8px;
-  margin-top: 10px;
-}
-
-.icon-summary {
-  color: #3b82f6;
-}
-
-.att-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
-  text-align: center;
-  color: #64748b;
-}
-
-.icon-empty {
-  color: #94a3b8;
-  margin-bottom: 15px;
-}
-
-.att-empty-sub {
-  font-size: 0.9rem;
-  color: #94a3b8;
-  margin-top: 5px;
-}
-
-.att-location {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background-color: #f8fafc;
-  border-radius: 6px;
-  margin-top: 10px;
-  font-size: 0.9rem;
-  color: #475569;
-}
-
-
-
-/* ... Existing code ... */
-
-/* --- Clickable Task Item --- */
-.task-item.clickable {
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.task-item.clickable:hover {
-  background-color: #f8fafc;
-  border-color: #cbd5e1;
-}
-
-/* --- Helper Classes for Images --- */
-.header-profile-img {
-  width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #3b82f6;
-}
-.header-profile-placeholder {
-  width: 40px; height: 40px; border-radius: 50%; background: #e5e7eb; align-items: center; justify-content: center; border: 2px solid #3b82f6;
-}
-
-/* --- EMP MODAL STYLES (Specific to Employee Dashboard) --- */
-.emp-modal-overlay {
-  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background-color: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(2px);
-  display: flex; justify-content: center; align-items: center;
-  z-index: 2000; padding: 20px;
-}
-
-.emp-modal-box {
-  background: white;
-  width: 100%; max-width: 500px;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.25);
-  overflow: hidden;
-  animation: slideUp 0.3s ease-out;
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.emp-modal-header {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 15px 20px; border-bottom: 1px solid #eee; background: #f9fafb;
-}
-
-.emp-modal-title { font-weight: 700; font-size: 1.1rem; color: #333; }
-.emp-modal-close { background: none; border: none; cursor: pointer; color: #999; }
-.emp-modal-close:hover { color: #ff4d4d; }
-
-.emp-modal-content { padding: 20px; }
-
-.emp-task-title {
-  font-size: 1.4rem; color: #111; margin-bottom: 15px; line-height: 1.3;
-}
-
-.emp-status-row { display: flex; gap: 10px; margin-bottom: 20px; }
-
-.emp-badge {
-  padding: 5px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; display: flex; align-items: center;
-}
-.emp-priority-high { background: #fee2e2; color: #dc2626; }
-.emp-priority-medium { background: #ffedd5; color: #ea580c; }
-.emp-priority-low { background: #dcfce7; color: #16a34a; }
-.emp-status-completed { background: #d1fae5; color: #059669; }
-.emp-status-pending { background: #f3f4f6; color: #4b5563; }
-
-.emp-section { margin-bottom: 20px; }
-.emp-label { display: flex; align-items: center; gap: 5px; font-size: 0.8rem; font-weight: 700; color: #6b7280; text-transform: uppercase; margin-bottom: 8px; }
-
-.emp-description-box {
-  background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;
-  max-height: 200px; overflow-y: auto;
-}
-.emp-text { font-size: 0.95rem; color: #334155; line-height: 1.6; white-space: pre-wrap; }
-
-.emp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-.emp-item { background: #fff; border: 1px solid #eee; padding: 10px; border-radius: 6px; }
-.emp-value { font-size: 1rem; font-weight: 600; color: #333; margin-top: 5px; }
-
-.emp-action-btn {
-  width: 100%; padding: 8px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: 5px; font-size: 0.85rem; transition: background 0.2s;
-}
-.btn-complete { background: #10b981; color: white; }
-.btn-complete:hover { background: #059669; }
-.btn-undo { background: #ef4444; color: white; }
-.btn-undo:hover { background: #dc2626; }
-
-/* Mobile Modal Adjustment */
-@media (max-width: 480px) {
-  .emp-grid { grid-template-columns: 1fr; }
-}
-
-
-
-
-/* Styling the "Welcome, Name" part */
-.header-info span {
-  font-size: 16px;
-  color: #111827; /* Dark grey/black */
-}
-
-.header-info strong {
-  font-weight: 600;
-}
-
-/* Your designation class (I moved your inline styles here) */
-.header-designation {
-  font-size: 0.8rem; /* Matches your inline style */
-  color: #6b7280;    /* Matches your inline style */
-  font-weight: 500;
-  margin-top: 2px;   /* Adds a tiny gap between name and role */
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* 1. Main Header Container */
-.dashboard-header {
-  display: flex;
-  align-items: center;
-  /* Make sure the container is relative so absolute children stay inside */
-  position: relative; 
-  padding: 15px 20px;
-  background-color: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
-  width: 100%;
-  box-sizing: border-box;
-  min-height: 70px; /* Ensure enough height for the absolute button */
-}
-
-/* 2. Left Side: Avatar + Text */
-.welcome-text {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  /* Add padding to the right so text doesn't hit the absolute button */
-  padding-right: 60px; 
-  flex: 1;
-}
-
-/* 3. The Text Block */
-.header-info {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  line-height: 1.3;
-  overflow: hidden; /* Truncate text if needed */
-}
-
-/* 4. Right Side: Button Container */
-.header-actions {
-  /* This effectively removes the button from the normal flow on mobile */
-  position: absolute;
-  right: 20px;
-  top: 50%;
-  transform: translateY(-50%); /* Centers it vertically */
-  z-index: 10;
-}
-
-/* 5. Logout Button Style */
-/* .btn-logout1 {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #fee2e2;
-  color: #991b1b;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  width: 40px;
-  height: 40px;
-  padding: 0;
-} */
-
-.btn-logout1:hover {
-  background-color: #fecaca;
-}
-
-/* Mobile Adjustments */
-@media (max-width: 480px) {
-  .dashboard-header {
-    padding: 10px 15px;
-  }
-  
-  .header-actions {
-    right: 15px; /* Adjust right spacing for small screens */
-  }
-
-  .btn-logout1 span {
-    display: none; /* Keep text hidden on mobile */
-  }
-  .btn-logout1{
-    width: 35px;
-    height: 35px;
-    margin-left: auto;
-  }
-  
-  .header-designation {
-    font-size: 0.75rem !important;
-  }
-}
-
-
-
-
-/* src/pages/EmployeeDashboard.css */
-
-:root {
-    --primary: #ff7f50;       /* Orange Theme */
+    --primary: #ff7f50;
     --primary-hover: #e66a3c;
     --primary-light: #fff7ed;
     --bg-body: #f3f4f6;
     --white: #ffffff;
     --text-dark: #1f2937;
     --text-gray: #6b7280;
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning-bg: #fef3c7;
+    --warning-text: #92400e;
     --border: #e5e7eb;
     --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
     --radius: 12px;
@@ -553,12 +18,12 @@
 .dashboard-layout {
     min-height: 100vh;
     background-color: var(--bg-body);
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     display: flex;
     flex-direction: column;
 }
 
-/* --- 1. HEADER --- */
+/* --- HEADER / TOP NAV --- */
 .top-nav {
     background: var(--white);
     padding: 15px 40px;
@@ -577,7 +42,14 @@
 
 .nav-user { display: flex; align-items: center; gap: 20px; }
 .user-profile { display: flex; align-items: center; gap: 10px; }
-.avatar-circle { width: 38px; height: 38px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+.avatar-circle { 
+    width: 38px; height: 38px; 
+    background: linear-gradient(135deg, #ff7f50, #ff5722); 
+    color: white; border-radius: 50%; 
+    display: flex; align-items: center; justify-content: center; 
+    font-weight: 700;
+    box-shadow: 0 4px 10px rgba(255, 87, 34, 0.3);
+}
 .user-details-text { display: flex; flex-direction: column; }
 .user-details-text .name { font-weight: 600; font-size: 0.9rem; color: var(--text-dark); }
 .user-details-text .role { font-size: 0.75rem; color: var(--text-gray); }
@@ -585,9 +57,10 @@
 .btn-logout-icon { background: #fee2e2; color: #dc2626; border: none; width: 38px; height: 38px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
 .btn-logout-icon:hover { background: #fecaca; }
 
-/* --- 2. HERO (Welcome + Attendance) --- */
+/* --- MAIN CONTENT --- */
 .main-content { padding: 30px 40px; max-width: 1400px; margin: 0 auto; width: 100%; box-sizing: border-box; }
 
+/* --- HERO SECTION (Welcome + Attendance) --- */
 .hero-section { display: grid; grid-template-columns: 1.5fr 1fr; gap: 25px; margin-bottom: 30px; }
 
 .welcome-card {
@@ -629,10 +102,11 @@
 .btn-out { background: #fee2e2; color: #dc2626; }
 .btn-out:hover { background: #fecaca; }
 
-/* --- 3. CONTENT GRID (Task List & Sidebar) --- */
+/* --- CONTENT GRID --- */
 .content-grid { display: grid; grid-template-columns: 2.5fr 1fr; gap: 30px; }
 
 /* Task Section */
+.task-section { }
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
 .section-header h3 { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 1.2rem; color: var(--text-dark); }
 .icon-orange { color: var(--primary); }
@@ -671,11 +145,15 @@
 .btn-check.checked { color: #16a34a; }
 .circle-empty { width: 18px; height: 18px; border: 2px solid #ccc; border-radius: 50%; }
 
+.loading-text { text-align: center; padding: 20px; color: var(--text-gray); }
+.empty-state { text-align: center; padding: 40px; color: var(--text-gray); }
+
 /* Sidebar Widgets */
 .sidebar-section { display: flex; flex-direction: column; gap: 20px; }
 .widget-card { background: white; padding: 20px; border-radius: var(--radius); border: 1px solid var(--border); }
 .widget-header { display: flex; align-items: center; gap: 8px; margin-bottom: 15px; font-weight: 700; color: var(--text-dark); }
 
+.team-list { }
 .team-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f3f4f6; cursor: pointer; transition: 0.2s; }
 .team-row:hover { background: #f9fafb; padding-left: 5px; }
 .team-avatar { width: 32px; height: 32px; background: var(--primary-light); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; }
@@ -685,29 +163,114 @@
 
 .info-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 0.9rem; color: var(--text-gray); border-bottom: 1px solid #f3f4f6; }
 .info-row strong { color: var(--text-dark); }
+.empty-text { text-align: center; padding: 15px; color: #999; font-size: 0.9rem; }
 
 /* --- MODALS --- */
-.modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(2px); }
-.modal-window { background: white; width: 500px; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-.modal-top { display: flex; justify-content: space-between; margin-bottom: 20px; align-items: center; }
-.modal-top button { background: none; border: none; cursor: pointer; color: #999; }
+.modal-backdrop { 
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+    background: rgba(0,0,0,0.6); 
+    display: flex; justify-content: center; align-items: center; 
+    z-index: 2000; 
+    backdrop-filter: blur(3px); 
+}
+
+.modal-window { 
+    background: white; 
+    width: 90%; 
+    max-width: 600px; 
+    border-radius: 16px; 
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3); 
+    display: flex; 
+    flex-direction: column; 
+    max-height: 85vh; 
+    overflow: hidden; 
+    animation: slideUp 0.3s ease-out; 
+}
+
+.modal-window.wide { max-width: 700px; }
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-top { 
+    padding: 20px 25px; 
+    border-bottom: 1px solid #eee; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    background: #fff; 
+    z-index: 10; 
+}
+.modal-top h3 { margin: 0; font-size: 1.2rem; color: #333; }
+.modal-top button { background: none; border: none; cursor: pointer; color: #999; transition: 0.2s; }
+.modal-top button:hover { color: #ff7f50; }
+
+.modal-body { 
+    padding: 25px; 
+    overflow-y: auto; 
+    flex: 1; 
+}
+.modal-body::-webkit-scrollbar { width: 6px; }
+.modal-body::-webkit-scrollbar-thumb { background-color: #ddd; border-radius: 4px; }
+.modal-body.scrollable { }
+
+.tags-row { display: flex; gap: 10px; margin-bottom: 15px; }
 
 .input-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 15px; }
 .input-group label { font-size: 0.85rem; font-weight: 600; color: #4b5563; }
-.input-group input, .input-group textarea, .input-group select { padding: 10px; border: 1px solid var(--border); border-radius: 8px; outline: none; width: 100%; box-sizing: border-box; }
-.input-group input:focus { border-color: var(--primary); }
+.input-group input, .input-group textarea, .input-group select { 
+    padding: 10px; 
+    border: 1px solid var(--border); 
+    border-radius: 8px; 
+    outline: none; 
+    width: 100%; 
+    box-sizing: border-box; 
+}
+.input-group input:focus, .input-group textarea:focus, .input-group select:focus { border-color: var(--primary); }
 .row-inputs { display: flex; gap: 15px; }
 .row-inputs .input-group { flex: 1; }
 
 .desc-box { background: #f9fafb; padding: 15px; border-radius: 8px; margin: 15px 0; border: 1px solid #eee; }
-.desc-box label { font-size: 0.8rem; font-weight: 700; color: #999; text-transform: uppercase; }
+.desc-box label { font-size: 0.8rem; font-weight: 700; color: #999; text-transform: uppercase; display: block; margin-bottom: 8px; }
 .desc-box p { margin: 5px 0 0; color: #333; line-height: 1.5; }
 
+.modal-actions { margin-top: 15px; }
 .btn-primary-fill { background: var(--primary); color: white; padding: 12px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; width: 100%; transition: 0.2s; }
 .btn-primary-fill:hover { background: var(--primary-hover); }
 .btn-primary-fill.green { background: #16a34a; }
+.btn-primary-fill.green:hover { background: #15803d; }
 
-/* Responsive */
+/* Teammate Modal Sections */
+.teammate-sections { }
+.section-block { margin-bottom: 30px; background: #fff; }
+.section-block h4 { font-size: 1rem; font-weight: 700; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 15px; }
+
+.history-list { }
+.history-list > div { border: 1px solid #eef0f2; transition: transform 0.1s ease; }
+.history-list > div:hover { background: #fff8f5 !important; border-color: #ffe0b2; }
+
+.mini-task-list { }
+.mini-task-list > div { transition: transform 0.1s; }
+.mini-task-list > div:hover { background: #fdfdfd; box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
+
+/* --- MOBILE / RESPONSIVE --- */
+
+/* Hide attendance card on mobile using touch detection */
+@media (hover: none) and (pointer: coarse) {
+    .attendance-card {
+        display: none !important;
+    }
+}
+
+/* Force hide on small screens regardless of desktop mode */
+@media (max-width: 900px) {
+    .attendance-card {
+        display: none !important;
+    }
+}
+
 @media screen and (max-width: 900px) {
     .main-content { padding: 20px; }
     .hero-section { grid-template-columns: 1fr; }
@@ -715,137 +278,25 @@
     .top-nav { padding: 15px 20px; }
     .nav-user .user-details-text { display: none; }
     .att-controls { flex-direction: column; width: 100%; }
+    
+    /* Hide attendance card completely on mobile */
+    .attendance-card {
+        display: none !important;
+    }
+    
+    .modal-window { width: 95%; max-width: 95%; }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* --- MODAL BACKDROP --- */
-.modal-backdrop {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 2000;
-    backdrop-filter: blur(3px);
+@media (max-width: 480px) {
+    .modal-window { padding: 0; }
+    .modal-body { padding: 20px; }
 }
+/* Update EmployeeDashboard.css */
 
-/* --- MODAL WINDOW --- */
-.modal-window {
-    background: white;
-    width: 90%;
-    max-width: 600px; /* Increased width for better readability */
-    border-radius: 16px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    display: flex;
-    flex-direction: column;
-    max-height: 85vh; /* Prevents modal from being taller than screen */
-    overflow: hidden; /* Ensures scroll works inside body */
-    animation: slideUp 0.3s ease-out;
-}
-
-/* WIDER MODAL FOR TEAMMATE PROFILE */
-.modal-window.wide {
-    max-width: 700px; /* Even wider for profile history */
-}
-
-@keyframes slideUp {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-}
-
-/* --- MODAL HEADER --- */
-.modal-top {
-    padding: 20px 25px;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #fff;
-    z-index: 10;
-}
-
-.modal-top h3 { margin: 0; font-size: 1.2rem; color: #333; }
-.modal-top button { background: none; border: none; cursor: pointer; color: #999; transition: 0.2s; }
-.modal-top button:hover { color: #ff7f50; }
-
-/* --- MODAL BODY (SCROLLABLE) --- */
-.modal-body {
-    padding: 25px;
-    overflow-y: auto; /* Enable vertical scroll */
-    flex: 1; /* Take remaining height */
-}
-
-/* Custom Scrollbar for Modal Body */
-.modal-body::-webkit-scrollbar { width: 6px; }
-.modal-body::-webkit-scrollbar-thumb { background-color: #ddd; border-radius: 4px; }
-
-/* --- SECTIONS INSIDE MODAL --- */
-.section-block {
-    margin-bottom: 30px;
-    background: #fff;
-}
-
-.section-block h4 {
-    font-size: 1rem;
-    font-weight: 700;
-    border-bottom: 2px solid #f0f0f0;
-    padding-bottom: 10px;
-    margin-bottom: 15px;
-}
-
-/* History List Item Styling */
-.history-list > div {
-    border: 1px solid #eef0f2;
-    transition: transform 0.1s ease;
-}
-.history-list > div:hover {
-    background: #fff8f5 !important; /* Slight orange tint on hover */
-    border-color: #ffe0b2;
-}
-
-/* Task List Item Styling */
-.mini-task-list > div {
-    transition: transform 0.1s;
-}
-.mini-task-list > div:hover {
-    background: #fdfdfd;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.03);
-}
-
-/* Avatar in Profile */
-.avatar-circle {
-    background: linear-gradient(135deg, #ff7f50, #ff5722);
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    box-shadow: 0 4px 10px rgba(255, 87, 34, 0.3);
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
 }

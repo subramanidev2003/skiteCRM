@@ -9,13 +9,37 @@ import './EmployeeDashboard.css';
 import { toast } from 'react-toastify';
 
 // --- CONFIGURATION ---
-const API_BASE = 'http://localhost:4000/api';
+const API_BASE = 'https://skitecrm.onrender.com/api';
+
+// ✅ FIX: Match the URL logic from your working Team.js page
+const UPLOADS_URL = "https://skitecrm.onrender.com/api/uploads";
+
 const ATTENDANCE_URL = `${API_BASE}/attendance`;
 const TASKS_URL = `${API_BASE}/tasks`;
 const USER_URL = `${API_BASE}/user`;
 
+// --- CUSTOM HOOK: DETECT MOBILE DEVICE ---
+const useIsMobileDevice = () => {
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
+  useEffect(() => {
+    const checkMobileDevice = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+      const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile|CriOS/i.test(userAgent);
+      const isTouchDevice = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+      const isSmallScreen = window.innerWidth <= 768;
+      setIsMobileDevice(isMobileUA || (isTouchDevice && isSmallScreen));
+    };
+    checkMobileDevice();
+    window.addEventListener('resize', checkMobileDevice);
+    return () => window.removeEventListener('resize', checkMobileDevice);
+  }, []);
+  return isMobileDevice;
+};
+
+// --- MAIN COMPONENT ---
 const EmployeeDashboard = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobileDevice(); 
   
   // --- STATE ---
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -32,12 +56,15 @@ const EmployeeDashboard = () => {
     title: "", description: "", priority: "Medium", dueDate: "", assignedTo: ""
   });
   
-  const loggedUser = JSON.parse(localStorage.getItem("employeeUser") || '{}');
-  const token = localStorage.getItem('employeeToken');
-  const EMPLOYEE_ID = loggedUser?._id || loggedUser?.id;
-  const EMPLOYEE_NAME = loggedUser?.name || "Employee";
-  const EMPLOYEE_DESIGNATION = loggedUser?.designation || "Team Member";
+  // Initial Load from LocalStorage
+  const storedUser = JSON.parse(localStorage.getItem("employeeUser") || '{}');
+  const [currentUser, setCurrentUser] = useState(storedUser); 
 
+  const token = localStorage.getItem('employeeToken');
+  const EMPLOYEE_ID = currentUser?._id || currentUser?.id;
+  const EMPLOYEE_NAME = currentUser?.name || "Employee";
+  const EMPLOYEE_DESIGNATION = currentUser?.designation || "Team Member";
+  
   const isContentWriter = (EMPLOYEE_DESIGNATION || "").toLowerCase().includes("content writ");
 
   // Dashboard State
@@ -51,8 +78,40 @@ const EmployeeDashboard = () => {
   const [lastSession, setLastSession] = useState({ checkInTime: null });
 
   // --- INIT ---
-  useEffect(() => { if (!token || !loggedUser) navigate('/'); }, [navigate, token]);
+  useEffect(() => { if (!token || !storedUser) navigate('/'); }, [navigate, token]);
   useEffect(() => { const i = setInterval(() => setCurrentTime(new Date()), 1000); return () => clearInterval(i); }, []);
+
+  // --- 1. FETCH FRESH USER PROFILE ---
+  useEffect(() => {
+    const fetchFreshProfile = async () => {
+        if (!EMPLOYEE_ID || !token) return;
+
+        try {
+            const res = await fetch(`${USER_URL}/${EMPLOYEE_ID}`, {
+                method: 'GET',
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json' 
+                }
+            });
+
+            if (res.status === 403 || res.status === 401) {
+                console.warn("Backend refused profile fetch. Using stored data.");
+                return;
+            }
+
+            if (res.ok) {
+                const data = await res.json();
+                const freshUser = data.user || data.employee || data; 
+                setCurrentUser(freshUser); 
+                localStorage.setItem("employeeUser", JSON.stringify(freshUser)); 
+            }
+        } catch (error) {
+            console.error("Error fetching fresh profile:", error);
+        }
+    };
+    fetchFreshProfile();
+  }, [EMPLOYEE_ID, token]); 
 
   // --- DATA FETCHING ---
   useEffect(() => {
@@ -64,11 +123,8 @@ const EmployeeDashboard = () => {
           const data = await res.json();
           const allUsers = data.employees || data.users || data;
           if (Array.isArray(allUsers)) {
-            // Filter logic
             const editors = allUsers.filter(u => (u.designation || "").toLowerCase().includes('video'));
             setVideoEditors(editors);
-            
-            // Set default assignedTo immediately if editors exist
             if(editors.length > 0) {
                 setNewTaskData(prev => ({...prev, assignedTo: editors[0]._id}));
             }
@@ -102,7 +158,6 @@ const EmployeeDashboard = () => {
         if (response.ok) {
           const data = await response.json();
           if (data.isCheckedIn) { setIsCheckedIn(true); setStartTime(new Date(data.checkInTime)); return; }
-          // Store last session info if available
           if (data.lastSession) setLastSession(data.lastSession);
         }
         if (savedSession && savedSession.userId === EMPLOYEE_ID) { setIsCheckedIn(true); setStartTime(new Date(savedSession.startTime)); }
@@ -143,7 +198,6 @@ const EmployeeDashboard = () => {
       setIsCheckedIn(false); setStartTime(null); setTaskDescription(''); 
       localStorage.removeItem('activeAttendanceSession');
       toast.success("Checked Out Successfully!");
-      // Update last session display immediately
       setLastSession({ checkInTime: new Date() }); 
     } catch (error) { toast.error("Network Error"); } finally { setLoading(false); }
   };
@@ -159,80 +213,44 @@ const EmployeeDashboard = () => {
     } catch (error) { fetchTasks(); toast.error("Failed to update status"); }
   };
 
-  // Assign Task Handler
   const handleAssignTask = async (e) => {
     e.preventDefault();
-    
-    // Validation
-    if (!newTaskData.assignedTo) {
-        toast.error("Please select a team member.");
-        return;
-    }
-    if (!newTaskData.title || !newTaskData.dueDate) {
-        toast.error("Title and Due Date are required.");
-        return;
-    }
+    if (!newTaskData.assignedTo) { toast.error("Please select a team member."); return; }
+    if (!newTaskData.title || !newTaskData.dueDate) { toast.error("Title and Due Date are required."); return; }
 
     setLoading(true);
     try {
       const res = await fetch(`${TASKS_URL}/create`, {
         method: "POST", 
-        headers: { 
-            "Content-Type": "application/json", 
-            "Authorization": `Bearer ${token}` 
-        },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify(newTaskData),
       });
-
       const data = await res.json(); 
-
       if (res.ok) {
         toast.success("Task assigned successfully!"); 
         setIsAssignModalOpen(false);
-        // Reset form
-        setNewTaskData({ 
-            title: "", 
-            description: "", 
-            priority: "Medium", 
-            dueDate: "", 
-            assignedTo: videoEditors.length > 0 ? videoEditors[0]._id : "" 
-        });
-      } else { 
-        toast.error(data.message || "Failed to assign task."); 
-      }
-    } catch (error) { 
-        console.error(error);
-        toast.error("Network Error: Could not assign task."); 
-    } finally { 
-        setLoading(false); 
-    }
+        setNewTaskData({ title: "", description: "", priority: "Medium", dueDate: "", assignedTo: videoEditors.length > 0 ? videoEditors[0]._id : "" });
+      } else { toast.error(data.message || "Failed to assign task."); }
+    } catch (error) { console.error(error); toast.error("Network Error: Could not assign task."); } finally { setLoading(false); }
   };
 
-  // Teammate Click - FETCH REAL DATA
   const handleTeammateClick = async (teammate) => {
     setIsTeammateModalOpen(true);
-    // 1. Set loading state
     setSelectedTeammateData({ details: teammate, tasks: [], attendanceHistory: [], loading: true });
 
     try {
         const headers = { 'Authorization': `Bearer ${token}` };
-
-        // 2. Fetch Tasks for this specific teammate
         const tasksRes = await fetch(`${TASKS_URL}/${teammate._id}`, { headers });
         const tasksData = await tasksRes.json();
-
-        // 3. Fetch Attendance History
         const attRes = await fetch(`${ATTENDANCE_URL}/${teammate._id}`, { headers }); 
         const attData = await attRes.json();
 
-        // 4. Update state with fetched data
         setSelectedTeammateData({
             details: teammate,
             tasks: Array.isArray(tasksData) ? tasksData : [],
             attendanceHistory: Array.isArray(attData) ? attData : [], 
             loading: false
         });
-
     } catch (error) {
         console.error("Error fetching details:", error);
         setSelectedTeammateData(prev => ({ ...prev, loading: false }));
@@ -240,19 +258,49 @@ const EmployeeDashboard = () => {
     }
   };
 
-  // Utils
+  // ✅ FIX: Use the URL construction logic from your working Team.js
+  const getImageUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith('http') || path.startsWith('data:')) return path;
+    // This matches the logic in Team.js:
+    return `${UPLOADS_URL}/${path.replace(/^\//, "")}`;
+  };
+
+  // --- HELPER: RENDER AVATAR ---
+  const renderAvatar = (user) => {
+    const rawImage = user.image || user.avatar || user.profilePic;
+    const imgUrl = getImageUrl(rawImage);
+    const initial = user.name ? user.name.charAt(0).toUpperCase() : "U";
+
+    if (imgUrl) {
+      return (
+        <img 
+          src={imgUrl} 
+          alt={user.name} 
+          className="avatar-img"
+          onError={(e) => {
+            e.target.style.display = 'none'; 
+            e.target.parentNode.innerText = initial; 
+          }}
+        />
+      );
+    }
+    return initial;
+  };
+
+  // --- UTILS ---
   const calculateDuration = (start) => {
     if (!start) return { h: 0, m: 0 };
     const diff = new Date() - new Date(start);
     return { h: Math.floor(diff / 3600000), m: Math.floor((diff % 3600000) / 60000) };
   };
-  const formatDate = (d) => d ? new Date(d).toLocaleDateString(undefined, {month:'short', day:'numeric'}) : 'N/A';
 
+  const formatDateWithDay = (d) => d ? new Date(d).toLocaleDateString('en-US', {weekday: 'short', month:'short', day:'numeric'}) : 'N/A';
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter(t => t.status === 'Completed').length;
 
   return (
-    <div className="dashboard-layout">
+    <div className={`dashboard-layout ${isMobile ? 'mobile-view' : ''}`}>
       
       {/* 1. TOP NAV */}
       <header className="top-nav">
@@ -262,11 +310,15 @@ const EmployeeDashboard = () => {
         </div>
         <div className="nav-user">
           <div className="user-profile">
-            <div className="avatar-circle">{EMPLOYEE_NAME.charAt(0)}</div>
-            <div className="user-details-text">
-                <span className="name">{EMPLOYEE_NAME}</span>
-                <span className="role">{EMPLOYEE_DESIGNATION}</span>
+            <div className="avatar-circle">
+                {renderAvatar(currentUser)}
             </div>
+            {!isMobile && (
+                <div className="user-details-text">
+                    <span className="name">{EMPLOYEE_NAME}</span>
+                    <span className="role">{EMPLOYEE_DESIGNATION}</span>
+                </div>
+            )}
           </div>
           <button className="btn-logout-icon" onClick={handleLogout} title="Logout">
             <LogOut size={20} />
@@ -275,7 +327,7 @@ const EmployeeDashboard = () => {
       </header>
 
       <main className="main-content">
-        
+        {/* ... Rest of your Dashboard UI (identical to before) ... */}
         {/* 2. ATTENDANCE & WELCOME */}
         <section className="hero-section">
             <div className="welcome-card">
@@ -335,7 +387,6 @@ const EmployeeDashboard = () => {
                     )}
                 </div>
 
-                {/* Progress Bar */}
                 <div className="progress-container">
                     <div className="progress-labels">
                         <span>Progress</span>
@@ -349,7 +400,6 @@ const EmployeeDashboard = () => {
                     </div>
                 </div>
 
-                {/* Task Cards */}
                 <div className="tasks-container">
                     {taskLoading ? (
                         <p className="loading-text">Loading Tasks...</p>
@@ -363,9 +413,12 @@ const EmployeeDashboard = () => {
                             <div key={task._id} className="task-card" onClick={() => {setSelectedTask(task); setIsViewModalOpen(true);}}>
                                 <div className="task-header">
                                     <span className={`priority-tag ${task.priority.toLowerCase()}`}>{task.priority}</span>
-                                    <span className="date-tag"><CalendarDays size={12}/> {formatDate(task.dueDate)}</span>
+                                    <span className="date-tag"><CalendarDays size={12}/> {formatDateWithDay(task.dueDate)}</span>
                                 </div>
                                 <h4 className={task.status === 'Completed' ? 'completed-text' : ''}>{task.title}</h4>
+                                <div style={{fontSize: '0.75rem', color: '#888', marginBottom: '8px', display:'flex', alignItems:'center', gap:'4px'}}>
+                                    <span>Assigned:</span> {formatDateWithDay(task.createdAt)}
+                                </div>
                                 <div className="task-footer">
                                     <span className={`status-text ${task.status.toLowerCase()}`}>
                                         {task.status === 'Completed' ? <CheckCircle2 size={14}/> : <Clock size={14}/>} {task.status}
@@ -386,7 +439,6 @@ const EmployeeDashboard = () => {
             {/* RIGHT: TEAM / STATS */}
             <div className="sidebar-section">
                 
-                {/* Team Widget (Only for Content Writers) */}
                 {isContentWriter && (
                     <div className="widget-card">
                         <div className="widget-header">
@@ -396,7 +448,9 @@ const EmployeeDashboard = () => {
                         <div className="team-list">
                             {videoEditors.length > 0 ? videoEditors.map(ed => (
                                 <div key={ed._id} className="team-row" onClick={() => handleTeammateClick(ed)}>
-                                    <div className="team-avatar">{ed.name.charAt(0)}</div>
+                                    <div className="team-avatar">
+                                        {renderAvatar(ed)}
+                                    </div>
                                     <div className="team-info">
                                         <p className="t-name">{ed.name}</p>
                                         <p className="t-role">{ed.designation}</p>
@@ -408,7 +462,6 @@ const EmployeeDashboard = () => {
                     </div>
                 )}
 
-                {/* Info Widget */}
                 <div className="widget-card">
                     <div className="widget-header">
                         <History size={18} className="icon-orange"/> 
@@ -430,8 +483,6 @@ const EmployeeDashboard = () => {
       </main>
 
       {/* --- MODALS --- */}
-      
-      {/* 1. View Task Modal */}
       {isViewModalOpen && selectedTask && (
         <div className="modal-backdrop" onClick={() => setIsViewModalOpen(false)}>
             <div className="modal-window" onClick={e => e.stopPropagation()}>
@@ -443,8 +494,11 @@ const EmployeeDashboard = () => {
                     <h2>{selectedTask.title}</h2>
                     <div className="tags-row">
                         <span className={`priority-tag ${selectedTask.priority.toLowerCase()}`}>{selectedTask.priority}</span>
-                        <span className="date-tag">{formatDate(selectedTask.dueDate)}</span>
+                        <span className="date-tag">Due: {formatDateWithDay(selectedTask.dueDate)}</span>
                     </div>
+                    <p style={{fontSize:'0.85rem', color:'#666', margin: '5px 0'}}>
+                        <strong>Assigned On:</strong> {formatDateWithDay(selectedTask.createdAt)}
+                    </p>
                     <div className="desc-box">
                         <label>Description</label>
                         <p>{selectedTask.description}</p>
@@ -462,7 +516,6 @@ const EmployeeDashboard = () => {
         </div>
       )}
 
-      {/* 2. Assign Task Modal */}
       {isAssignModalOpen && (
         <div className="modal-backdrop" onClick={() => setIsAssignModalOpen(false)}>
             <div className="modal-window" onClick={e => e.stopPropagation()}>
@@ -510,7 +563,6 @@ const EmployeeDashboard = () => {
         </div>
       )}
 
-      {/* 3. Teammate Details Modal (UPDATED & SCROLLABLE) */}
       {isTeammateModalOpen && selectedTeammateData.details && (
         <div className="modal-backdrop" onClick={() => setIsTeammateModalOpen(false)}>
             <div className="modal-window wide" onClick={e => e.stopPropagation()}>
@@ -520,10 +572,9 @@ const EmployeeDashboard = () => {
                 </div>
                 
                 <div className="modal-body scrollable">
-                    {/* PROFILE HEADER */}
                     <div style={{ textAlign: 'center', marginBottom: '25px', paddingBottom: '20px', borderBottom: '1px solid #eee' }}>
                         <div className="avatar-circle" style={{ width: '70px', height: '70px', fontSize: '2rem', margin: '0 auto 15px' }}>
-                            {selectedTeammateData.details.name.charAt(0)}
+                            {renderAvatar(selectedTeammateData.details)}
                         </div>
                         <h2 style={{ margin: '0 0 5px' }}>{selectedTeammateData.details.name}</h2>
                         <span className="priority-tag medium">{selectedTeammateData.details.designation}</span>
@@ -536,8 +587,6 @@ const EmployeeDashboard = () => {
                         <p style={{textAlign: 'center', padding: '20px', color: '#888'}}>Loading data...</p>
                     ) : (
                         <div className="teammate-sections">
-                            
-                            {/* SECTION 1: DAILY ATTENDANCE & SUMMARIES */}
                             <div className="section-block">
                                 <h4 style={{marginBottom: '15px', color: '#ff7f50', display:'flex', alignItems:'center', gap:'8px'}}>
                                     <History size={18}/> Daily Attendance & Work Summaries
@@ -548,8 +597,6 @@ const EmployeeDashboard = () => {
                                     <div className="history-list" style={{ maxHeight: '250px', overflowY: 'auto' }}>
                                         {selectedTeammateData.attendanceHistory.map((record, index) => (
                                             <div key={index} style={{ background: '#f9f9f9', padding: '15px', borderRadius: '10px', marginBottom: '12px', border: '1px solid #eee' }}>
-                                                
-                                                {/* Date & Time Row */}
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontWeight: '600', fontSize: '0.9rem' }}>
                                                     <span style={{display:'flex', alignItems:'center', gap:'5px'}}>
                                                         <CalendarDays size={14}/> {new Date(record.checkInTime).toLocaleDateString()}
@@ -558,15 +605,12 @@ const EmployeeDashboard = () => {
                                                         {record.checkOutTime ? 'Completed' : 'Active Now'}
                                                     </span>
                                                 </div>
-
                                                 <div style={{ display: 'flex', gap: '20px', color: '#666', fontSize: '0.85rem', marginBottom: '10px' }}>
                                                     <span>🟢 In: {new Date(record.checkInTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
                                                     {record.checkOutTime && (
                                                         <span>🔴 Out: {new Date(record.checkOutTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
                                                     )}
                                                 </div>
-
-                                                {/* WORK DESCRIPTION */}
                                                 {record.taskDescription ? (
                                                     <div style={{ background: '#fff', padding: '10px', borderRadius: '6px', border: '1px solid #e0e0e0', fontStyle: 'italic', color: '#444', fontSize: '0.9rem' }}>
                                                         <span style={{fontWeight:'bold', color:'#333', display:'block', marginBottom:'4px', fontSize:'0.75rem', textTransform:'uppercase'}}>Work Summary:</span>
@@ -581,7 +625,6 @@ const EmployeeDashboard = () => {
                                 )}
                             </div>
 
-                            {/* SECTION 2: ASSIGNED TASKS (NOW SCROLLABLE) */}
                             <div className="section-block" style={{ marginTop: '30px' }}>
                                 <h4 style={{marginBottom: '15px', color: '#333', display:'flex', alignItems:'center', gap:'8px'}}>
                                     <ListTodo size={18}/> Assigned Tasks
@@ -597,7 +640,7 @@ const EmployeeDashboard = () => {
                                                     <p style={{ margin: 0, fontSize: '0.85rem', color: '#666' }}>{t.description}</p>
                                                 </div>
                                                 <div style={{textAlign: 'right', minWidth: '80px'}}>
-                                                    <span style={{ fontSize: '0.75rem', color: '#888', display:'block', marginBottom:'4px' }}>Due: {formatDate(t.dueDate)}</span>
+                                                    <span style={{ fontSize: '0.75rem', color: '#888', display:'block', marginBottom:'4px' }}>Due: {formatDateWithDay(t.dueDate)}</span>
                                                     <span className={`status-text ${t.status.toLowerCase()}`} style={{fontSize: '0.8rem'}}>{t.status}</span>
                                                 </div>
                                             </div>
@@ -605,7 +648,6 @@ const EmployeeDashboard = () => {
                                     </div>
                                 )}
                             </div>
-
                         </div>
                     )}
                 </div>
