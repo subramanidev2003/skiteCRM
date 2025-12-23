@@ -1,0 +1,191 @@
+/* src/pages/ServiceType.css */
+
+:root {
+    --st-primary: #ff7f50;
+    --st-bg: #f4f6f8;
+    --st-white: #ffffff;
+    --st-text: #1f2937;
+    --st-border: #e5e7eb;
+}
+
+/* Page Layout */
+.st-page-container {
+    min-height: 100vh;
+    background-color: var(--st-bg);
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    flex-direction: column;
+}
+
+.st-page-content {
+    padding: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Header */
+.st-page-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.st-btn-back {
+    background: var(--st-white);
+    border: 1px solid var(--st-border);
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: #555;
+    transition: all 0.2s;
+}
+
+.st-btn-back:hover {
+    background: #f8f9fa;
+    color: var(--st-primary);
+    border-color: var(--st-primary);
+}
+
+.st-page-title {
+    font-size: 1.8rem;
+    color: var(--st-text);
+    margin: 0;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+/* Table Wrapper */
+.st-table-wrapper {
+    background: transparent;
+    padding: 0;
+    overflow-x: auto;
+}
+
+/* Table */
+.st-leads-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 15px; /* Gap between rows */
+    min-width: 800px;
+}
+
+/* Header Row */
+.st-leads-table th {
+    background-color: var(--st-primary);
+    color: white;
+    font-weight: 700;
+    text-align: left;
+    padding: 16px 20px;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: none;
+}
+
+.st-leads-table th:first-child { border-top-left-radius: 10px; border-bottom-left-radius: 10px; }
+.st-leads-table th:last-child { border-top-right-radius: 10px; border-bottom-right-radius: 10px; }
+
+/* Data Rows (Cards) */
+.st-lead-row {
+    background-color: var(--st-white);
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.st-lead-row:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    z-index: 1;
+    position: relative;
+}
+
+.st-leads-table td {
+    padding: 16px 20px;
+    color: var(--st-text);
+    font-size: 0.95rem;
+    vertical-align: middle;
+    border: 1px solid transparent;
+}
+
+/* Row Rounded Corners */
+.st-lead-row td:first-child { border-top-left-radius: 10px; border-bottom-left-radius: 10px; }
+.st-lead-row td:last-child { border-top-right-radius: 10px; border-bottom-right-radius: 10px; }
+
+/* Badges */
+.st-priority-badge {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    display: inline-block;
+    min-width: 80px;
+    text-align: center;
+}
+
+.st-priority-badge.high { background: #ffebee; color: #d32f2f; border: 1px solid #ffcdd2; }
+.st-priority-badge.medium { background: #fff3e0; color: #ef6c00; border: 1px solid #ffe0b2; }
+.st-priority-badge.low { background: #e0f2fe; color: #1976d2; border: 1px solid #bbdefb; }
+
+/* States */
+.st-no-data {
+    text-align: center;
+    padding: 50px;
+    color: #888;
+    font-style: italic;
+    background: var(--st-white);
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+/* Mobile Responsive */
+@media screen and (max-width: 768px) {
+    .st-page-title{
+        font-size: 0.8rem;
+
+    }
+    .st-page-content { padding: 15px; }
+    
+    /* Turn Table into Cards */
+    .st-leads-table, .st-leads-table tbody, .st-leads-table tr, .st-leads-table td {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        min-width: unset;
+    }
+    
+    .st-leads-table thead { display: none; }
+
+    .st-lead-row {
+        margin-bottom: 20px;
+        padding: 15px;
+        border-radius: 12px;
+    }
+
+    .st-leads-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: right;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--st-border);
+    }
+
+    .st-leads-table td:last-child { border-bottom: none; }
+
+    /* Add Labels */
+    .st-leads-table td:nth-of-type(1)::before { content: "Date"; font-weight: 700; color: #777; }
+    .st-leads-table td:nth-of-type(2)::before { content: "Name"; font-weight: 700; color: #777; }
+    .st-leads-table td:nth-of-type(3)::before { content: "Phone"; font-weight: 700; color: #777; }
+    .st-leads-table td:nth-of-type(4)::before { content: "Company"; font-weight: 700; color: #777; }
+    .st-leads-table td:nth-of-type(5)::before { content: "Priority"; font-weight: 700; color: #777; }
+    .st-leads-table td:nth-of-type(6)::before { content: "Closing"; font-weight: 700; color: #777; }
+}

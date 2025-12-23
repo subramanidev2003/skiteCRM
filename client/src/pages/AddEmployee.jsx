@@ -6,6 +6,10 @@ import {
 import { useNavigate } from 'react-router-dom';
 import './Addemployee.css';
 
+
+const API_BASE = 'http://localhost:4000/api'
+
+
 const AddEmployee = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -69,7 +73,7 @@ const AddEmployee = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:4000/api/auth/register`, {
+      const response = await fetch(`${API_BASE}/auth/register`, {
         method: 'POST',
         body: dataToSend
       });
@@ -216,6 +220,7 @@ const AddEmployee = () => {
                 <option value="">Select Role</option>
                 {/* Added Manager Option Below */}
                 <option value="Manager">Manager</option>
+                <option value="Sales">Sales</option>
                 <option value="employee">Employee</option>
                 <option value="Admin">Admin</option>
               </select>

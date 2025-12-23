@@ -1,0 +1,131 @@
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Trash2 } from 'lucide-react';
+import { toast } from 'react-toastify';
+import './AdminServiceType.css'; 
+
+const API_BASE = 'http://localhost:4000/api';
+
+const AdminServiceType = () => {
+    const { serviceName } = useParams();
+    const navigate = useNavigate();
+    const [leads, setLeads] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchLeads = async () => {
+            try {
+                const response = await fetch(`${API_BASE}/leads/common/all`);
+                const data = await response.json();
+                
+                if (response.ok && Array.isArray(data)) {
+                    const decodedService = decodeURIComponent(serviceName);
+                    const filtered = data.filter(lead => 
+                        lead.serviceType === decodedService ||
+                        lead.serviceType === serviceName
+                    );
+                    setLeads(filtered);
+                } else {
+                    setLeads([]);
+                }
+            } catch (error) {
+                console.error("Error fetching leads:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchLeads();
+    }, [serviceName]);
+
+    const handleDelete = async (e, id) => {
+        e.stopPropagation();
+        if(!window.confirm("Are you sure you want to delete this lead?")) return;
+
+        try {
+            const res = await fetch(`${API_BASE}/leads/delete/${id}`, { method: 'DELETE' });
+            if(res.ok) {
+                setLeads(prev => prev.filter(l => (l._id || l.id) !== id));
+                toast.success("Lead deleted");
+            } else {
+                toast.error("Failed to delete");
+            }
+        } catch(err) { toast.error("Server Error"); }
+    };
+
+    return (
+        <div className="ad-page-container">
+            
+            {/* HEADER */}
+            <div className="ad-page-header">
+                <button className="ad-btn-back" onClick={() => navigate('/admin-dashboard')}>
+                    <ArrowLeft size={18} /> Back to Dashboard
+                </button>
+                <div className="header-text">
+                    <h1 className="ad-page-title">{decodeURIComponent(serviceName)}</h1>
+                    <p className="ad-page-subtitle">{leads.length} Leads Found</p>
+                </div>
+            </div>
+
+            {/* TABLE */}
+            <div className="ad-table-wrapper">
+                {loading ? (
+                    <div className="ad-loading">Loading...</div>
+                ) : (
+                    <table className="ad-leads-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Client Name</th>
+                                <th>Phone</th>
+                                <th>Company</th>
+                                <th>Priority</th>
+                                <th>Closing</th>
+                                <th style={{textAlign: 'center'}}>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {leads.length === 0 ? (
+                                <tr>
+                                    <td colSpan="7" className="ad-no-data">
+                                        No leads found for {decodeURIComponent(serviceName)}.
+                                    </td>
+                                </tr>
+                            ) : (
+                                leads.map((lead) => (
+                                    <tr 
+                                        key={lead._id || lead.id} 
+                                        className="ad-lead-row" 
+                                        onClick={() => navigate(`/admin-dashboard/lead-detail/${lead._id}`, { state: { lead } })}
+                                    >
+                                        {/* ✅ Added data-label for Mobile View */}
+                                        <td data-label="Date">{lead.date}</td>
+                                        <td data-label="Client Name" className="font-bold">{lead.name}</td>
+                                        <td data-label="Phone">{lead.phoneNumber}</td>
+                                        <td data-label="Company">{lead.companyName || '-'}</td>
+                                        <td data-label="Priority">
+                                            <span className={`ad-priority-badge ${lead.priority?.toLowerCase()}`}>
+                                                {lead.priority}
+                                            </span>
+                                        </td>
+                                        <td data-label="Closing">{lead.closing}</td>
+                                        
+                                        <td data-label="Action" style={{textAlign: 'center'}}>
+                                            <button 
+                                                className="ad-btn-delete"
+                                                onClick={(e) => handleDelete(e, lead._id || lead.id)}
+                                            >
+                                                <Trash2 size={18}/>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                )}
+            </div>
+        </div>
+    );
+};
+
+export default AdminServiceType;

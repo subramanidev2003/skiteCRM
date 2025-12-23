@@ -1,0 +1,241 @@
+/* Unique Container to prevent inheriting broken styles */
+.all-leads-container {
+    width: 100%;
+    min-height: 100vh;
+    background-color: #f4f6f8;
+    padding: 30px;
+    box-sizing: border-box;
+    /* ✅ This ensures it expands to fill the parent flex container */
+    flex: 1; 
+}
+
+.all-leads-content {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* --- FILTER BAR STYLES --- */
+.filter-bar {
+    display: flex;
+    gap: 15px;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    align-items: flex-end; /* Aligns inputs and buttons at the bottom */
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-group label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.filter-group input, 
+.filter-group select {
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    font-size: 0.95rem;
+    min-width: 160px;
+    outline: none;
+}
+
+.filter-group input:focus, 
+.filter-group select:focus {
+    border-color: #ff7f50;
+}
+
+.filter-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-filter {
+    background: #ff7f50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 42px; /* Match input height */
+    transition: background 0.2s;
+}
+
+.btn-filter:hover { background: #e66a3c; }
+
+.btn-reset {
+    background: #f8f9fa;
+    color: #dc3545;
+    border: 1px solid #ddd;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 42px;
+    transition: background 0.2s;
+}
+
+.btn-reset:hover { background: #e2e6ea; }
+
+/* Reuse Table Styles */
+.leads-table-container {
+    background: transparent;
+    /* padding: 15px 90px; */
+}
+.leads-table {
+    background-color: #aaa7a6;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 15px;
+    padding: 15px 90px;
+}
+.leads-table th {
+    background-color: #ff7f50;
+    color: white;
+    padding: 15px;
+    text-align: left;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+.leads-table th:first-child { border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
+.leads-table th:last-child { border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
+
+.clickable-row {
+    background: white;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    transition: transform 0.2s;
+    cursor: pointer;
+}
+.clickable-row:hover { transform: translateY(-2px); }
+
+.clickable-row td {
+    padding: 15px;
+    color: #333;
+}
+.clickable-row td:first-child { border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
+.clickable-row td:last-child { border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
+
+.no-data { text-align: center; padding: 40px; color: #888; background: white; border-radius: 8px; }
+
+/* =========================================
+   MOBILE RESPONSIVE STYLES
+   ========================================= */
+@media screen and (max-width: 768px) {
+    
+    /* 1. Container Adjustments */
+    .all-leads-container {
+        padding: 15px; /* Reduce padding */
+    }
+
+    .leads-section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    /* 2. Filter Bar Stacking */
+    .filter-bar {
+        flex-direction: column;
+        align-items: stretch; /* Stretch inputs to full width */
+        gap: 15px;
+    }
+
+    .filter-group input, 
+    .filter-group select {
+        width: 100%; /* Full width inputs */
+        min-width: unset;
+        box-sizing: border-box;
+    }
+
+    .filter-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .btn-filter, .btn-reset {
+        flex: 1; /* Buttons share equal width */
+        justify-content: center;
+    }
+
+    /* 3. TABLE TO CARD TRANSFORMATION */
+    /* Force table elements to display as blocks */
+    .leads-table, .leads-table tbody, .leads-table tr, .leads-table td {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* Hide the table header */
+    .leads-table thead {
+        display: none;
+    }
+
+    /* Style the rows as cards */
+    .clickable-row {
+        margin-bottom: 20px;
+        border-radius: 12px;
+        border: 1px solid #eee;
+        padding: 15px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    }
+
+    /* Reset border radius logic from desktop table */
+    .clickable-row td:first-child,
+    .clickable-row td:last-child {
+        border-radius: 0;
+    }
+
+    /* Style individual cells to look like key-value pairs */
+    .clickable-row td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: right;
+        padding: 10px 0;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 0.95rem;
+    }
+
+    .clickable-row td:last-child {
+        border-bottom: none;
+        justify-content: flex-end; /* Align action button right */
+        padding-top: 15px;
+    }
+
+    /* Add Labels using CSS pseudo-elements */
+    .clickable-row td::before {
+        content: attr(data-label); /* Fallback */
+        font-weight: 700;
+        color: #777;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        text-align: left;
+        margin-right: 15px;
+    }
+
+    /* Manually assign labels since JSX doesn't have data-label attrs */
+    .clickable-row td:nth-of-type(1)::before { content: "Date"; }
+    .clickable-row td:nth-of-type(2)::before { content: "Name"; }
+    .clickable-row td:nth-of-type(3)::before { content: "Phone"; }
+    .clickable-row td:nth-of-type(4)::before { content: "Company"; }
+    .clickable-row td:nth-of-type(5)::before { content: "Service"; }
+    .clickable-row td:nth-of-type(6)::before { content: "Priority"; }
+    .clickable-row td:nth-of-type(7)::before { content: "Closing"; }
+    .clickable-row td:nth-of-type(8)::before { content: "Action"; }
+}

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import skitelogo from '../assets/skitelogo.png'; // Ensure this path is correct
+import skitelogo from '../assets/skitelogo.png'; 
 import './Login.css';
 
+// UPDATED: Pointing to Localhost as requested
 const API_BASE = 'http://localhost:4000/api';
 
 const Login = () => {
@@ -32,7 +33,7 @@ const Login = () => {
         
         setStatus({ loading: true, error: '' });
 
-        // ✅ CLEAR ALL PREVIOUS AUTH DATA BEFORE LOGIN
+        // ✅ CLEAR ALL PREVIOUS AUTH DATA
         localStorage.clear(); 
         
         try {
@@ -41,7 +42,7 @@ const Login = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                credentials: 'include',
+                // credentials: 'include', // Uncomment if using cookies/sessions
                 body: JSON.stringify(formData)
             });
 
@@ -56,10 +57,10 @@ const Login = () => {
                 
                 setStatus({ loading: false, error: '' });
 
-                // Ensure role is compared in lowercase to match your logic
+                // Ensure role is lowercase for comparison
                 const role = data.user.role.toLowerCase();
                 
-                // ✅ SAVE WITH ROLE-SPECIFIC KEYS
+                // --- ADMIN ---
                 if (role === 'admin') {
                     localStorage.setItem('adminToken', data.token);
                     localStorage.setItem('adminUser', JSON.stringify(data.user));
@@ -67,21 +68,28 @@ const Login = () => {
                     setTimeout(() => {
                         navigate('/admin-dashboard', { replace: true });
                     }, 100);
-                    
                 } 
-                // 👇 NEW MANAGER LOGIC ADDED HERE 👇
+                // --- MANAGER ---
                 else if (role === 'manager') {
                     localStorage.setItem('managerToken', data.token);
                     localStorage.setItem('managerUser', JSON.stringify(data.user));
-
-                    console.log('Manager credentials stored');
                     
                     setTimeout(() => {
-                        console.log('Navigating to manager dashboard');
                         navigate('/manager-dashboard', { replace: true });
                     }, 100);
-                } 
-                // 👆 END NEW MANAGER LOGIC 👆
+                }
+                // --- SALES (NEW ADDITION) ---
+                else if (role === 'sales') {
+                    localStorage.setItem('salesToken', data.token);
+                    localStorage.setItem('salesUser', JSON.stringify(data.user));
+
+                    console.log('Sales credentials stored');
+
+                    setTimeout(() => {
+                        navigate('/sales-dashboard', { replace: true });
+                    }, 100);
+                }
+                // --- EMPLOYEE ---
                 else if (role === 'employee') {
                     localStorage.setItem('employeeToken', data.token);
                     localStorage.setItem('employeeUser', JSON.stringify(data.user));
@@ -89,8 +97,9 @@ const Login = () => {
                     setTimeout(() => {
                         navigate('/employee-dashboard', { replace: true });
                     }, 100);
-                    
-                } else {
+                } 
+                // --- UNKNOWN ---
+                else {
                     console.error('Unknown role:', data.user.role);
                     setStatus({ 
                         loading: false, 
@@ -109,7 +118,7 @@ const Login = () => {
             console.error('Login error:', err);
             setStatus({
                 loading: false,
-                error: 'Network error. Please check if the server is running.'
+                error: 'Network error. Please check if the server is running on port 4000.'
             });
         }
     };

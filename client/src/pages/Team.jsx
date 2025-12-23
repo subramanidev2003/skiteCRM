@@ -1,17 +1,16 @@
-// src/pages/Team.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import "./Team.css";
 import { toast } from "react-toastify";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Trash2, Mail, Calendar, User, Search } from "lucide-react";
+import "./Team.css"; // ✅ New CSS File
 
 const API_BASE = "https://skitecrm.onrender.com/api";
-// ✅ FIXED: Correct upload URL without /uploads path
 const UPLOADS_URL = "https://skitecrm.onrender.com/api/uploads";
 
 const Team = () => {
   const navigate = useNavigate();
   const [employees, setEmployees] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [status, setStatus] = useState({ loading: true, error: "" });
 
   const fetchEmployees = async () => {
@@ -19,275 +18,159 @@ const Team = () => {
     const token = localStorage.getItem("adminToken");
 
     if (!token) {
-      setStatus({
-        loading: false,
-        error: "Authentication required. Please login.",
-      });
       navigate("/");
       return;
     }
 
     try {
       const res = await fetch(`${API_BASE}/user/all`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (res.status === 401) {
-        const data = await res.json();
-        localStorage.removeItem("adminToken");
-        localStorage.removeItem("adminUser");
-        setStatus({
-          loading: false,
-          error: data.message || "Session expired. Please log in again.",
-        });
+        localStorage.clear();
         navigate("/");
         return;
       }
 
       const data = await res.json();
-
       if (res.ok) {
-        // ✅ DEBUG: Log employee data to check image field
-        // console.log("📸 Employee data received:", data);
-        data.forEach((emp) => {
-          // console.log(`Employee: ${emp.name}, Image: ${emp.image}`);
-        });
         setEmployees(data);
         setStatus({ loading: false, error: "" });
       } else {
-        setStatus({
-          loading: false,
-          error: data.message || "Failed to load employees",
-        });
+        setStatus({ loading: false, error: data.message || "Failed to load" });
       }
     } catch (error) {
-      console.error("Fetch error:", error);
-      setStatus({
-        loading: false,
-        error: "Network error. Could not connect to the server.",
-      });
+      setStatus({ loading: false, error: "Network Error" });
     }
   };
 
-  useEffect(() => {
-    fetchEmployees();
-  }, []);
+  useEffect(() => { fetchEmployees(); }, []);
 
-  const handleEmployeeClick = (employeeId) => {
-    console.log("🚀 Navigating to employee:", employeeId);
-    navigate(`/admin-dashboard/teams/details/${employeeId}`);
-  };
-
-  const handleDelete = async (e, employeeId, employeeName) => {
+  const handleDelete = async (e, id, name) => {
     e.stopPropagation();
-
-    const confirmDelete = window.confirm(
-      `Are you sure you want to delete ${employeeName}?`
-    );
-    if (!confirmDelete) return;
-
-    const token = localStorage.getItem("adminToken");
+    if (!window.confirm(`Delete ${name}?`)) return;
 
     try {
-      const res = await fetch(`${API_BASE}/user/delete/${employeeId}`, {
+      const token = localStorage.getItem("adminToken");
+      const res = await fetch(`${API_BASE}/user/delete/${id}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        toast.error(data.message || "Failed to delete employee.");
-        return;
+      if (res.ok) {
+        setEmployees(prev => prev.filter(emp => emp._id !== id));
+        toast.success("Deleted successfully");
+      } else {
+        toast.error("Failed to delete");
       }
-
-      setEmployees((prev) => prev.filter((emp) => emp._id !== employeeId));
-      toast.success("Employee deleted successfully!");
-    } catch (err) {
-      toast.error("Network error while deleting employee.");
-    }
+    } catch (err) { toast.error("Error deleting"); }
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    const date = new Date(dateString);
-    if (isNaN(date)) return dateString;
-    return date.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
+  const getImageUrl = (path) => {
+    if (!path) return null;
+    return path.startsWith("http") ? path : `${UPLOADS_URL}/${path.replace(/^\//, "")}`;
   };
 
-  // ✅ NEW: Helper function to get the correct image URL
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) {
-      // console.log("⚠️ No image path provided");
-      return null;
-    }
-
-    // console.log("🔍 Original image path:", imagePath);
-
-    // If imagePath already includes full URL, return as is
-    if (imagePath.startsWith("http")) {
-      console.log("✅ Full URL detected:", imagePath);
-      return imagePath;
-    }
-
-    // Remove leading slash if present
-    const cleanPath = imagePath.startsWith("/")
-      ? imagePath.slice(1)
-      : imagePath;
-
-    // Construct full URL
-    const fullUrl = `${UPLOADS_URL}/${cleanPath}`;
-    // console.log("🖼️ Constructed image URL:", fullUrl);
-    return fullUrl;
-  };
-
-  // ✅ NEW: Handle image load errors
-  const handleImageError = (e) => {
-    console.error("Image failed to load:", e.target.src);
-    e.target.style.display = "none";
-    e.target.nextSibling.style.display = "flex"; // Show placeholder
-  };
-
-  if (status.loading) {
-    return (
-      <div className="team-page-container">
-        <h2>Team Members</h2>
-        <p>Loading team members...</p>
-      </div>
-    );
-  }
+  // Filter employees
+  const filteredEmployees = employees.filter(emp => 
+    emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    emp.designation.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div className="team-page-container">
-      <button
-        className="task-btn-back mb-4"
-        onClick={() => navigate("/admin-dashboard")}
-      >
-        <ArrowLeft size={20} /> Back To Dashboard
-      </button>
-      <h1 className="team-page-title">Team Members</h1>
+    <div className="team-container">
+      
+      {/* Header Section */}
+      <div className="team-header">
+        <div className="header-left">
+            <button className="btn-back" onClick={() => navigate("/admin-dashboard")}>
+                <ArrowLeft size={18} /> Back
+            </button>
+            <h1 className="page-title">Team Management</h1>
+            <p className="page-subtitle">Manage your employees and their roles.</p>
+        </div>
+        <div className="header-right">
+            <div className="search-box">
+                <Search size={18} className="search-icon"/>
+                <input 
+                    type="text" 
+                    placeholder="Search employees..." 
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+            <button className="btn-add" onClick={() => navigate("/add-employee")}>
+                + Add Member
+            </button>
+        </div>
+      </div>
 
-      {status.error && <div className="error-message">{status.error}</div>}
-
-      <table className="employee-table1 team-list-table">
-        <thead>
-          <tr>
-            <th className="table-header">Name</th>
-            <th className="table-header">Designation</th>
-            <th className="table-header">Email</th>
-            <th className="table-header">DOB</th>
-            <th className="table-header">Actions</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {employees.map((emp) => {
-            const imageUrl = getImageUrl(emp.image);
-
-            return (
-              <tr
-                key={emp._id}
-                className="table-row employee-clickable-row"
-                onClick={() => handleEmployeeClick(emp._id)}
-              >
-                <td className="table-cell" data-label="Name">
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "10px",
-                    }}
-                  >
-                    {/* ✅ FIXED: Improved image rendering with error handling */}
-                    {imageUrl ? (
-                      <>
-                        <img
-                          src={imageUrl}
-                          alt={emp.name}
-                          className="table-profile-image"
-                          onError={handleImageError}
-                          style={{
-                            width: "30px",
-                            height: "30px",
-                            borderRadius: "50%",
-                            objectFit: "cover",
-                          }}
-                        />
-                        {/* Placeholder - hidden by default, shown on error */}
-                        <div
-                          style={{
-                            width: "30px",
-                            height: "30px",
-                            borderRadius: "50%",
-                            background: "#eee",
-                            display: "none",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontSize: "12px",
-                            color: "#666",
-                          }}
-                        >
-                          {emp.name?.charAt(0)?.toUpperCase() || "?"}
-                        </div>
-                      </>
-                    ) : (
-                      <div
-                        style={{
-                          width: "30px",
-                          height: "30px",
-                          borderRadius: "50%",
-                          background: "#eee",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: "12px",
-                          color: "#666",
-                        }}
-                      >
-                        {emp.name?.charAt(0)?.toUpperCase() || "?"}
-                      </div>
-                    )}
-                    {emp.name}
-                  </div>
-                </td>
-
-                <td className="table-cell" data-label="Designation">
-                  {emp.designation}
-                </td>
-                <td className="table-cell" data-label="Email">
-                  {emp.email}
-                </td>
-                <td className="table-cell" data-label="DOB">
-                  {formatDate(emp.dob)}
-                </td>
-
-                <td className="table-cell" data-label="Actions">
-                  <button
-                    className="delete-btn"
-                    onClick={(e) => handleDelete(e, emp._id, emp.name)}
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-
-      {employees.length === 0 && !status.error && !status.loading && (
-        <p className="no-data-message">No employees found.</p>
-      )}
+      {/* Content Area */}
+      <div className="team-content">
+        {status.loading ? (
+            <div className="loading-state">Loading team data...</div>
+        ) : filteredEmployees.length === 0 ? (
+            <div className="empty-state">No team members found.</div>
+        ) : (
+            <div className="table-card">
+                <table className="team-table">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Role</th>
+                            <th>Contact</th>
+                            <th>Join Date</th>
+                            <th className="text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {filteredEmployees.map((emp) => {
+                            const imgUrl = getImageUrl(emp.image);
+                            return (
+                                <tr key={emp._id} onClick={() => navigate(`/admin-dashboard/teams/details/${emp._id}`)}>
+                                    <td>
+                                        <div className="user-cell">
+                                            <div className="avatar-wrapper">
+                                                {imgUrl ? (
+                                                    <img src={imgUrl} alt={emp.name} onError={(e) => e.target.style.display='none'} />
+                                                ) : (
+                                                    <div className="avatar-placeholder">{emp.name.charAt(0)}</div>
+                                                )}
+                                            </div>
+                                            <div className="user-info">
+                                                <span className="name">{emp.name}</span>
+                                                <span className="id">ID: {emp._id.slice(-6).toUpperCase()}</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span className="role-badge">{emp.designation}</span>
+                                    </td>
+                                    <td>
+                                        <div className="contact-cell">
+                                            <Mail size={14} /> {emp.email}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div className="date-cell">
+                                            <Calendar size={14} /> 
+                                            {emp.dob ? new Date(emp.dob).toLocaleDateString() : 'N/A'}
+                                        </div>
+                                    </td>
+                                    <td className="text-right">
+                                        <button className="btn-icon-delete" onClick={(e) => handleDelete(e, emp._id, emp.name)}>
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
+        )}
+      </div>
     </div>
   );
 };

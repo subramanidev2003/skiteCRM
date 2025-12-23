@@ -13,6 +13,15 @@ import Attendance from './pages/Attendance.jsx';
 import AddEmployee from './pages/AddEmployee.jsx';
 import EditEmployee from './pages/EditEmployee.jsx';
 import ManagerDashboard from './pages/ManagerDashboard.jsx';
+import SalesDashboard from './pages/SalesDashboard.jsx';
+import LeadPage from './pages/LeadPage.jsx';
+import ServiceType from './pages/ServiceType.jsx';
+import AdminSalesDashboard from './pages/AdminSalesDashboard.jsx';
+import AdminServiceType from './pages/AdminServiceType.jsx';
+import AdminLeadPage from './pages/AdminLeadPage.jsx';
+import Conversion from './pages/Conversion.jsx';
+import AllLeadPage from './pages/AllLeadPage.jsx';
+import SalesLayout from './components/SalesLayout.jsx';
 
 function App() {
   return (
@@ -21,35 +30,60 @@ function App() {
 
       <Routes>
         <Route path="/" element={<Login />} />
-        {/* <Route path='/home' element={<Home />}/> */}
-
-        {/* --- EMPLOYEE ROUTES (Only for employees) --- */}
+        
+        {/* --- EMPLOYEE ROUTES --- */}
         <Route element={<ProtectedRoute allowedRoles={["employee"]} />}>
           <Route path="/employee-dashboard" element={<EmployeeDashboard />} />
         </Route>
+
+        {/* --- SALES ROUTES (✅ FIXED) --- */}
+        {/* We wrap the route just like Admin and Manager below */}
+        {/* --- SALES ROUTES --- */}
+<Route element={<ProtectedRoute allowedRoles={["sales", "Sales"]} />}>
+    
+    {/* ✅ WRAP ROUTES IN SALES LAYOUT */}
+    <Route element={<SalesLayout />}>
+        
+        {/* Dashboard is the default view */}
+        <Route path="/sales-dashboard" element={<SalesDashboard />} />
+        
+        {/* These pages will now appear UNDER the Header */}
+        <Route path="/lead-detail/:id" element={<LeadPage />} />
+        <Route path="/sales/service/:serviceName" element={<ServiceType />} />
+        <Route path="/sales-dashboard/conversion" element={<Conversion />} />
+        <Route path="/sales-dashboard/all-leads" element={<AllLeadPage />} />
+        
+    </Route>
+
+</Route>
+
         {/* --- MANAGER ROUTES --- */}
         <Route element={<ProtectedRoute allowedRoles={["manager"]} />}>
           <Route path="/manager-dashboard" element={<ManagerDashboard />} />
           <Route path="/manager-dashboard/tasks" element={<Task />} />
-    <Route path="/manager-dashboard/attendance" element={<Attendance />} />
+          <Route path="/manager-dashboard/attendance" element={<Attendance />} />
         </Route>
 
-        {/* --- ADMIN ROUTES (Only for admins) --- */}
+        {/* --- ADMIN ROUTES --- */}
         <Route element={<ProtectedRoute allowedRoles={["Admin"]} />}>
           <Route path="/admin-dashboard" element={<AdminDashboard />}>
             <Route index element={null} />
             <Route path="teams" element={<Team />} />
             <Route path="teams/details/:id" element={<EmployeeDetail />} />
-            <Route
-              path="/admin-dashboard/teams/edit/:id"
-              element={<EditEmployee />}
-            />
+            <Route path="teams/edit/:id" element={<EditEmployee />} />
             <Route path="tasks" element={<Task />} />
             <Route path="attendance" element={<Attendance />} />
+            <Route path="leads" element={<AdminSalesDashboard />} />
+            <Route path="service/:serviceName" element={<AdminServiceType />} />
+            <Route path="lead-detail/:id" element={<AdminLeadPage />} />
+            <Route path="/admin-dashboard/all-leads" element={<AllLeadPage />} />
+            <Route path="/admin-dashboard/conversion" element={<Conversion />} />
           </Route>
 
           <Route path="/add-employee" element={<AddEmployee />} />
         </Route>
+        
+       
 
         <Route path="*" element={<div>404 Not Found</div>} />
       </Routes>

@@ -14,6 +14,10 @@ const ProtectedRoute = ({ allowedRoles }) => {
   const employeeToken = localStorage.getItem('employeeToken');
   const employeeUserStr = localStorage.getItem('employeeUser');
 
+  // ✅ ADDED: Get Sales Credentials
+  const salesToken = localStorage.getItem('salesToken');
+  const salesUserStr = localStorage.getItem('salesUser');
+
   // 2. Determine which set of credentials to use
   let token = null;
   let userStr = null;
@@ -24,6 +28,9 @@ const ProtectedRoute = ({ allowedRoles }) => {
   } else if (managerToken && managerUserStr) {
     token = managerToken;
     userStr = managerUserStr;
+  } else if (salesToken && salesUserStr) { // ✅ ADDED: Check Sales
+    token = salesToken;
+    userStr = salesUserStr;
   } else if (employeeToken && employeeUserStr) {
     token = employeeToken;
     userStr = employeeUserStr;
@@ -52,12 +59,14 @@ const ProtectedRoute = ({ allowedRoles }) => {
     const handleStorageChange = () => {
       const admT = localStorage.getItem('adminToken');
       const mngT = localStorage.getItem('managerToken');
+      const salesT = localStorage.getItem('salesToken'); // ✅ ADDED
       const empT = localStorage.getItem('employeeToken');
 
       // If the user's specific token is cleared, boot them out
       const role = user.role.toLowerCase();
       if ((role === 'admin' && !admT) || 
           (role === 'manager' && !mngT) || 
+          (role === 'sales' && !salesT) || // ✅ ADDED
           (role === 'employee' && !empT)) {
         navigate('/', { replace: true });
       }
@@ -78,6 +87,7 @@ const ProtectedRoute = ({ allowedRoles }) => {
       // Redirect to their specific "Home" dashboard if they try to access a forbidden area
       if (userRole === 'admin') return <Navigate to="/admin-dashboard" replace />;
       if (userRole === 'manager') return <Navigate to="/manager-dashboard" replace />;
+      if (userRole === 'sales') return <Navigate to="/sales-dashboard" replace />; // ✅ ADDED
       if (userRole === 'employee') return <Navigate to="/employee-dashboard" replace />;
       
       return <Navigate to="/" replace />;

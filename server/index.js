@@ -46,6 +46,7 @@ import taskRouter from "./routes/taskRoutes.js";
 import { fileURLToPath } from 'url';
 import path from 'path';
 import fs from 'fs';
+import leadRoutes from './routes/leadRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -120,6 +121,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/user', userRouter); 
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/tasks', taskRouter);
+app.use('/api/leads', leadRoutes);
 
 // ✅ ERROR HANDLING MIDDLEWARE
 app.use((err, req, res, next) => {
