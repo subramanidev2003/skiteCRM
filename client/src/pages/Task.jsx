@@ -57,8 +57,10 @@ const Task = () => {
     if (token) fetchEmployees();
   }, [token, isManager]);
 
-  const fetchTasks = async () => {
+const fetchTasks = async () => {
     try {
+      // We still send params to the backend in case it supports it, 
+      // but we will primarily rely on the JS filtering below.
       const params = new URLSearchParams();
       if (filters.searchAssignee) params.append("assignedTo", filters.searchAssignee.trim());
       if (filters.fromDate) params.append("fromDate", filters.fromDate);
@@ -68,14 +70,49 @@ const Task = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      if (!res.ok) { setTasks([]); return; }
+      
+      if (!res.ok) { 
+        setTasks([]); 
+        return; 
+      }
 
       let currentTasks = Array.isArray(data) ? data : [];
+
+      // --- 1. Filter by Manager Role (Existing Logic) ---
       if (isManager) {
         currentTasks = currentTasks.filter(task => allowedDesignations.includes(task.assignedTo?.designation));
       }
+
+      // --- 2. Filter by Specific Assignee (Fix) ---
+      if (filters.searchAssignee) {
+        currentTasks = currentTasks.filter(task => 
+          task.assignedTo?._id === filters.searchAssignee
+        );
+      }
+
+      // --- 3. Filter by Date Range (Fix) ---
+      // Note: This filters by 'createdAt'. Change to 'dueDate' if you prefer filtering by deadlines.
+      if (filters.fromDate) {
+        const fromDate = new Date(filters.fromDate).setHours(0, 0, 0, 0);
+        currentTasks = currentTasks.filter(task => {
+          const taskDate = new Date(task.createdAt).setHours(0, 0, 0, 0);
+          return taskDate >= fromDate;
+        });
+      }
+
+      if (filters.toDate) {
+        const toDate = new Date(filters.toDate).setHours(23, 59, 59, 999);
+        currentTasks = currentTasks.filter(task => {
+          const taskDate = new Date(task.createdAt).setHours(0, 0, 0, 0);
+          return taskDate <= toDate;
+        });
+      }
+
       setTasks(currentTasks);
-    } catch (error) { setTasks([]); }
+    } catch (error) { 
+      console.error("Fetch error:", error);
+      setTasks([]); 
+    }
   };
 
   useEffect(() => {
