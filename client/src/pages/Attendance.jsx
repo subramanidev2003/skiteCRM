@@ -4,43 +4,47 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import './Attendance.css';
 import { toast } from 'react-toastify';
-import { ArrowLeft, X, User, Calendar, Clock, FileText } from 'lucide-react';
+import { ArrowLeft, X, Calendar, Clock, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const API_BASE = 'https://skitecrm.onrender.com/api';
 
 const Attendance = () => {
   const navigate = useNavigate();
   
-  // ✅ AUTH & ROLE LOGIC
+  // AUTH
   const adminToken = localStorage.getItem('adminToken');
   const managerToken = localStorage.getItem('managerToken');
   const token = adminToken || managerToken;
-  
   const managerUser = JSON.parse(localStorage.getItem('managerUser'));
   const isManager = !!managerUser;
-
-  // ✅ DESIGNATIONS ALLOWED FOR MANAGER
   const allowedDesignations = ['Web Developer', 'Web Developer(intern)', 'SEO(intern)'];
 
+  // STATE
   const [attendance, setAttendance] = useState([]);
   const [filteredAttendance, setFilteredAttendance] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
-
+  
+  // MODAL
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAttendance, setSelectedAttendance] = useState(null);
 
+  // FILTERS
   const [searchTerm, setSearchTerm] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
+  // ✅ PAGINATION STATE (10 per page)
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // FETCH DATA
   useEffect(() => {
     const fetchAttendance = async () => {
       try {
         if (!token) {
-          setError("No authentication token found. Please login.");
-          setTimeout(() => navigate('/'), 2000);
+          setError("No authentication token found.");
           setLoading(false);
           return;
         }
@@ -59,48 +63,35 @@ const Attendance = () => {
           return;
         }
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          setError(errorData.message || "Failed to fetch attendance");
-          setLoading(false);
-          return;
-        }
-
         const data = await response.json();
         setAttendance(data);
         setLoading(false);
-
       } catch (err) {
         console.error('Fetch error:', err);
-        setError("Network error. Please try again later.");
+        setError("Network error.");
         setLoading(false);
       }
     };
-
     fetchAttendance();
   }, [navigate, token]);
 
-  // ✅ UPDATED FILTER LOGIC (Role-Based + Search + Date)
+  // FILTER LOGIC
   useEffect(() => {
     let result = attendance;
 
-    // 1. Manager-Specific Designation Filtering
     if (isManager) {
       result = result.filter((row) => {
-        // Checking multiple possible field names depending on your backend schema
         const designation = row.designation || row.employeeDesignation || (row.userId && row.userId.designation);
         return allowedDesignations.includes(designation);
       });
     }
 
-    // 2. Name Search
     if (searchTerm) {
       result = result.filter((row) =>
         (row.employeeName || "").toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
-    // 3. Date Filtering
     if (fromDate) {
       const from = new Date(fromDate);
       from.setHours(0, 0, 0, 0);
@@ -114,146 +105,89 @@ const Attendance = () => {
     }
 
     setFilteredAttendance(result);
+    setCurrentPage(1); // Reset to page 1 on filter change
   }, [attendance, searchTerm, fromDate, toDate, isManager]);
 
-  // --- ACTIONS ---
+  // ✅ PAGINATION CALCULATION
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredAttendance.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredAttendance.length / itemsPerPage);
 
-  const deleteSingleRecord = async (id) => {
-    try {
-      const response = await fetch(`${API_BASE}/attendance/deleterec/${id}`, { 
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      return response.ok;
-    } catch (err) { return false; }
-  };
+  const goToNextPage = () => { if (currentPage < totalPages) setCurrentPage(prev => prev + 1); };
+  const goToPrevPage = () => { if (currentPage > 1) setCurrentPage(prev => prev - 1); };
 
-  const deleteAllFilteredRecords = async () => {
-    if (filteredAttendance.length === 0) return;
-    const confirmation = window.confirm(`Delete ALL ${filteredAttendance.length} records?`);
-    if (!confirmation) return;
-
-    setIsDeleting(true);
-    let successfulDeletions = 0;
-    const idsToDelete = filteredAttendance.map(row => row._id || row.id).filter(id => id);
-
-    for (const id of idsToDelete) {
-      const success = await deleteSingleRecord(id);
-      if (success) successfulDeletions++;
-    }
-
-    setIsDeleting(false);
-    if (successfulDeletions > 0) {
-      setAttendance(prev => prev.filter(item => !idsToDelete.includes(item._id) && !idsToDelete.includes(item.id)));
-      toast.success(`Deleted ${successfulDeletions} records.`);
-    }
-  };
-
-  // --- HELPERS ---
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  };
-
-  const formatTime = (dateString) => {
-    if (!dateString) return "--:--";
-    return new Date(dateString).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-  };
+  // HELPERS
+  const formatDate = (dateString) => dateString ? new Date(dateString).toLocaleDateString() : "N/A";
+  const formatTime = (dateString) => dateString ? new Date(dateString).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "--:--";
 
   const downloadPDF = () => {
     const doc = new jsPDF();
     doc.text("Attendance Report", 14, 15);
     const tableRows = filteredAttendance.map(row => [
-      row.employeeName || "Unknown",
-      formatDate(row.checkIn),
-      formatTime(row.checkIn),
-      row.checkOut ? formatTime(row.checkOut) : "Active",
-      row.taskDescription || "—"
+      row.employeeName, formatDate(row.checkIn), formatTime(row.checkIn),
+      row.checkOut ? formatTime(row.checkOut) : "Active", row.taskDescription || "—"
     ]);
-    autoTable(doc, { head: [["Employee", "Date", "Check In", "Check Out", "Task"]], body: tableRows, startY: 20 });
-    doc.save("attendance_report.pdf");
+    autoTable(doc, { head: [["Employee", "Date", "In", "Out", "Task"]], body: tableRows, startY: 20 });
+    doc.save("attendance.pdf");
   };
 
-  const openModal = (record) => { setSelectedAttendance(record); setIsModalOpen(true); };
-  const closeModal = () => { setIsModalOpen(false); setSelectedAttendance(null); };
+  const deleteSingleRecord = async (id) => {
+     try {
+       await fetch(`${API_BASE}/attendance/deleterec/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` }});
+       return true;
+     } catch(e) { return false; }
+  };
 
-  if (loading) return <div className="attendance-page1">Loading records...</div>;
+  const deleteAllFilteredRecords = async () => {
+    if(!window.confirm(`Delete ${filteredAttendance.length} records?`)) return;
+    setIsDeleting(true);
+    const ids = filteredAttendance.map(r => r._id);
+    for(let id of ids) await deleteSingleRecord(id);
+    setAttendance(prev => prev.filter(item => !ids.includes(item._id)));
+    setIsDeleting(false);
+    toast.success("Deleted records");
+  };
+
+  if (loading) return <div className="attendance-page1">Loading...</div>;
 
   return (
     <div className="attendance-page1">
-      {/* ✅ DYNAMIC BACK BUTTON */}
       <button className="task-btn-back mb-4" onClick={() => navigate(isManager ? "/manager-dashboard" : "/admin-dashboard")}>
-        <ArrowLeft size={20} /> Back To Dashboard
+        <ArrowLeft size={20} /> Back
       </button>
 
-      <h2 className="page-title">{isManager ? "Team Attendance History" : "Company Attendance History"}</h2>
+      <h2 className="page-title">Attendance History</h2>
 
       <div className="filter-container1">
         <div className="filter-inputs">
-          <input 
-            type="text" 
-            placeholder="Search by Name..." 
-            value={searchTerm} 
-            onChange={(e) => setSearchTerm(e.target.value)} 
-            className="search-input" 
-          />
-          <div className="date-group">
-            <label>From:</label>
-            <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="date-input" />
-          </div>
-          <div className="date-group">
-            <label>To:</label>
-            <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="date-input" />
-          </div>
+          <input type="text" placeholder="Search Name..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="search-input" />
+          <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="date-input" />
+          <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="date-input" />
           <button onClick={() => {setSearchTerm(""); setFromDate(""); setToDate("");}} className="clear-btn">Clear</button>
         </div>
-        
-      <div className="action-buttons">
-  {/* Hide ONLY the delete button for managers */}
-  {!isManager && (
-    <button 
-      className="delete-btn" 
-      onClick={deleteAllFilteredRecords} 
-      disabled={isDeleting || filteredAttendance.length === 0}
-    >
-      {isDeleting ? "Deleting..." : `Delete (${filteredAttendance.length})`}
-    </button>
-  )}
-  
-  <button onClick={downloadPDF} className="download-btn">
-    Download PDF
-  </button>
-</div>
+        <div className="action-buttons">
+          {!isManager && <button className="delete-btn" onClick={deleteAllFilteredRecords} disabled={isDeleting}>{isDeleting ? "..." : "Delete All"}</button>}
+          <button onClick={downloadPDF} className="download-btn">Download PDF</button>
+        </div>
       </div>
 
       <div className="table-container">
         <table className="attendance-table">
           <thead>
-            <tr>
-              <th>EMPLOYEE</th>
-              <th>DATE</th>
-              <th>CHECK IN</th>
-              <th>CHECK OUT</th>
-              <th>TASK DESCRIPTION</th>
-            </tr>
+            <tr><th>EMPLOYEE</th><th>DATE</th><th>IN</th><th>OUT</th><th>TASK</th></tr>
           </thead>
           <tbody>
-            {filteredAttendance.length === 0 ? (
-              <tr><td colSpan="5" className="text-center">No records found for your team.</td></tr>
+            {currentItems.length === 0 ? (
+              <tr><td colSpan="5" className="text-center">No records.</td></tr>
             ) : (
-              filteredAttendance.map((row) => (
-                <tr key={row._id || Math.random()} onClick={() => openModal(row)} className="att-clickable-row">
-                  <td data-label="Employee">
-                    <strong>{row.employeeName}</strong>
-                    <br/><small style={{color: '#666'}}>{row.designation || row.employeeDesignation}</small>
-                  </td>
-                  <td data-label="Date">{formatDate(row.checkIn)}</td>
-                  <td data-label="Check In" className="text-green">{formatTime(row.checkIn)}</td>
-                  <td data-label="Check Out" className={row.checkOut ? "text-red" : "text-blue"}>
-                    {row.checkOut ? formatTime(row.checkOut) : "Active"}
-                  </td>
-                  <td data-label="Task" className="td-task">{row.taskDescription || "—"}</td>
+              currentItems.map((row) => (
+                <tr key={row._id} onClick={() => {setSelectedAttendance(row); setIsModalOpen(true);}} className="att-clickable-row">
+                  <td><strong>{row.employeeName}</strong><br/><small>{row.designation}</small></td>
+                  <td>{formatDate(row.checkIn)}</td>
+                  <td className="text-green">{formatTime(row.checkIn)}</td>
+                  <td className={row.checkOut ? "text-red" : "text-blue"}>{row.checkOut ? formatTime(row.checkOut) : "Active"}</td>
+                  <td className="td-task">{row.taskDescription || "—"}</td>
                 </tr>
               ))
             )}
@@ -261,29 +195,24 @@ const Attendance = () => {
         </table>
       </div>
 
-      {/* ✅ DETAIL MODAL */}
+      {/* ✅ PAGINATION CONTROLS */}
+      {filteredAttendance.length > 0 && (
+        <div className="pagination-container" style={{display:'flex', justifyContent:'flex-end', marginTop:'15px', gap:'10px'}}>
+          <span>Page {currentPage} of {totalPages}</span>
+          <button onClick={goToPrevPage} disabled={currentPage===1} style={{padding:'5px 10px'}}><ChevronLeft/></button>
+          <button onClick={goToNextPage} disabled={currentPage===totalPages} style={{padding:'5px 10px'}}><ChevronRight/></button>
+        </div>
+      )}
+
+      {/* MODAL */}
       {isModalOpen && selectedAttendance && (
-        <div className="att-modal-overlay" onClick={closeModal}>
+        <div className="att-modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="att-modal-box" onClick={(e) => e.stopPropagation()}>
-            <div className="att-modal-header">
-              <span className="att-modal-title">Record Details</span>
-              <button className="att-modal-close" onClick={closeModal}><X size={24} /></button>
-            </div>
+            <div className="att-modal-header"><h3>Details</h3><button onClick={() => setIsModalOpen(false)}><X/></button></div>
             <div className="att-modal-content">
-              <div className="att-profile-section">
-                <div className="att-avatar">{selectedAttendance.employeeName?.charAt(0)}</div>
-                <h3>{selectedAttendance.employeeName}</h3>
-                <p>{selectedAttendance.designation || selectedAttendance.employeeDesignation}</p>
-              </div>
-              <div className="att-grid">
-                <div className="att-item"><label><Calendar size={14}/> Date</label><div>{formatDate(selectedAttendance.checkIn)}</div></div>
-                <div className="att-item"><label><Clock size={14}/> Check In</label><div className="text-green">{formatTime(selectedAttendance.checkIn)}</div></div>
-                <div className="att-item"><label><Clock size={14}/> Check Out</label><div className="text-red">{selectedAttendance.checkOut ? formatTime(selectedAttendance.checkOut) : "Still Logged In"}</div></div>
-              </div>
-              <div className="att-section">
-                <label><FileText size={14}/> Work Done</label>
-                <div className="att-desc-box">{selectedAttendance.taskDescription || "No description provided."}</div>
-              </div>
+               <h3>{selectedAttendance.employeeName}</h3>
+               <p>Date: {formatDate(selectedAttendance.checkIn)}</p>
+               <p>Task: {selectedAttendance.taskDescription}</p>
             </div>
           </div>
         </div>

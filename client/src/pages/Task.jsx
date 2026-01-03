@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import "./Task.css";
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, X, Trash2 } from "lucide-react"; 
+import { ArrowLeft, X, Trash2, ChevronLeft, ChevronRight } from "lucide-react"; 
 import { toast } from 'react-toastify'; 
 
 const API_BASE = 'https://skitecrm.onrender.com/api';
@@ -24,7 +24,7 @@ const Task = () => {
 
   const [employees, setEmployees] = useState([]);
   const [tasks, setTasks] = useState([]);
-  const prevTasksRef = useRef([]);
+  // const prevTasksRef = useRef([]); // Not strictly needed for basic rendering
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -32,6 +32,10 @@ const Task = () => {
   const [filters, setFilters] = useState({ searchAssignee: "", fromDate: "", toDate: "" });
   const [taskData, setTaskData] = useState({ title: "", description: "", priority: "Medium", assignedTo: "", dueDate: "" });
   const [status, setStatus] = useState({ loading: false, error: "", success: "" });
+
+  // ✅ PAGINATION STATE
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // --- DATA FETCHING ---
 
@@ -57,10 +61,8 @@ const Task = () => {
     if (token) fetchEmployees();
   }, [token, isManager]);
 
-const fetchTasks = async () => {
+  const fetchTasks = async () => {
     try {
-      // We still send params to the backend in case it supports it, 
-      // but we will primarily rely on the JS filtering below.
       const params = new URLSearchParams();
       if (filters.searchAssignee) params.append("assignedTo", filters.searchAssignee.trim());
       if (filters.fromDate) params.append("fromDate", filters.fromDate);
@@ -78,20 +80,19 @@ const fetchTasks = async () => {
 
       let currentTasks = Array.isArray(data) ? data : [];
 
-      // --- 1. Filter by Manager Role (Existing Logic) ---
+      // --- 1. Filter by Manager Role ---
       if (isManager) {
         currentTasks = currentTasks.filter(task => allowedDesignations.includes(task.assignedTo?.designation));
       }
 
-      // --- 2. Filter by Specific Assignee (Fix) ---
+      // --- 2. Filter by Specific Assignee ---
       if (filters.searchAssignee) {
         currentTasks = currentTasks.filter(task => 
           task.assignedTo?._id === filters.searchAssignee
         );
       }
 
-      // --- 3. Filter by Date Range (Fix) ---
-      // Note: This filters by 'createdAt'. Change to 'dueDate' if you prefer filtering by deadlines.
+      // --- 3. Filter by Date Range ---
       if (filters.fromDate) {
         const fromDate = new Date(filters.fromDate).setHours(0, 0, 0, 0);
         currentTasks = currentTasks.filter(task => {
@@ -115,11 +116,23 @@ const fetchTasks = async () => {
     }
   };
 
+  // ✅ FETCH & RESET PAGINATION ON FILTER CHANGE
   useEffect(() => {
+    setCurrentPage(1); // Reset to page 1 when filters change
     fetchTasks();
     const intervalId = setInterval(fetchTasks, 5000);
     return () => clearInterval(intervalId);
   }, [filters, token]);
+
+  // --- PAGINATION CALCULATIONS ---
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = tasks.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(tasks.length / itemsPerPage);
+
+  const goToNextPage = () => { if (currentPage < totalPages) setCurrentPage(prev => prev + 1); };
+  const goToPrevPage = () => { if (currentPage > 1) setCurrentPage(prev => prev - 1); };
+
 
   // --- HANDLERS ---
 
@@ -154,7 +167,6 @@ const fetchTasks = async () => {
       description: "", 
       priority: "Medium", 
       dueDate: "", 
-      // Reset assignedTo to the first employee if available, otherwise empty
       assignedTo: employees.length > 0 ? employees[0]._id : "" 
     }); };
   const openViewModal = (task) => { setSelectedTask(task); setIsViewModalOpen(true); };
@@ -222,7 +234,8 @@ const fetchTasks = async () => {
           value={filters.fromDate}
           onChange={handleFilterChange}
           className="task-filter-input"
-        />
+        >
+        </input>
         <input
           type="date"
           name="toDate"
@@ -244,19 +257,18 @@ const fetchTasks = async () => {
               <th>STATUS</th>
               <th>ASSIGNED DATE</th>
               <th>DUE DATE</th>
-              {/* ✅ FIX: Use ternary operator to avoid whitespace/boolean issues in table */}
               {isAdmin ? <th>ACTION</th> : null}
             </tr>
           </thead>
           <tbody>
-            {tasks.length === 0 ? (
+            {currentItems.length === 0 ? (
               <tr>
-                <td colSpan={isAdmin ? "5" : "4"} className="task-empty-state">
+                <td colSpan={isAdmin ? "6" : "5"} className="task-empty-state">
                   No relevant tasks found.
                 </td>
               </tr>
             ) : (
-              tasks.map((task) => (
+              currentItems.map((task) => (
                 <tr
                   key={task._id}
                   className="task-table-row task-clickable-row"
@@ -293,7 +305,6 @@ const fetchTasks = async () => {
                     {new Date(task.dueDate).toLocaleDateString()}
                   </td>
 
-                  {/* ✅ FIX: Use ternary operator here as well */}
                   {isAdmin ? (
                     <td className="task-cell">
                       <button
@@ -316,6 +327,29 @@ const fetchTasks = async () => {
           </tbody>
         </table>
       </div>
+
+      {/* ✅ PAGINATION CONTROLS */}
+      {tasks.length > 0 && (
+        <div className="pagination-container" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginTop: '15px', gap: '10px' }}>
+          <span style={{ fontSize: '14px', color: '#555' }}>
+            Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
+          </span>
+          <button 
+            onClick={goToPrevPage} 
+            disabled={currentPage === 1}
+            style={{ padding: '5px 10px', border: '1px solid #ddd', borderRadius: '4px', background: currentPage === 1 ? '#f0f0f0' : '#fff', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center' }}
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <button 
+            onClick={goToNextPage} 
+            disabled={currentPage === totalPages}
+            style={{ padding: '5px 10px', border: '1px solid #ddd', borderRadius: '4px', background: currentPage === totalPages ? '#f0f0f0' : '#fff', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center' }}
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      )}
 
       {/* ASSIGN TASK MODAL */}
       {isModalOpen && (

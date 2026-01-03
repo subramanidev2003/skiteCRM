@@ -17,9 +17,15 @@ router.post("/checkin", checkin); // Add userAuth middleware if needed
 router.post("/checkout", checkout);
 
 // --- GET ALL (Manager Filtered) ---
+// --- GET ALL (Manager Filtered) ---
+// ... inside your router ...
+
+// --- GET ALL (Manager Filtered) ---
 router.get('/all', userAuth, async (req, res) => {
     try {
         let query = {};
+        
+        // Manager Logic
         if (req.userRole && req.userRole.toLowerCase() === 'manager') {
             const allowedDesignations = ['Web Developer', 'Web Developer(intern)', 'SEO(intern)'];
             const eligibleUsers = await User.find({ designation: { $in: allowedDesignations } }).select('_id');
@@ -27,10 +33,10 @@ router.get('/all', userAuth, async (req, res) => {
             query.userId = { $in: userIds };
         }
 
+        // ✅ FIX: Removed .limit(100) so it fetches EVERYTHING
         const attendanceRecords = await Attendance.find(query)
             .populate('userId', 'name email designation') 
-            .sort({ checkInTime: -1 })
-            .limit(100); 
+            .sort({ checkInTime: -1 }); 
 
         const formattedRecords = attendanceRecords.map(record => ({
             id: record._id, 
@@ -50,7 +56,6 @@ router.get('/all', userAuth, async (req, res) => {
         res.status(500).json({ msg: 'Server error' });
     }
 });
-
 // --- GET STATUS ---
 router.get('/status/:userId', async (req, res) => {
     try {
