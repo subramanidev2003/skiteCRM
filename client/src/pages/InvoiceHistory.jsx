@@ -13,7 +13,7 @@ const InvoiceHistory = () => {
   // 1. Fetch Data
   const fetchInvoices = async () => {
     try {
-      const response = await fetch('http://localhost:4000/api/invoice/all');
+      const response = await fetch('https://skite-crm.onrender.com/api/invoice/all');
       const data = await response.json();
       if (response.ok) {
         setInvoices(data);
@@ -37,7 +37,7 @@ const InvoiceHistory = () => {
     if (!window.confirm("Are you sure you want to delete this invoice?")) return;
 
     try {
-      const response = await fetch(`http://localhost:4000/api/invoice/delete/${id}`, {
+      const response = await fetch(`https://skite-crm.onrender.com/api/invoice/delete/${id}`, {
         method: 'DELETE',
       });
 

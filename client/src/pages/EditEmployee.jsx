@@ -8,7 +8,7 @@ import {
 import './EditEmployee.css';
 import { toast } from 'react-toastify';
 
-const API_BASE = 'http://localhost:4000/api';
+const API_BASE = 'https://skite-crm.onrender.com/api';
 const API_UPLOAD = 'https://skitecrm.onrender.com/api/uploads';
 
 const EditEmployee = () => {

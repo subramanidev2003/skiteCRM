@@ -13,7 +13,7 @@ const QuoteHistory = () => {
   // 1. Fetch Data
   const fetchQuotes = async () => {
     try {
-      const response = await fetch('http://localhost:4000/api/quote/all');
+      const response = await fetch('https://skite-crm.onrender.com/api/quote/all');
       const data = await response.json();
       if (response.ok) {
         setQuotes(data);
@@ -37,7 +37,7 @@ const QuoteHistory = () => {
     if (!window.confirm("Are you sure you want to delete this quote?")) return;
 
     try {
-      const response = await fetch(`http://localhost:4000/api/quote/delete/${id}`, {
+      const response = await fetch(`https://skite-crm.onrender.com/api/quote/delete/${id}`, {
         method: 'DELETE',
       });
 

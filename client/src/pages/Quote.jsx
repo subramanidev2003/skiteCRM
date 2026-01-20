@@ -8,7 +8,7 @@ import { toast } from 'react-toastify';
 import './Invoice.css'; 
 
 // ✅ IMAGES IMPORT
-import skitelogo from '../assets/skitelogo.png'; 
+import skitelogo from '../assets/skite-logo.jpg'; 
 import skitesign from '../assets/sign.jpg'; 
 import skiteseal from '../assets/seal.png'; 
 
@@ -111,7 +111,7 @@ Any additional page will be charged at Rs.1,500 per page.`);
         terms
       };
 
-      const response = await fetch('http://localhost:4000/api/quote/create', {
+      const response = await fetch('https://skite-crm.onrender.com/api/quote/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(quoteData)
@@ -167,7 +167,7 @@ Any additional page will be charged at Rs.1,500 per page.`);
 
     // 1. LOGO
     try {
-        doc.addImage(skitelogo, 'PNG', 14, 10, 40, 29); 
+        doc.addImage(skitelogo, 'JPG', 14, 10, 40, 29); 
     } catch (e) { console.error("Logo Error:", e); }
 
     // 2. COMPANY DETAILS

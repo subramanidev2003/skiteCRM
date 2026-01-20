@@ -6,7 +6,7 @@ import autoTable from 'jspdf-autotable';
 import { toast } from 'react-toastify';
 import './Attendance.css'; 
 
-const API_BASE = 'http://localhost:4000/api';
+const API_BASE = 'http://skite-crm.onrender.com/api';
 
 const PayRoll = () => {
   const navigate = useNavigate();
