@@ -89,6 +89,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  salaryPerDay: { 
+    type: Number, 
+    default: 0 
+  },
   
   // Bank Details - All Optional
   bankDetails: {

@@ -4,9 +4,9 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import './Attendance.css';
 import { toast } from 'react-toastify';
-import { ArrowLeft, X, Calendar, Clock, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
-const API_BASE = 'https://skitecrm.onrender.com/api';
+const API_BASE = 'http://localhost:4000/api';
 
 const Attendance = () => {
   const navigate = useNavigate();
@@ -35,7 +35,7 @@ const Attendance = () => {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
-  // ✅ PAGINATION STATE (10 per page)
+  // PAGINATION STATE
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -105,10 +105,10 @@ const Attendance = () => {
     }
 
     setFilteredAttendance(result);
-    setCurrentPage(1); // Reset to page 1 on filter change
+    setCurrentPage(1); 
   }, [attendance, searchTerm, fromDate, toDate, isManager]);
 
-  // ✅ PAGINATION CALCULATION
+  // PAGINATION CALCULATION
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredAttendance.slice(indexOfFirstItem, indexOfLastItem);
@@ -117,18 +117,62 @@ const Attendance = () => {
   const goToNextPage = () => { if (currentPage < totalPages) setCurrentPage(prev => prev + 1); };
   const goToPrevPage = () => { if (currentPage > 1) setCurrentPage(prev => prev - 1); };
 
-  // HELPERS
+  // --- HELPERS (Updated with Duration Logic) ---
   const formatDate = (dateString) => dateString ? new Date(dateString).toLocaleDateString() : "N/A";
   const formatTime = (dateString) => dateString ? new Date(dateString).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "--:--";
+
+  // New Function: Calculate Duration
+  const calculateDuration = (checkIn, checkOut) => {
+    if (!checkIn) return { text: "0h 0m", hours: 0 };
+    
+    const start = new Date(checkIn);
+    const end = checkOut ? new Date(checkOut) : new Date(); // If no checkout, calculate till now
+    
+    const diffMs = end - start;
+    const diffHrs = Math.floor(diffMs / 3600000); // hours
+    const diffMins = Math.floor((diffMs % 3600000) / 60000); // minutes
+    
+    const totalHoursDecimal = diffMs / (1000 * 60 * 60);
+
+    return { 
+        text: `${diffHrs}h ${diffMins}m`, 
+        hours: totalHoursDecimal 
+    };
+  };
+
+  // New Function: Get Status Component
+  const renderStatusBadge = (hours) => {
+      if (hours >= 6) return <span style={{backgroundColor:'#d1fae5', color:'#065f46', padding:'4px 8px', borderRadius:'12px', fontSize:'0.75rem', fontWeight:'600'}}>Present</span>;
+      if (hours >= 3) return <span style={{backgroundColor:'#ffedd5', color:'#9a3412', padding:'4px 8px', borderRadius:'12px', fontSize:'0.75rem', fontWeight:'600'}}>Half Day</span>;
+      return <span style={{backgroundColor:'#fee2e2', color:'#991b1b', padding:'4px 8px', borderRadius:'12px', fontSize:'0.75rem', fontWeight:'600'}}>Short</span>;
+  };
 
   const downloadPDF = () => {
     const doc = new jsPDF();
     doc.text("Attendance Report", 14, 15);
-    const tableRows = filteredAttendance.map(row => [
-      row.employeeName, formatDate(row.checkIn), formatTime(row.checkIn),
-      row.checkOut ? formatTime(row.checkOut) : "Active", row.taskDescription || "—"
-    ]);
-    autoTable(doc, { head: [["Employee", "Date", "In", "Out", "Task"]], body: tableRows, startY: 20 });
+    
+    // Updated PDF rows to include Duration and Status text
+    const tableRows = filteredAttendance.map(row => {
+        const { text, hours } = calculateDuration(row.checkIn, row.checkOut);
+        let statusText = "Short";
+        if(hours >= 6) statusText = "Present";
+        else if(hours >= 3) statusText = "Half Day";
+
+        return [
+            row.employeeName, 
+            formatDate(row.checkIn), 
+            formatTime(row.checkIn),
+            row.checkOut ? formatTime(row.checkOut) : "Active", 
+            text, // Duration
+            statusText // Status
+        ];
+    });
+
+    autoTable(doc, { 
+        head: [["Employee", "Date", "In", "Out", "Duration", "Status"]], 
+        body: tableRows, 
+        startY: 20 
+    });
     doc.save("attendance.pdf");
   };
 
@@ -175,27 +219,46 @@ const Attendance = () => {
       <div className="table-container">
         <table className="attendance-table">
           <thead>
-            <tr><th>EMPLOYEE</th><th>DATE</th><th>IN</th><th>OUT</th><th>TASK</th></tr>
+            {/* Added DURATION and STATUS columns */}
+            <tr>
+                <th>EMPLOYEE</th>
+                <th>DATE</th>
+                <th>IN</th>
+                <th>OUT</th>
+                <th>DURATION</th>
+                <th>STATUS</th>
+                <th>TASK</th>
+            </tr>
           </thead>
           <tbody>
             {currentItems.length === 0 ? (
-              <tr><td colSpan="5" className="text-center">No records.</td></tr>
+              <tr><td colSpan="7" className="text-center">No records.</td></tr>
             ) : (
-              currentItems.map((row) => (
-                <tr key={row._id} onClick={() => {setSelectedAttendance(row); setIsModalOpen(true);}} className="att-clickable-row">
-                  <td><strong>{row.employeeName}</strong><br/><small>{row.designation}</small></td>
-                  <td>{formatDate(row.checkIn)}</td>
-                  <td className="text-green">{formatTime(row.checkIn)}</td>
-                  <td className={row.checkOut ? "text-red" : "text-blue"}>{row.checkOut ? formatTime(row.checkOut) : "Active"}</td>
-                  <td className="td-task">{row.taskDescription || "—"}</td>
-                </tr>
-              ))
+              currentItems.map((row) => {
+                // Calculate logic for each row
+                const { text, hours } = calculateDuration(row.checkIn, row.checkOut);
+
+                return (
+                    <tr key={row._id} onClick={() => {setSelectedAttendance(row); setIsModalOpen(true);}} className="att-clickable-row">
+                      <td><strong>{row.employeeName}</strong><br/><small>{row.designation}</small></td>
+                      <td>{formatDate(row.checkIn)}</td>
+                      <td className="text-green">{formatTime(row.checkIn)}</td>
+                      <td className={row.checkOut ? "text-red" : "text-blue"}>{row.checkOut ? formatTime(row.checkOut) : "Active"}</td>
+                      
+                      {/* New Columns Data */}
+                      <td style={{fontWeight:'bold', color: '#555'}}>{text}</td>
+                      <td>{renderStatusBadge(hours)}</td>
+
+                      <td className="td-task">{row.taskDescription || "—"}</td>
+                    </tr>
+                );
+              })
             )}
           </tbody>
         </table>
       </div>
 
-      {/* ✅ PAGINATION CONTROLS */}
+      {/* PAGINATION CONTROLS */}
       {filteredAttendance.length > 0 && (
         <div className="pagination-container" style={{display:'flex', justifyContent:'flex-end', marginTop:'15px', gap:'10px'}}>
           <span>Page {currentPage} of {totalPages}</span>
@@ -212,6 +275,8 @@ const Attendance = () => {
             <div className="att-modal-content">
                <h3>{selectedAttendance.employeeName}</h3>
                <p>Date: {formatDate(selectedAttendance.checkIn)}</p>
+               {/* Show duration in Modal too */}
+               <p>Work Duration: <strong>{calculateDuration(selectedAttendance.checkIn, selectedAttendance.checkOut).text}</strong></p>
                <p>Task: {selectedAttendance.taskDescription}</p>
             </div>
           </div>

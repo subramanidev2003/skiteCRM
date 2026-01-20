@@ -4,7 +4,7 @@ import skitelogo from '../assets/skitelogo.png';
 import './Login.css';
 
 // UPDATED: Pointing to Localhost as requested
-const API_BASE = 'https://skitecrm.onrender.com/api';
+const API_BASE = 'http://localhost:4000/api';
 
 const Login = () => {
     const navigate = useNavigate();

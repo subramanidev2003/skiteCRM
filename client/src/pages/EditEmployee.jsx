@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+// 1. IndianRupee ஐ இங்கே import செய்யுங்கள்
 import { 
   User, Mail, Calendar, Briefcase, FileText, 
-  CreditCard, Building, ArrowLeft, Save, Upload, X 
+  CreditCard, Building, ArrowLeft, Save, Upload, X, IndianRupee 
 } from 'lucide-react';
 import './EditEmployee.css';
 import { toast } from 'react-toastify';
 
-const API_BASE = 'https://skitecrm.onrender.com/api';
+const API_BASE = 'http://localhost:4000/api';
 const API_UPLOAD = 'https://skitecrm.onrender.com/api/uploads';
 
 const EditEmployee = () => {
@@ -25,6 +26,7 @@ const EditEmployee = () => {
     password: '',
     designation: '',
     role: '',
+    salaryPerDay: '', // 2. இங்கே salaryPerDay ஐ சேர்க்கவும்
     dob: '',
     joiningDate: '',
     panNumber: '',
@@ -57,11 +59,12 @@ const EditEmployee = () => {
         ...data,
         dob: formatDate(data.dob),
         joiningDate: formatDate(data.joiningDate),
-        password: '', // Don't populate password field
+        // 3. Backend-ல் இருந்து வரும் டேட்டாவை இங்கே set செய்யவும்
+        salaryPerDay: data.salaryPerDay || '', 
+        password: '', 
         bankDetails: data.bankDetails || { bankName: '', accountNumber: '', ifscCode: '' }
       });
 
-      // Store the profileImage in formData
       if (data.profileImage) {
         setFormData(prev => ({
           ...prev,
@@ -79,6 +82,7 @@ const EditEmployee = () => {
     setLoading(false);
   }
 };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -95,21 +99,16 @@ const EditEmployee = () => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         toast.error('Please select a valid image file');
         return;
       }
-      
-      // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         toast.error('Image size should be less than 5MB');
         return;
       }
-
       setSelectedFile(file);
       setImagePreview(URL.createObjectURL(file));
-      console.log('Image selected:', file.name, file.type, file.size);
     }
   };
 
@@ -120,12 +119,8 @@ const handleSubmit = async (e) => {
   const token = localStorage.getItem('adminToken');
   const dataToSend = new FormData();
 
-  // 1. Append basic fields
   Object.keys(formData).forEach(key => {
-    // CRITICAL: Keep profileImage in the excluded list
     if (key !== 'bankDetails' && key !== 'image' && key !== '_id' && key !== 'profileImage') {
-      
-      // Skip password if it is empty
       if (key === 'password' && !formData[key]) {
         return; 
       }
@@ -133,18 +128,13 @@ const handleSubmit = async (e) => {
     }
   });
 
-  // 2. Append Bank Details as JSON string
   dataToSend.append('bankDetails', JSON.stringify(formData.bankDetails));
 
-  // 3. Append Image ONLY if a new one is selected
   if (selectedFile) {
     dataToSend.append('image', selectedFile); 
   } else {
-    // CRITICAL FIX: If no new file selected, send existing image filename
-    // Get the existing profileImage from the original data
     const existingImage = formData.profileImage;
     if (existingImage && existingImage !== 'null' && existingImage !== 'undefined') {
-      // Extract just the filename if it's a full URL
       const filename = existingImage.includes('/') 
         ? existingImage.split('/').pop() 
         : existingImage;
@@ -157,7 +147,6 @@ const handleSubmit = async (e) => {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`
-        // Do NOT set Content-Type manually
       },
       body: dataToSend
     });
@@ -166,6 +155,7 @@ const handleSubmit = async (e) => {
 
     if (response.ok) {
       toast.success('Employee updated successfully!');
+      // 4. Update Navigation if needed
       navigate(`/admin-dashboard/teams/details/${id}`);
     } else {
       toast.error(result.message || 'Update failed');
@@ -177,7 +167,7 @@ const handleSubmit = async (e) => {
     setSaving(false);
   }
 };
-  // Clean up image preview URL on unmount
+
   useEffect(() => {
     return () => {
       if (imagePreview && imagePreview.startsWith('blob:')) {
@@ -256,6 +246,21 @@ const handleSubmit = async (e) => {
                 <label>Joining Date</label>
                 <input type="date" name="joiningDate" value={formData.joiningDate} onChange={handleChange} />
               </div>
+              
+              {/* 5. Salary Input Field இங்கே சேர்க்கப்பட்டுள்ளது */}
+              <div className="form-group">
+                <label style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <IndianRupee size={14} /> Salary Per Day
+                </label>
+                <input 
+                  type="number" 
+                  name="salaryPerDay" 
+                  value={formData.salaryPerDay} 
+                  onChange={handleChange} 
+                  placeholder="e.g. 500"
+                />
+              </div>
+
             </div>
 
             <div className="detail-card">

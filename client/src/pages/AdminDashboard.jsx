@@ -1,5 +1,5 @@
 // D:/Desktop/skite/client/src/pages/AdminDashboard.jsx
-import { CalendarCheck, Megaphone, Users } from 'lucide-react';
+import { CalendarCheck, Megaphone, Users, IndianRupee, FileText, ScrollText } from 'lucide-react'; // ✅ ScrollText added for Quote
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom'; 
 import skitelogo from '../assets/skitelogo.png'; 
@@ -27,7 +27,6 @@ export const TaskCloseIcon = () => (
 // Component to display the initial cards only
 const DashboardCards = ({ handleCardClick }) => (
     <div className="cards-container">
-        {/* Updated: Clicking this now navigates to the new AddEmployee page */}
         <div className="card" onClick={() => handleCardClick('add')}>
             <div className="card-icon"><PlusIcon /></div>
             <div className="card-title1">Add employee</div>
@@ -45,19 +44,47 @@ const DashboardCards = ({ handleCardClick }) => (
             <div className="card-title1">Task</div>
             <div className="card-accent"></div>
         </div>
-         <div className="card" onClick={() => handleCardClick('attendance')}>
+
+        <div className="card" onClick={() => handleCardClick('attendance')}>
             <div className="card-icon"><CalendarCheck size={40} color="#FF4500" /></div>
             <div className="card-title1">Attendance</div>
             <div className="card-accent"></div>
         </div>
+
         <div className="card" onClick={() => handleCardClick('leads')}>
-    <div className="card-icon">
-        {/* ✅ Changed to Users Icon */}
-        <Megaphone size={40} color="#FF4500" />
-    </div>
-    <div className="card-title1">Leads</div>
-    <div className="card-accent"></div>
-</div>
+            <div className="card-icon">
+                <Megaphone size={40} color="#FF4500" />
+            </div>
+            <div className="card-title1">Leads</div>
+            <div className="card-accent"></div>
+        </div>
+
+        <div className="card" onClick={() => handleCardClick('payroll')}>
+            <div className="card-icon">
+                <IndianRupee size={40} color="#FF4500" />
+            </div>
+            <div className="card-title1">Payroll</div>
+            <div className="card-accent"></div>
+        </div>
+
+        {/* Invoice Card */}
+        <div className="card" onClick={() => handleCardClick('invoice')}>
+            <div className="card-icon">
+                <FileText size={40} color="#FF4500" />
+            </div>
+            <div className="card-title1">Invoice</div>
+            <div className="card-accent"></div>
+        </div>
+
+        {/* ✅ New Quote Card Added Here */}
+        <div className="card" onClick={() => handleCardClick('quote')}>
+            <div className="card-icon">
+                <ScrollText size={40} color="#FF4500" />
+            </div>
+            <div className="card-title1">Quote</div>
+            <div className="card-accent"></div>
+        </div>
+
     </div>
 );
 
@@ -85,7 +112,6 @@ const AdminDashboard = () => {
         } catch (err) { 
             console.log(err); 
         } finally {
-            // ✅ FIXED: Clear admin-specific credentials
             localStorage.removeItem('adminToken');
             localStorage.removeItem('adminUser');
             navigate('/');
@@ -95,7 +121,6 @@ const AdminDashboard = () => {
 
     const handleCardClick = (type) => {
         if (type === 'add') {
-            // Updated: Navigate to the dedicated Add Employee page
             navigate('/add-employee'); 
             return;
         }
@@ -112,9 +137,22 @@ const AdminDashboard = () => {
             return;
         }
         if (type === 'leads') {
-        navigate('/admin-dashboard/leads'); // This will now open AdminSalesDashboard
-        return;
-    }
+            navigate('/admin-dashboard/leads'); 
+            return;
+        }
+        if (type === 'payroll') {
+            navigate('/admin-dashboard/payroll'); 
+            return;
+        }
+        if (type === 'invoice') {
+            navigate('/admin-dashboard/invoice'); 
+            return;
+        }
+        // ✅ Quote Page Navigation Added
+        if (type === 'quote') {
+            navigate('/admin-dashboard/quote'); 
+            return;
+        }
     };
     
     return (
@@ -132,12 +170,12 @@ const AdminDashboard = () => {
              </header>
 
              <main className={isBaseDashboard ? "main-content1" : "main-content-child"}>
-    {/* IF we are on the base dashboard path, show the cards */}
-    {isBaseDashboard && <DashboardCards handleCardClick={handleCardClick} />}
+                {/* IF we are on the base dashboard path, show the cards */}
+                {isBaseDashboard && <DashboardCards handleCardClick={handleCardClick} />}
 
-    {/* The <Outlet /> renders the child component */}
-    <Outlet />
-</main>
+                {/* The <Outlet /> renders the child component */}
+                <Outlet />
+            </main>
         </div>
     );
 }

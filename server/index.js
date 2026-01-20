@@ -47,6 +47,9 @@ import { fileURLToPath } from 'url';
 import path from 'path';
 import fs from 'fs';
 import leadRoutes from './routes/leadRoutes.js';
+import invoiceRoutes from './routes/invoiceRoutes.js';
+import quoteRoutes from './routes/quoteRoutes.js';
+
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -122,6 +125,8 @@ app.use('/api/user', userRouter);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/tasks', taskRouter);
 app.use('/api/leads', leadRoutes);
+app.use('/api/invoice', invoiceRoutes);
+app.use('/api/quote', quoteRoutes); // Add this line
 
 // ✅ ERROR HANDLING MIDDLEWARE
 app.use((err, req, res, next) => {

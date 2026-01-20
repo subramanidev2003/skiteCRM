@@ -45,7 +45,7 @@ export const getAllEmployees = async (req, res) => {
         const employees = await userModel
             .find({ role: { $ne: "Admin" } }) 
             // ✅ CHANGED: profileImage → image
-            .select('name role email designation dob image joiningDate _id') 
+            .select('name role email designation dob image joiningDate salaryPerDay _id') 
             .sort({ name: 1 });
 
         return res.status(200).json(employees);
@@ -121,8 +121,9 @@ export const deleteUser = async (req, res) => {
     }
 };
 
+
 // ================================
-// 5. UPDATE EMPLOYEE - ✅ FIXED
+// 5. UPDATE EMPLOYEE - ✅ UPDATED
 // ================================
 export const updateUser = async (req, res) => {
   try {
@@ -147,6 +148,9 @@ export const updateUser = async (req, res) => {
       aadharNumber: req.body.aadharNumber || user.aadharNumber,
       dob: req.body.dob || user.dob,
       joiningDate: req.body.joiningDate || user.joiningDate,
+      
+      
+      salaryPerDay: req.body.salaryPerDay || user.salaryPerDay,
     };
 
     // 2. Handle Password
@@ -167,24 +171,20 @@ export const updateUser = async (req, res) => {
       updates.bankDetails = user.bankDetails;
     }
 
-    // 4. Handle Image Upload - ✅ CHANGED: profileImage → image
+    // 4. Handle Image Upload
     if (req.file) {
-      // Delete old image
       if (user.image) {
         const oldPath = path.join(process.cwd(), 'uploads', user.image);
         if (fs.existsSync(oldPath)) {
           try {
             fs.unlinkSync(oldPath);
-            console.log('Deleted old image:', oldPath);
           } catch (err) {
             console.error('Failed to delete old image:', err);
           }
         }
       }
-      // ✅ CHANGED: profileImage → image
       updates.image = req.file.filename;
     }
-    // If no file uploaded, keep the existing image
     else if (req.body.image) {
       updates.image = req.body.image;
     } else {

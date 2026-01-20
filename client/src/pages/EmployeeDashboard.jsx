@@ -2,16 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { 
   Clock, ListTodo, CalendarDays, CheckCircle2, 
   LogOut, User, AlertCircle, X, UserPlus, Users, History, 
-  ArrowRight, PlayCircle, StopCircle
+  ArrowRight, PlayCircle, StopCircle, BadgeCheck // Added BadgeCheck icon
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './EmployeeDashboard.css'; 
 import { toast } from 'react-toastify';
 
 // --- CONFIGURATION ---
-const API_BASE = 'https://skitecrm.onrender.com/api';
+const API_BASE = 'http://localhost:4000/api';
 
-// ✅ FIX: Match the URL logic from your working Team.js page
+// Matches your Team.js logic
 const UPLOADS_URL = "https://skitecrm.onrender.com/api/uploads";
 
 const ATTENDANCE_URL = `${API_BASE}/attendance`;
@@ -77,9 +77,20 @@ const EmployeeDashboard = () => {
   const [taskLoading, setTaskLoading] = useState(true);
   const [lastSession, setLastSession] = useState({ checkInTime: null });
 
+  // --- NEW STATE for PAYROLL STATUS ---
+  const [todayWorkHours, setTodayWorkHours] = useState(0);
+  const [payrollStatus, setPayrollStatus] = useState("Absent"); // Absent, Half Day, Present
+
   // --- INIT ---
   useEffect(() => { if (!token || !storedUser) navigate('/'); }, [navigate, token]);
-  useEffect(() => { const i = setInterval(() => setCurrentTime(new Date()), 1000); return () => clearInterval(i); }, []);
+  
+  // Update Time & Payroll Logic every second
+  useEffect(() => { 
+    const i = setInterval(() => {
+        setCurrentTime(new Date());
+    }, 1000); 
+    return () => clearInterval(i); 
+  }, []);
 
   // --- 1. FETCH FRESH USER PROFILE ---
   useEffect(() => {
@@ -95,11 +106,6 @@ const EmployeeDashboard = () => {
                 }
             });
 
-            if (res.status === 403 || res.status === 401) {
-                console.warn("Backend refused profile fetch. Using stored data.");
-                return;
-            }
-
             if (res.ok) {
                 const data = await res.json();
                 const freshUser = data.user || data.employee || data; 
@@ -112,6 +118,55 @@ const EmployeeDashboard = () => {
     };
     fetchFreshProfile();
   }, [EMPLOYEE_ID, token]); 
+
+  // --- 2. CALCULATE PAYROLL STATUS (New Logic) ---
+  const calculateDailyStatus = async () => {
+    if (!EMPLOYEE_ID) return;
+    try {
+        const res = await fetch(`${ATTENDANCE_URL}/${EMPLOYEE_ID}`, { 
+            headers: { 'Authorization': `Bearer ${token}` } 
+        });
+        if (res.ok) {
+            const history = await res.json();
+            const todayStr = new Date().toDateString();
+            
+            // Filter only today's records
+            const todayRecords = Array.isArray(history) ? history.filter(r => new Date(r.checkInTime).toDateString() === todayStr) : [];
+            
+            let totalMillis = 0;
+            
+            // Sum completed sessions
+            todayRecords.forEach(r => {
+                if(r.checkOutTime) {
+                    totalMillis += new Date(r.checkOutTime) - new Date(r.checkInTime);
+                }
+            });
+
+            // Add CURRENT live session if checked in
+            if (isCheckedIn && startTime) {
+                totalMillis += new Date() - new Date(startTime);
+            }
+
+            const hours = totalMillis / (1000 * 60 * 60);
+            setTodayWorkHours(hours);
+
+            // Logic: 6 Hours = Present, 3 Hours = Half Day
+            if (hours >= 6) setPayrollStatus("Present");
+            else if (hours >= 3) setPayrollStatus("Half Day");
+            else setPayrollStatus("Absent / Short");
+        }
+    } catch (err) {
+        console.error("Payroll Calc Error:", err);
+    }
+  };
+
+  // Run calculation every minute OR when check-in status changes
+  useEffect(() => {
+    calculateDailyStatus();
+    const interval = setInterval(calculateDailyStatus, 60000); // Update every minute
+    return () => clearInterval(interval);
+  }, [EMPLOYEE_ID, isCheckedIn, startTime]); 
+
 
   // --- DATA FETCHING ---
   useEffect(() => {
@@ -183,6 +238,7 @@ const EmployeeDashboard = () => {
       const sessionStart = new Date(data.checkInTime);
       setIsCheckedIn(true); setStartTime(sessionStart); 
       localStorage.setItem('activeAttendanceSession', JSON.stringify({ userId: EMPLOYEE_ID, startTime: sessionStart }));
+      calculateDailyStatus(); // Update status immediately
       toast.success("Checked In Successfully!");
     } catch (error) { toast.error("Network Error"); } finally { setLoading(false); }
   };
@@ -199,6 +255,7 @@ const EmployeeDashboard = () => {
       localStorage.removeItem('activeAttendanceSession');
       toast.success("Checked Out Successfully!");
       setLastSession({ checkInTime: new Date() }); 
+      calculateDailyStatus(); // Update status immediately
     } catch (error) { toast.error("Network Error"); } finally { setLoading(false); }
   };
 
@@ -328,7 +385,6 @@ const EmployeeDashboard = () => {
       </header>
 
       <main className="main-content">
-        {/* ... Rest of your Dashboard UI (identical to before) ... */}
         {/* 2. ATTENDANCE & WELCOME */}
         <section className="hero-section">
           <div className="welcome-card">
@@ -530,6 +586,35 @@ const EmployeeDashboard = () => {
 
           {/* RIGHT: TEAM / STATS */}
           <div className="sidebar-section">
+            
+            {/* --- NEW STATUS CARD START --- */}
+            <div className="widget-card">
+              <div className="widget-header">
+                <BadgeCheck size={18} className="icon-orange" />
+                <span>Today's Status</span>
+              </div>
+              <div style={{ textAlign: 'center', padding: '10px 0' }}>
+                  <div style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#333' }}>
+                      {todayWorkHours.toFixed(1)} <span style={{fontSize: '1rem', color: '#888'}}>hrs</span>
+                  </div>
+                  <div style={{ fontSize: '0.85rem', color: '#666', marginBottom: '10px' }}>Total Work Today</div>
+                  
+                  <div style={{ 
+                      display: 'inline-block',
+                      padding: '6px 15px', 
+                      borderRadius: '20px', 
+                      fontWeight: '600',
+                      fontSize: '0.9rem',
+                      backgroundColor: payrollStatus === 'Present' ? '#e8f5e9' : payrollStatus === 'Half Day' ? '#fff3e0' : '#ffebee',
+                      color: payrollStatus === 'Present' ? '#2e7d32' : payrollStatus === 'Half Day' ? '#ef6c00' : '#c62828',
+                      border: `1px solid ${payrollStatus === 'Present' ? '#c8e6c9' : payrollStatus === 'Half Day' ? '#ffe0b2' : '#ffcdd2'}`
+                  }}>
+                      {payrollStatus === 'Present' ? '✅ Present' : payrollStatus === 'Half Day' ? '⚠️ Half Day' : '❌ Absent / Short'}
+                  </div>
+              </div>
+            </div>
+            {/* --- NEW STATUS CARD END --- */}
+
             {isContentWriter && (
               <div className="widget-card">
                 <div className="widget-header">
@@ -757,6 +842,7 @@ const EmployeeDashboard = () => {
         </div>
       )}
 
+      {/* --- TEAMMATE DETAILS MODAL (FULL ORIGINAL CODE RESTORED) --- */}
       {isTeammateModalOpen && selectedTeammateData.details && (
         <div
           className="modal-backdrop"

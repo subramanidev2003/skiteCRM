@@ -2,7 +2,7 @@ import express from "express";
 import { 
   checkin, 
   checkout, 
-  getAttendanceHistory // 👈 1. IMPORT THIS
+  getAttendanceHistory 
 } from "../controllers/attendanceController.js";
 import Attendance from "../models/Attendance.js";
 import User from "../models/userModel.js"; 
@@ -13,19 +13,15 @@ import mongoose from 'mongoose';
 const router = express.Router();
 
 // --- POST ROUTES ---
-router.post("/checkin", checkin); // Add userAuth middleware if needed
+router.post("/checkin", checkin); 
 router.post("/checkout", checkout);
 
-// --- GET ALL (Manager Filtered) ---
-// --- GET ALL (Manager Filtered) ---
-// ... inside your router ...
-
-// --- GET ALL (Manager Filtered) ---
+// --- GET ALL (Manager Filtered & Payroll Ready) ---
 router.get('/all', userAuth, async (req, res) => {
     try {
         let query = {};
         
-        // Manager Logic
+        // Manager Logic: Only show specific designations
         if (req.userRole && req.userRole.toLowerCase() === 'manager') {
             const allowedDesignations = ['Web Developer', 'Web Developer(intern)', 'SEO(intern)'];
             const eligibleUsers = await User.find({ designation: { $in: allowedDesignations } }).select('_id');
@@ -33,19 +29,31 @@ router.get('/all', userAuth, async (req, res) => {
             query.userId = { $in: userIds };
         }
 
-        // ✅ FIX: Removed .limit(100) so it fetches EVERYTHING
+        // Fetch Records
         const attendanceRecords = await Attendance.find(query)
-            .populate('userId', 'name email designation') 
+            // ✅ FIX 1: Added 'salaryPerDay' to populate
+            .populate('userId', 'name email designation salaryPerDay') 
             .sort({ checkInTime: -1 }); 
 
         const formattedRecords = attendanceRecords.map(record => ({
             id: record._id, 
             _id: record._id, 
+            
+            // ✅ FIX 2: CRITICAL! Included userId object so Payroll page can filter by employee
+            userId: record.userId, 
+
             employeeName: record.userId?.name || 'Unknown',
             designation: record.userId?.designation || 'N/A', 
+            
+            // Send correctly named fields for Frontend
+            checkInTime: record.checkInTime, 
+            checkOutTime: record.checkOutTime,
+            
+            // Keep existing fields for compatibility
             date: record.checkInTime,
             checkIn: record.checkInTime,
             checkOut: record.checkOutTime,
+            
             taskDescription: record.taskDescription,
             duration: record.checkOutTime ? Math.floor((new Date(record.checkOutTime) - new Date(record.checkInTime)) / 1000) : null
         }));
@@ -56,6 +64,7 @@ router.get('/all', userAuth, async (req, res) => {
         res.status(500).json({ msg: 'Server error' });
     }
 });
+
 // --- GET STATUS ---
 router.get('/status/:userId', async (req, res) => {
     try {
@@ -88,6 +97,7 @@ router.delete('/deleterec/:id', userAuth, adminAuth, async (req, res) => {
         res.status(500).json({ message: 'Server error during deletion' });
     }
 });
+
 router.delete('/bulkdelete', userAuth, adminAuth, async (req, res) => {
     const { ids } = req.body; 
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
@@ -102,19 +112,7 @@ router.delete('/bulkdelete', userAuth, adminAuth, async (req, res) => {
     }
 });
 
-// ✅ NEW ROUTE: GET HISTORY FOR SPECIFIC USER
-// ⚠️ IMPORTANT: Place this AT THE BOTTOM to prevent it from blocking other routes like /all or /status
+// --- GET HISTORY FOR SPECIFIC USER ---
 router.get('/:userId', userAuth, getAttendanceHistory);
 
 export default router;
-/**
- * NOTE ON DELETION: 
- * Your current 'adminAuth' middleware strictly checks for 'admin'.
- * If you want Managers to delete their team's records, 
- * you should update adminAuth to allow 'Manager' role too.
- */
-
-// Delete Single Record
-
-
-// Bulk Delete
