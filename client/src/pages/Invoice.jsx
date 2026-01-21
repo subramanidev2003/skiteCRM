@@ -7,7 +7,6 @@ import { toast } from 'react-toastify';
 import './Invoice.css';
 
 // ✅ IMAGES IMPORT
-// Make sure these paths are correct for your project structure
 import skitelogo from '../assets/skite-logo.jpg'; 
 import skitesign from '../assets/sign.jpg';
 import skiteseal from '../assets/seal.png'; 
@@ -110,7 +109,7 @@ const Invoice = () => {
         grandTotal
       };
 
-      const response = await fetch('https://skite-crm.onrender.com/api/invoice/create', {
+      const response = await fetch('https://skitecrm.onrender.com/api/invoice/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(invoiceData)
@@ -133,6 +132,14 @@ const Invoice = () => {
   // 🖨️ PDF GENERATION
   // ==========================================
   const generatePDF = async () => {
+    
+    // ✅ 1. Ask for File Name (Popup)
+    let fileName = prompt("Enter PDF File Name:", `Invoice_${invoiceMeta.invoiceNo.replace(/\//g, '-')}`);
+    
+    if (fileName === null) return; // If cancel is clicked, stop
+    if (!fileName.trim()) fileName = `Invoice_${invoiceMeta.invoiceNo.replace(/\//g, '-')}`; // Default name
+    if (!fileName.endsWith('.pdf')) fileName += '.pdf'; // Add extension if missing
+
     const doc = new jsPDF();
     const orangeColor = [255, 69, 0]; 
 
@@ -160,7 +167,6 @@ const Invoice = () => {
         doc.addImage(logoBase64, 'JPG', 14, 10, 40, 29); 
     } catch (e) { 
         console.error("Logo Error:", e);
-        // Fallback: Draw a colored rectangle with text if image fails
         doc.setFillColor(255, 69, 0);
         doc.rect(14, 10, 40, 29, 'F');
         doc.setTextColor(255, 255, 255);
@@ -301,7 +307,8 @@ const Invoice = () => {
     doc.setFont("helvetica", "bold");
     doc.text("Authorised Signatory", 150, finalY + 70);
 
-    doc.save(`Invoice_${invoiceMeta.invoiceNo}.pdf`);
+    // ✅ Save with User Name
+    doc.save(fileName);
   };
 
   return (

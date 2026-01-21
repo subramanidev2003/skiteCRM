@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-// 1. IndianRupee ஐ இங்கே import செய்யுங்கள்
 import { 
-  User, Mail, Calendar, Briefcase, FileText, 
-  CreditCard, Building, ArrowLeft, Save, Upload, X, IndianRupee 
+  User, Briefcase, FileText, 
+  CreditCard, ArrowLeft, Save, Upload, IndianRupee 
 } from 'lucide-react';
 import './EditEmployee.css';
 import { toast } from 'react-toastify';
 
-const API_BASE = 'https://skite-crm.onrender.com/api';
+// ✅ LIVE URL used here. Switch to localhost if testing locally.
+const API_BASE = 'https://skitecrm.onrender.com/api'; 
 const API_UPLOAD = 'https://skitecrm.onrender.com/api/uploads';
 
 const EditEmployee = () => {
@@ -26,7 +26,7 @@ const EditEmployee = () => {
     password: '',
     designation: '',
     role: '',
-    salaryPerDay: '', // 2. இங்கே salaryPerDay ஐ சேர்க்கவும்
+    salaryPerDay: '', 
     dob: '',
     joiningDate: '',
     panNumber: '',
@@ -42,46 +42,43 @@ const EditEmployee = () => {
     fetchEmployeeDetails();
   }, [id]);
 
- const fetchEmployeeDetails = async () => {
-  const token = localStorage.getItem('adminToken');
-  if (!token) return navigate('/');
+  const fetchEmployeeDetails = async () => {
+    const token = localStorage.getItem('adminToken');
+    if (!token) return navigate('/');
 
-  try {
-    const response = await fetch(`${API_BASE}/user/${id}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    const data = await response.json();
-
-    if (response.ok) {
-      const formatDate = (date) => date ? new Date(date).toISOString().split('T')[0] : '';
-      
-      setFormData({
-        ...data,
-        dob: formatDate(data.dob),
-        joiningDate: formatDate(data.joiningDate),
-        // 3. Backend-ல் இருந்து வரும் டேட்டாவை இங்கே set செய்யவும்
-        salaryPerDay: data.salaryPerDay || '', 
-        password: '', 
-        bankDetails: data.bankDetails || { bankName: '', accountNumber: '', ifscCode: '' }
+    try {
+      const response = await fetch(`${API_BASE}/user/${id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
       });
+      const data = await response.json();
 
-      if (data.profileImage) {
-        setFormData(prev => ({
-          ...prev,
-          profileImage: data.profileImage
-        }));
-        setImagePreview(`${API_UPLOAD}/${data.profileImage}`);
+      if (response.ok) {
+        const formatDate = (date) => date ? new Date(date).toISOString().split('T')[0] : '';
+        
+        setFormData({
+          ...data,
+          dob: formatDate(data.dob),
+          joiningDate: formatDate(data.joiningDate),
+          salaryPerDay: (data.salaryPerDay !== undefined && data.salaryPerDay !== null) ? data.salaryPerDay : '', 
+          password: '', 
+          bankDetails: data.bankDetails || { bankName: '', accountNumber: '', ifscCode: '' }
+        });
+
+        if (data.image) { 
+          setImagePreview(`${API_UPLOAD}/${data.image}`);
+        } else if (data.profileImage) {
+           setImagePreview(`${API_UPLOAD}/${data.profileImage}`);
+        }
+      } else {
+        toast.error('Failed to load employee data');
       }
-    } else {
-      toast.error('Failed to load employee data');
+    } catch (err) {
+      console.error(err);
+      toast.error('Network error while loading data');
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    console.error(err);
-    toast.error('Network error while loading data');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -112,61 +109,56 @@ const EditEmployee = () => {
     }
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setSaving(true);
-  
-  const token = localStorage.getItem('adminToken');
-  const dataToSend = new FormData();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    
+    const token = localStorage.getItem('adminToken');
+    const dataToSend = new FormData();
 
-  Object.keys(formData).forEach(key => {
-    if (key !== 'bankDetails' && key !== 'image' && key !== '_id' && key !== 'profileImage') {
-      if (key === 'password' && !formData[key]) {
-        return; 
+    Object.keys(formData).forEach(key => {
+      if (key !== 'bankDetails' && key !== 'image' && key !== '_id' && key !== 'profileImage') {
+        if (key === 'password' && !formData[key]) {
+          return; 
+        }
+        dataToSend.append(key, formData[key]);
       }
-      dataToSend.append(key, formData[key]);
-    }
-  });
-
-  dataToSend.append('bankDetails', JSON.stringify(formData.bankDetails));
-
-  if (selectedFile) {
-    dataToSend.append('image', selectedFile); 
-  } else {
-    const existingImage = formData.profileImage;
-    if (existingImage && existingImage !== 'null' && existingImage !== 'undefined') {
-      const filename = existingImage.includes('/') 
-        ? existingImage.split('/').pop() 
-        : existingImage;
-      dataToSend.append('profileImage', filename);
-    }
-  }
-
-  try {
-    const response = await fetch(`${API_BASE}/user/edit/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      },
-      body: dataToSend
     });
 
-    const result = await response.json();
-
-    if (response.ok) {
-      toast.success('Employee updated successfully!');
-      // 4. Update Navigation if needed
-      navigate(`/admin-dashboard/teams/details/${id}`);
-    } else {
-      toast.error(result.message || 'Update failed');
+    if (formData.salaryPerDay !== undefined) {
+        dataToSend.set('salaryPerDay', formData.salaryPerDay); 
     }
-  } catch (error) {
-    console.error('Update Error:', error);
-    toast.error('Network error occurred');
-  } finally {
-    setSaving(false);
-  }
-};
+
+    dataToSend.append('bankDetails', JSON.stringify(formData.bankDetails));
+
+    if (selectedFile) {
+      dataToSend.append('image', selectedFile); 
+    } 
+
+    try {
+      const response = await fetch(`${API_BASE}/user/edit/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: dataToSend
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        toast.success('Employee updated successfully!');
+        navigate(-1);
+      } else {
+        toast.error(result.message || 'Update failed');
+      }
+    } catch (error) {
+      console.error('Update Error:', error);
+      toast.error('Network error occurred');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   useEffect(() => {
     return () => {
@@ -176,30 +168,32 @@ const handleSubmit = async (e) => {
     };
   }, [imagePreview]);
 
-  if (loading) return <div className="loading-text">Loading...</div>;
+  if (loading) return <div className="ee-container"><p>Loading...</p></div>;
 
   return (
-    <div className="details-container1">
-      <div className="details-wrapper1">
+    <div className="ee-container">
+      <div className="ee-wrapper">
         
-        <div className="details-header">
-          <button className="back-btn" onClick={() => navigate(-1)} type="button">
-            <ArrowLeft size={20} /> Cancel
+        {/* Header */}
+        <div className="ee-header">
+          <button className="ee-back-btn" onClick={() => navigate(-1)} type="button">
+            <ArrowLeft size={20} /> Back
           </button>
-          <h2 className="header-title">Edit Employee</h2>
+          <h2 className="ee-title">Edit Employee</h2>
         </div>
 
-        <form onSubmit={handleSubmit} className="edit-form">
+        <form onSubmit={handleSubmit}>
           
-          <div className="profile-edit-section">
-            <div className="image-preview-wrapper">
+          {/* Image Upload */}
+          <div className="ee-profile-section">
+            <div className="ee-image-wrapper">
               {imagePreview ? (
-                <img src={imagePreview} alt="Preview" className="image-preview" />
+                <img src={imagePreview} alt="Preview" className="ee-image-preview" />
               ) : (
-                <div className="image-placeholder"><User size={40} /></div>
+                <div className="ee-image-placeholder"><User size={40} /></div>
               )}
-              <label htmlFor="imageUpload" className="upload-btn-overlay">
-                <Upload size={16} /> Change Photo
+              <label htmlFor="imageUpload" className="ee-upload-overlay">
+                <Upload size={14} /> Upload
               </label>
               <input 
                 type="file" 
@@ -211,99 +205,108 @@ const handleSubmit = async (e) => {
             </div>
           </div>
 
-          <div className="details-grid">
+          {/* Form Grid - Responsive */}
+          <div className="ee-grid-container">
             
-            <div className="detail-card">
-              <h3 className="card-title"><User size={18} /> Personal Info</h3>
-              <div className="form-group">
+            {/* Card 1: Personal */}
+            <div className="ee-card">
+              <h3 className="ee-card-title"><User size={18} /> Personal Info</h3>
+              <div className="ee-form-group">
                 <label>Full Name</label>
-                <input type="text" name="name" value={formData.name} onChange={handleChange} required />
+                <input className="ee-input" type="text" name="name" value={formData.name} onChange={handleChange} required />
               </div>
-              <div className="form-group">
+              <div className="ee-form-group">
                 <label>Email</label>
-                <input type="email" name="email" value={formData.email} onChange={handleChange} required />
+                <input className="ee-input" type="email" name="email" value={formData.email} onChange={handleChange} required />
               </div>
-              <div className="form-group">
+              <div className="ee-form-group">
                 <label>Date of Birth</label>
-                <input type="date" name="dob" value={formData.dob} onChange={handleChange} />
+                <input className="ee-input" type="date" name="dob" value={formData.dob} onChange={handleChange} />
               </div>
             </div>
 
-            <div className="detail-card">
-              <h3 className="card-title"><Briefcase size={18} /> Professional</h3>
-              <div className="form-group">
+            {/* Card 2: Professional */}
+            <div className="ee-card">
+              <h3 className="ee-card-title"><Briefcase size={18} /> Professional</h3>
+              <div className="ee-form-group">
                 <label>Designation</label>
-                <input type="text" name="designation" value={formData.designation} onChange={handleChange} />
+                <input className="ee-input" type="text" name="designation" value={formData.designation} onChange={handleChange} />
               </div>
-              <div className="form-group">
+              <div className="ee-form-group">
                 <label>Role</label>
-                <select name="role" value={formData.role} onChange={handleChange} className="form-select">
-                  <option value="Employee">Employee</option>
+                <select className="ee-select" name="role" value={formData.role} onChange={handleChange}>
+                  <option value="employee">Employee</option>
                   <option value="Admin">Admin</option>
+                  <option value="Manager">Manager</option>
                 </select>
               </div>
-              <div className="form-group">
+              <div className="ee-form-group">
                 <label>Joining Date</label>
-                <input type="date" name="joiningDate" value={formData.joiningDate} onChange={handleChange} />
+                <input className="ee-input" type="date" name="joiningDate" value={formData.joiningDate} onChange={handleChange} />
               </div>
               
-              {/* 5. Salary Input Field இங்கே சேர்க்கப்பட்டுள்ளது */}
-              <div className="form-group">
+              {/* Salary - Fixed Scroll Issue */}
+              <div className="ee-form-group">
                 <label style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                   <IndianRupee size={14} /> Salary Per Day
                 </label>
                 <input 
+                  className="ee-input"
                   type="number" 
                   name="salaryPerDay" 
                   value={formData.salaryPerDay} 
                   onChange={handleChange} 
                   placeholder="e.g. 500"
+                  onWheel={(e) => e.target.blur()} 
                 />
               </div>
-
             </div>
 
-            <div className="detail-card">
-              <h3 className="card-title"><FileText size={18} /> Documents</h3>
-              <div className="form-group">
+            {/* Card 3: Documents */}
+            <div className="ee-card">
+              <h3 className="ee-card-title"><FileText size={18} /> Documents</h3>
+              <div className="ee-form-group">
                 <label>PAN Number</label>
-                <input type="text" name="panNumber" value={formData.panNumber} onChange={handleChange} />
+                <input className="ee-input" type="text" name="panNumber" value={formData.panNumber} onChange={handleChange} />
               </div>
-              <div className="form-group">
+              <div className="ee-form-group">
                 <label>Aadhar Number</label>
-                <input type="text" name="aadharNumber" value={formData.aadharNumber} onChange={handleChange} />
+                <input className="ee-input" type="text" name="aadharNumber" value={formData.aadharNumber} onChange={handleChange} />
               </div>
-              <div className="form-group">
-                <label>Password (Leave empty to keep current)</label>
+              <div className="ee-form-group">
+                <label>Password (Leave empty to keep)</label>
                 <input 
+                  className="ee-input"
                   type="password" 
                   name="password" 
                   value={formData.password} 
                   onChange={handleChange}
-                  placeholder="Enter new password or leave empty"
+                  placeholder="Enter new password"
                 />
               </div>
             </div>
 
-            <div className="detail-card">
-              <h3 className="card-title"><CreditCard size={18} /> Bank Details</h3>
-              <div className="form-group">
+            {/* Card 4: Bank Details */}
+            <div className="ee-card">
+              <h3 className="ee-card-title"><CreditCard size={18} /> Bank Details</h3>
+              <div className="ee-form-group">
                 <label>Bank Name</label>
-                <input type="text" name="bankName" value={formData.bankDetails.bankName} onChange={handleBankChange} />
+                <input className="ee-input" type="text" name="bankName" value={formData.bankDetails.bankName} onChange={handleBankChange} />
               </div>
-              <div className="form-group">
+              <div className="ee-form-group">
                 <label>Account Number</label>
-                <input type="text" name="accountNumber" value={formData.bankDetails.accountNumber} onChange={handleBankChange} />
+                <input className="ee-input" type="text" name="accountNumber" value={formData.bankDetails.accountNumber} onChange={handleBankChange} />
               </div>
-              <div className="form-group">
+              <div className="ee-form-group">
                 <label>IFSC Code</label>
-                <input type="text" name="ifscCode" value={formData.bankDetails.ifscCode} onChange={handleBankChange} />
+                <input className="ee-input" type="text" name="ifscCode" value={formData.bankDetails.ifscCode} onChange={handleBankChange} />
               </div>
             </div>
           </div>
 
-          <div className="form-actions">
-            <button type="submit" className="save-btn" disabled={saving}>
+          {/* Action Buttons */}
+          <div className="ee-actions">
+            <button type="submit" className="ee-save-btn" disabled={saving}>
               {saving ? 'Saving...' : <><Save size={18} /> Save Changes</>}
             </button>
           </div>

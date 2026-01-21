@@ -1,53 +1,97 @@
-/* Inherits container styles from EmployeeDetail.css where possible */
+/* --- EditEmployee.css --- */
 
-.header-title {
-  font-size: 1.5rem;
-  font-weight: 600;
+/* Main Container */
+.ee-container {
+  width: 100%;
+  min-height: 100vh;
+  background-color: #f8fafc;
+  padding: 1rem;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+}
+
+.ee-wrapper {
+  width: 100%;
+  max-width: 1000px; /* Limits width on big screens */
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  padding: 1.5rem;
+}
+
+/* Header Section */
+.ee-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 1rem;
+}
+
+.ee-title {
+  font-size: 1.25rem;
+  font-weight: 700;
   color: #1e293b;
   margin: 0;
 }
 
-.edit-form {
+.ee-back-btn {
   display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  padding: 1rem 0;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  color: #64748b;
+  font-weight: 500;
+  cursor: pointer;
+  font-size: 0.95rem;
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: all 0.2s;
 }
 
-/* Image Upload Styling */
-.profile-edit-section {
+.ee-back-btn:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+/* Profile Image Section */
+.ee-profile-section {
   display: flex;
   justify-content: center;
-  margin-bottom: 1rem;
+  margin-bottom: 2rem;
 }
 
-.image-preview-wrapper {
+.ee-image-wrapper {
   position: relative;
-  width: 120px;
-  height: 120px;
+  width: 130px;
+  height: 130px;
   border-radius: 50%;
   border: 4px solid #fff;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   background: #f1f5f9;
 }
 
-.image-preview {
+.ee-image-preview {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.image-placeholder {
+.ee-image-placeholder {
   width: 100%;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #94a3b8;
+  color: #cbd5e1;
 }
 
-.upload-btn-overlay {
+.ee-upload-overlay {
   position: absolute;
   bottom: 0;
   left: 0;
@@ -55,64 +99,101 @@
   background: rgba(0, 0, 0, 0.6);
   color: white;
   font-size: 0.75rem;
-  padding: 6px 0;
+  padding: 8px 0;
   text-align: center;
   cursor: pointer;
-  transition: background 0.2s;
   display: flex;
   justify-content: center;
-  gap: 4px;
+  gap: 5px;
+  transition: background 0.3s;
 }
 
-.upload-btn-overlay:hover {
+.ee-upload-overlay:hover {
   background: rgba(0, 0, 0, 0.8);
 }
 
-/* Form Groups */
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+/* --- RESPONSIVE GRID LAYOUT --- */
+.ee-grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
 }
 
-.form-group label {
-  font-size: 0.875rem;
+/* Individual Cards inside Grid */
+.ee-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1.25rem;
+  transition: box-shadow 0.2s;
+}
+
+.ee-card:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.ee-card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 2px solid #f1f5f9;
+  padding-bottom: 0.5rem;
+}
+
+/* Form Inputs */
+.ee-form-group {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.ee-form-group label {
+  font-size: 0.85rem;
   font-weight: 500;
   color: #64748b;
 }
 
-.form-group input,
-.form-group select {
-  padding: 0.6rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
+.ee-input,
+.ee-select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
   font-size: 0.95rem;
-  transition: border-color 0.2s;
+  background-color: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box; /* Important for padding */
 }
 
-.form-group input:focus,
-.form-group select:focus {
+.ee-input:focus,
+.ee-select:focus {
   outline: none;
   border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
-/* Form Actions */
-.form-actions {
+/* Save Button */
+.ee-actions {
+  margin-top: 2rem;
   display: flex;
   justify-content: flex-end;
-  padding-top: 1rem;
   border-top: 1px solid #e2e8f0;
+  padding-top: 1.5rem;
 }
 
-.save-btn {
-  background: #3b82f6;
+.ee-save-btn {
+  background: #2563eb;
   color: white;
   border: none;
-  padding: 0.75rem 1.5rem;
+  padding: 0.85rem 2rem;
   border-radius: 8px;
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 1rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -120,11 +201,45 @@
   transition: background 0.2s;
 }
 
-.save-btn:hover {
-  background: #2563eb;
+.ee-save-btn:hover {
+  background: #1d4ed8;
 }
 
-.save-btn:disabled {
+.ee-save-btn:disabled {
   background: #94a3b8;
   cursor: not-allowed;
+}
+
+/* --- SCROLL FIX FOR NUMBERS --- */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* --- MOBILE SPECIFIC TWEAKS --- */
+@media (max-width: 768px) {
+  .ee-container {
+    padding: 0.5rem;
+  }
+  
+  .ee-wrapper {
+    padding: 1rem;
+  }
+
+  .ee-grid-container {
+    grid-template-columns: 1fr; /* Force single column on mobile */
+  }
+
+  .ee-save-btn {
+    width: 100%; /* Full width button on mobile */
+    justify-content: center;
+  }
+  
+  .ee-title {
+    font-size: 1.1rem;
+  }
 }

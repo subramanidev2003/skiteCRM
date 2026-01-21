@@ -2,16 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { 
   Clock, ListTodo, CalendarDays, CheckCircle2, 
   LogOut, User, AlertCircle, X, UserPlus, Users, History, 
-  ArrowRight, PlayCircle, StopCircle, BadgeCheck // Added BadgeCheck icon
+  ArrowRight, PlayCircle, StopCircle, BadgeCheck 
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './EmployeeDashboard.css'; 
 import { toast } from 'react-toastify';
 
 // --- CONFIGURATION ---
-const API_BASE = 'https://skite-crm.onrender.com/api';
-
-// Matches your Team.js logic
+const API_BASE = 'https://skitecrm.onrender.com/api';
 const UPLOADS_URL = "https://skitecrm.onrender.com/api/uploads";
 
 const ATTENDANCE_URL = `${API_BASE}/attendance`;
@@ -315,11 +313,9 @@ const EmployeeDashboard = () => {
     }
   };
 
-  // ✅ FIX: Use the URL construction logic from your working Team.js
   const getImageUrl = (path) => {
     if (!path) return null;
     if (path.startsWith('http') || path.startsWith('data:')) return path;
-    // This matches the logic in Team.js:
     return `${UPLOADS_URL}/${path.replace(/^\//, "")}`;
   };
 
@@ -355,6 +351,9 @@ const EmployeeDashboard = () => {
   const formatDateWithDay = (d) => d ? new Date(d).toLocaleDateString('en-US', {weekday: 'short', month:'short', day:'numeric'}) : 'N/A';
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter(t => t.status === 'Completed').length;
+
+  // --- SORT TASKS: NEWEST FIRST ---
+  const sortedTasks = [...tasks].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
   return (
     <div className={`dashboard-layout ${isMobile ? "mobile-view" : ""}`}>
@@ -506,80 +505,112 @@ const EmployeeDashboard = () => {
             <div className="tasks-container">
               {taskLoading ? (
                 <p className="loading-text">Loading Tasks...</p>
-              ) : tasks.length === 0 ? (
+              ) : sortedTasks.length === 0 ? (
                 <div className="empty-state">
                   <AlertCircle size={40} color="#ffccbc" />
                   <p>No tasks assigned to you yet.</p>
                 </div>
               ) : (
-                tasks.map((task) => (
-                  <div
-                    key={task._id}
-                    className="task-card"
-                    onClick={() => {
-                      setSelectedTask(task);
-                      setIsViewModalOpen(true);
-                    }}
-                  >
-                    <div className="task-header">
-                      <span
-                        className={`priority-tag ${task.priority.toLowerCase()}`}
-                      >
-                        {task.priority}
-                      </span>
-                      <span className="date-tag">
-                        <CalendarDays size={12} />{" "}
-                        {formatDateWithDay(task.dueDate)}
-                      </span>
-                    </div>
-                    <h4
-                      className={
-                        task.status === "Completed" ? "completed-text" : ""
-                      }
-                    >
-                      {task.title}
-                    </h4>
+                sortedTasks.map((task) => {
+                  // Determine border color based on priority
+                  let priorityColor = '#ccc';
+                  if (task.priority === 'High') priorityColor = '#ff5252';
+                  else if (task.priority === 'Medium') priorityColor = '#ff9800';
+                  else if (task.priority === 'Low') priorityColor = '#4caf50';
+
+                  return (
                     <div
+                      key={task._id}
+                      className="task-card"
+                      onClick={() => {
+                        setSelectedTask(task);
+                        setIsViewModalOpen(true);
+                      }}
+                      // Inline styling for the new card design request
                       style={{
-                        fontSize: "0.75rem",
-                        color: "#888",
-                        marginBottom: "8px",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "4px",
+                        borderLeft: `5px solid ${priorityColor}`,
+                        padding: '15px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '10px'
                       }}
                     >
-                      <span>Assigned:</span> {formatDateWithDay(task.createdAt)}
+                      {/* Top: Header */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <h4
+                          className={task.status === "Completed" ? "completed-text" : ""}
+                          style={{ margin: 0, fontSize: '1.1rem', color: '#333' }}
+                        >
+                          {task.title}
+                        </h4>
+                        
+                         {/* Toggle Checkbox Button */}
+                         <button
+                            className={`btn-check ${
+                              task.status === "Completed" ? "checked" : ""
+                            }`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleTask(task._id, task.status);
+                            }}
+                            title="Mark as Completed"
+                          >
+                            {task.status === "Completed" ? (
+                              <CheckCircle2 size={24} />
+                            ) : (
+                              <div className="circle-empty" style={{ width: '22px', height: '22px' }}></div>
+                            )}
+                          </button>
+                      </div>
+                      
+                      {/* Description - Added Here! */}
+                      <p style={{
+                         margin: '0',
+                         fontSize: '0.9rem',
+                         color: '#666',
+                         lineHeight: '1.4',
+                         display: '-webkit-box',
+                         WebkitLineClamp: '3',
+                         WebkitBoxOrient: 'vertical',
+                         overflow: 'hidden'
+                      }}>
+                         {task.description}
+                      </p>
+
+                      {/* Middle: Big Due Date Box */}
+                      <div style={{
+                        background: '#f8f9fa',
+                        padding: '10px',
+                        borderRadius: '8px',
+                        textAlign: 'center',
+                        border: '1px solid #eee',
+                        margin: '5px 0'
+                      }}>
+                         <span style={{ fontSize: '0.75rem', color: '#888', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '4px' }}>
+                           <CalendarDays size={12} style={{ marginRight: '4px', verticalAlign: 'text-bottom' }} />
+                           Due Date
+                         </span>
+                         <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#333' }}>
+                           {formatDateWithDay(task.dueDate)}
+                         </span>
+                      </div>
+
+                      {/* Bottom: Footer Info */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
+                         <span style={{ color: '#888' }}>
+                           Assigned: {new Date(task.createdAt).toLocaleDateString()}
+                         </span>
+                         
+                         <span
+                          className={`status-text ${task.status.toLowerCase()}`}
+                          style={{ fontWeight: '600' }}
+                        >
+                          {task.status}
+                        </span>
+                      </div>
                     </div>
-                    <div className="task-footer">
-                      <span
-                        className={`status-text ${task.status.toLowerCase()}`}
-                      >
-                        {task.status === "Completed" ? (
-                          <CheckCircle2 size={14} />
-                        ) : (
-                          <Clock size={14} />
-                        )}{" "}
-                        {task.status}
-                      </span>
-                      <button
-                        className={`btn-check ${
-                          task.status === "Completed" ? "checked" : ""
-                        }`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleToggleTask(task._id, task.status);
-                        }}
-                      >
-                        {task.status === "Completed" ? (
-                          <CheckCircle2 size={20} />
-                        ) : (
-                          <div className="circle-empty"></div>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
@@ -842,7 +873,7 @@ const EmployeeDashboard = () => {
         </div>
       )}
 
-      {/* --- TEAMMATE DETAILS MODAL (FULL ORIGINAL CODE RESTORED) --- */}
+      {/* --- TEAMMATE DETAILS MODAL --- */}
       {isTeammateModalOpen && selectedTeammateData.details && (
         <div
           className="modal-backdrop"

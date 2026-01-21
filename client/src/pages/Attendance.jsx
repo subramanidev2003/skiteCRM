@@ -6,7 +6,7 @@ import './Attendance.css';
 import { toast } from 'react-toastify';
 import { ArrowLeft, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
-const API_BASE = 'https://skite-crm.onrender.com/api';
+const API_BASE = 'https://skitecrm.onrender.com/api';
 
 const Attendance = () => {
   const navigate = useNavigate();

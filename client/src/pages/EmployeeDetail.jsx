@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { 
   User, Mail, Lock, Calendar, Briefcase, FileText, 
   CreditCard, Building, ArrowLeft, Edit, Trash2
@@ -16,8 +16,6 @@ const EmployeeDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  console.log('Employee ID:', id);
-  
   useEffect(() => {
     fetchEmployeeDetails();
   }, [id]);
@@ -46,7 +44,6 @@ const EmployeeDetails = () => {
       }
 
       const data = await response.json();
-      console.log('Employee data received:', data);
 
       if (response.ok) {
         setEmployee(data);
@@ -106,17 +103,17 @@ const EmployeeDetails = () => {
 
   if (loading) {
     return (
-      <div className="details-container">
-        <div className="loading-text">Loading employee details...</div>
+      <div className="ed-loading">
+        Loading employee details...
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="details-container">
-        <div className="error-box">{error}</div>
-        <button className="back-btn" onClick={() => navigate('/admin-dashboard/teams')}>
+      <div className="ed-container">
+        <div className="ed-error">{error}</div>
+        <button className="ed-back-btn" onClick={() => navigate('/admin-dashboard/teams')}>
           <ArrowLeft size={18} /> Go Back
         </button>
       </div>
@@ -125,179 +122,142 @@ const EmployeeDetails = () => {
 
   if (!employee) {
     return (
-      <div className="details-container">
-        <div className="error-box">Employee not found</div>
+      <div className="ed-container">
+        <div className="ed-error">Employee not found</div>
       </div>
     );
   }
 
   return (
-    <div className="details-container">
-      <div className="details-wrapper">
+    <div className="ed-container">
+      <div className="ed-wrapper">
+        
         {/* Header */}
-        <div className="details-header">
+        <div className="ed-header">
           <button
-            className="back-btn"
+            className="ed-back-btn"
             onClick={() => navigate("/admin-dashboard/teams")}
           >
             <ArrowLeft size={20} /> Back
           </button>
-          <div className="header-actions">
+          <div className="ed-header-actions">
             <button
-              className="edit-btn"
+              className="ed-btn ed-edit-btn"
               onClick={() => navigate(`/admin-dashboard/teams/edit/${id}`)}
             >
               <Edit size={18} /> Edit
             </button>
-            <button className="delete-btn" onClick={handleDelete}>
+            <button className="ed-btn ed-delete-btn" onClick={handleDelete}>
               <Trash2 size={18} /> Delete
             </button>
           </div>
         </div>
 
-        {/* Profile Section - ✅ FIXED: Changed profileImage to image */}
-        <div className="profile-section">
-          <div className="profile-image-container">
+        {/* Profile Section */}
+        <div className="ed-profile-section">
+          <div className="ed-profile-img-box">
             {employee.image ? (
-              <>
-                <img
-                  src={`${API_UPLOAD}/${employee.image}`}
-                  alt={employee.name}
-                  className="profile-image"
-                  onError={(e) => {
-                    console.error("❌ Image failed to load!");
-                    console.log(
-                      "Image path:",
-                      `${API_UPLOAD}/${employee.image}`
-                    );
-                    console.log("Full employee data:", employee);
-
-                    fetch(`${API_UPLOAD}/${employee.image}`)
-                      .then((response) => {
-                        console.log("Image fetch status:", response.status);
-                        console.log("Image fetch headers:", response.headers);
-                      })
-                      .catch((err) => console.error("Fetch error:", err));
-
-                    e.target.style.display = "none";
-                    e.target.nextSibling.style.display = "flex";
-                  }}
-                  onLoad={() => {
-                    console.log(
-                      "✅ Image loaded successfully:",
-                      `${API_UPLOAD}/${employee.image}`
-                    );
-                  }}
-                />
-                <div className="image-debug">
-                  <small>Image: {employee.image}</small>
-                </div>
-              </>
+              <img
+                src={`${API_UPLOAD}/${employee.image}`}
+                alt={employee.name}
+                className="ed-profile-img"
+                onError={(e) => {
+                  e.target.style.display = "none";
+                  e.target.nextSibling.style.display = "flex";
+                }}
+              />
             ) : null}
             <div
-              className="profile-placeholder"
+              className="ed-profile-placeholder"
               style={{ display: employee.image ? "none" : "flex" }}
             >
-              <User size={60} color="#cbd5e1" />
+              <User size={50} color="#cbd5e1" />
             </div>
           </div>
-          <div className="profile-info">
+          
+          <div className="ed-profile-info">
             <h1 className="employee-name">{employee.name}</h1>
-            <p className="employee-designation">
+            <p className="ed-designation">
               {employee.designation || "N/A"}
             </p>
-            <span className="role-badge">
+            <span className="ed-role-badge">
               {employee.role === "Admin" ? "👑 Admin" : "👤 Employee"}
             </span>
           </div>
         </div>
 
         {/* Details Grid */}
-        <div className="details-grid">
+        <div className="ed-grid">
+          
           {/* Personal Information */}
-          <div className="detail-card">
-            <h2 className="card-title">
-              <User size={20} className="icon-blue1" />
+          <div className="ed-card">
+            <h2 className="ed-card-title">
+              <User size={20} className="ed-icon-primary" />
               Personal Information
             </h2>
-            <div className="details-content">
-              <div className="detail-row">
-                <div className="detail-label">
-                  <User size={16} className="icon-blue1" />
+            <div className="ed-content">
+              <div className="ed-row">
+                <div className="ed-label">
+                  <User size={16} className="ed-icon-primary" />
                   <span>Full Name</span>
                 </div>
-                <span className="detail-value">{employee.name}</span>
+                <span className="ed-value">{employee.name}</span>
               </div>
-              <div className="detail-row">
-                <div className="detail-label">
-                  <Mail size={16} className="icon-blue1" />
-                  <span>Email Address</span>
+              <div className="ed-row">
+                <div className="ed-label">
+                  <Mail size={16} className="ed-icon-primary" />
+                  <span>Email</span>
                 </div>
-                <span className="detail-value">{employee.email}</span>
+                <span className="ed-value">{employee.email}</span>
               </div>
-              <div className="detail-row">
-                <div className="detail-label">
-                  <Lock size={16} className="icon-blue1" />
+              <div className="ed-row">
+                <div className="ed-label">
+                  <Lock size={16} className="ed-icon-primary" />
                   <span>Password</span>
                 </div>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                  }}
-                >
-                  <span className="detail-value" style={{ fontStyle: 'italic', color: '#64748b' }}>
-                    Hidden for security
-                  </span>
-                  <button
-                    onClick={() => navigate(`/admin-dashboard/teams/edit/${id}`)}
-                    className="eye-btn"
-                    title="Reset password in edit mode"
-                  >
-                    <Edit size={16} />
-                  </button>
-                </div>
+                <span className="ed-value" style={{ fontStyle: 'italic', color: '#94a3b8' }}>
+                  Hidden
+                </span>
               </div>
-              <div className="detail-row">
-                <div className="detail-label">
-                  <Calendar size={16} className="icon-blue1" />
+              <div className="ed-row">
+                <div className="ed-label">
+                  <Calendar size={16} className="ed-icon-primary" />
                   <span>Date of Birth</span>
                 </div>
-                <span className="detail-value">{formatDate(employee.dob)}</span>
+                <span className="ed-value">{formatDate(employee.dob)}</span>
               </div>
             </div>
           </div>
 
           {/* Professional Details */}
-          <div className="detail-card">
-            <h2 className="card-title">
-              <Briefcase size={20} className="icon-blue1" />
+          <div className="ed-card">
+            <h2 className="ed-card-title">
+              <Briefcase size={20} className="ed-icon-primary" />
               Professional Details
             </h2>
-            <div className="details-content">
-              <div className="detail-row">
-                <div className="detail-label">
-                  <Briefcase size={16} className="icon-blue1" />
+            <div className="ed-content">
+              <div className="ed-row">
+                <div className="ed-label">
+                  <Briefcase size={16} className="ed-icon-primary" />
                   <span>Designation</span>
                 </div>
-                <span className="detail-value">
+                <span className="ed-value">
                   {employee.designation || "N/A"}
                 </span>
               </div>
-              <div className="detail-row">
-                <div className="detail-label">
-                  <User size={16} className="icon-blue1" />
+              <div className="ed-row">
+                <div className="ed-label">
+                  <User size={16} className="ed-icon-primary" />
                   <span>Role</span>
                 </div>
-                <span className="detail-value">{employee.role}</span>
+                <span className="ed-value">{employee.role}</span>
               </div>
-              <div className="detail-row">
-                <div className="detail-label">
-                  <Calendar size={16} className="icon-blue1" />
+              <div className="ed-row">
+                <div className="ed-label">
+                  <Calendar size={16} className="ed-icon-primary" />
                   <span>Joining Date</span>
                 </div>
-                <span className="detail-value">
+                <span className="ed-value">
                   {formatDate(employee.joiningDate)}
                 </span>
               </div>
@@ -305,27 +265,27 @@ const EmployeeDetails = () => {
           </div>
 
           {/* Documents */}
-          <div className="detail-card">
-            <h2 className="card-title">
-              <FileText size={20} className="icon-blue1" />
+          <div className="ed-card">
+            <h2 className="ed-card-title">
+              <FileText size={20} className="ed-icon-primary" />
               Documents
             </h2>
-            <div className="details-content">
-              <div className="detail-row">
-                <div className="detail-label">
-                  <FileText size={16} className="icon-blue1" />
+            <div className="ed-content">
+              <div className="ed-row">
+                <div className="ed-label">
+                  <FileText size={16} className="ed-icon-primary" />
                   <span>PAN Number</span>
                 </div>
-                <span className="detail-value">
+                <span className="ed-value">
                   {employee.panNumber || "N/A"}
                 </span>
               </div>
-              <div className="detail-row">
-                <div className="detail-label">
-                  <FileText size={16} className="icon-blue1" />
+              <div className="ed-row">
+                <div className="ed-label">
+                  <FileText size={16} className="ed-icon-primary" />
                   <span>Aadhar Number</span>
                 </div>
-                <span className="detail-value">
+                <span className="ed-value">
                   {employee.aadharNumber || "N/A"}
                 </span>
               </div>
@@ -333,41 +293,42 @@ const EmployeeDetails = () => {
           </div>
 
           {/* Bank Details */}
-          <div className="detail-card">
-            <h2 className="card-title">
-              <CreditCard size={20} className="icon-blue1" />
+          <div className="ed-card">
+            <h2 className="ed-card-title">
+              <CreditCard size={20} className="ed-icon-primary" />
               Bank Details
             </h2>
-            <div className="details-content">
-              <div className="detail-row">
-                <div className="detail-label">
-                  <Building size={16} className="icon-blue1" />
+            <div className="ed-content">
+              <div className="ed-row">
+                <div className="ed-label">
+                  <Building size={16} className="ed-icon-primary" />
                   <span>Bank Name</span>
                 </div>
-                <span className="detail-value">
+                <span className="ed-value">
                   {employee.bankDetails?.bankName || "N/A"}
                 </span>
               </div>
-              <div className="detail-row">
-                <div className="detail-label">
-                  <CreditCard size={16} className="icon-blue1" />
-                  <span>Account Number</span>
+              <div className="ed-row">
+                <div className="ed-label">
+                  <CreditCard size={16} className="ed-icon-primary" />
+                  <span>Account No</span>
                 </div>
-                <span className="detail-value">
+                <span className="ed-value">
                   {employee.bankDetails?.accountNumber || "N/A"}
                 </span>
               </div>
-              <div className="detail-row">
-                <div className="detail-label">
-                  <FileText size={16} className="icon-blue1" />
+              <div className="ed-row">
+                <div className="ed-label">
+                  <FileText size={16} className="ed-icon-primary" />
                   <span>IFSC Code</span>
                 </div>
-                <span className="detail-value">
+                <span className="ed-value">
                   {employee.bankDetails?.ifscCode || "N/A"}
                 </span>
               </div>
             </div>
           </div>
+
         </div>
       </div>
     </div>

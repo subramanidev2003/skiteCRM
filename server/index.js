@@ -75,7 +75,7 @@ if (!fs.existsSync(uploadsDir)) {
 const allowedOrigins = [
   "http://localhost:5173",           // Local development
   "https://crm.skitedigital.in",     // Your production frontend
-  "https://skite-crm.onrender.com"   // Your backend (for testing)
+  "https://skitecrm.onrender.com"   // Your backend (for testing)
 ];
 
 app.use(cors({
