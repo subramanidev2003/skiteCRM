@@ -1,15 +1,61 @@
 import Quote from "../models/Quote.js";
 
-// Create Quote
+// ✅ Create Quote (Updated with Qty Logic)
 export const createQuote = async (req, res) => {
   try {
-    const newQuote = new Quote(req.body);
+
+    const { 
+      quoteNo, 
+      date, 
+      clientDetails, 
+      items, 
+      taxRate, 
+      terms 
+    } = req.body;
+
+ 
+    let subtotal = 0;
+
+    const processedItems = items.map(item => {
+      const qty = Number(item.qty) || 1;   
+      const price = Number(item.price) || 0;
+      const total = qty * price;         
+      
+      subtotal += total; 
+
+      return {
+        ...item,
+        qty: qty,
+        total: total
+      };
+    });
+
+      
+    const taxAmount = (subtotal * (Number(taxRate) || 0)) / 100;
+    const grandTotal = subtotal + taxAmount;
+
+    const newQuote = new Quote({
+      quoteNo,
+      date,
+      clientDetails,
+      items: processedItems,
+      subtotal,
+      taxRate,
+      taxAmount,
+      grandTotal,
+      terms
+    });
+
+    // 5. Database-ல் சேமித்தல்
     await newQuote.save();
+    
     res.status(201).json({ message: "Quote saved successfully!", quote: newQuote });
+
   } catch (error) {
     if (error.code === 11000) {
         return res.status(400).json({ message: "Quote Number already exists!" });
     }
+    console.error("Save Error:", error);
     res.status(500).json({ message: "Failed to save quote", error: error.message });
   }
 };

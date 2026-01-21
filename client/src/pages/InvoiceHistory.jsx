@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Trash2, Plus, Search, FileText, FileX } from 'lucide-react'; // ✅ Icons added
+import { ArrowLeft, Trash2, Plus, Search, FileText, FileX } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import './Invoice.css'; 
+
+// ✅ FIX 1: Correct API Base URL (Removed hyphen)
+const API_BASE = 'https://skitecrm.onrender.com/api';
 
 const InvoiceHistory = () => {
   const navigate = useNavigate();
@@ -14,17 +17,29 @@ const InvoiceHistory = () => {
 
   // Fetch Data
   const fetchInvoices = async () => {
+    // ✅ FIX 2: Get Token for Authentication
+    const token = localStorage.getItem('adminToken'); 
+
     try {
-      const response = await fetch('https://skite-crm.onrender.com/api/invoice/all');
+      const response = await fetch(`${API_BASE}/invoice/all`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` // ✅ Sending Token
+        }
+      });
+
       const data = await response.json();
+      
       if (response.ok) {
-        setInvoices(data);
+        // Ensure data is an array
+        setInvoices(Array.isArray(data) ? data : []);
       } else {
-        toast.error("Failed to fetch invoices");
+        toast.error(data.message || "Failed to fetch invoices");
       }
     } catch (error) {
       console.error(error);
-      toast.error("Server Error");
+      toast.error("Server Error: Check your connection");
     } finally {
       setLoading(false);
     }
@@ -38,14 +53,19 @@ const InvoiceHistory = () => {
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this invoice?")) return;
 
+    const token = localStorage.getItem('adminToken'); // ✅ Need token for delete too
+
     try {
-      const response = await fetch(`https://skite-crm.onrender.com/api/invoice/delete/${id}`, {
+      const response = await fetch(`${API_BASE}/invoice/delete/${id}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}` // ✅ Sending Token
+        }
       });
 
       if (response.ok) {
         toast.success("Invoice Deleted!");
-        setInvoices(invoices.filter(inv => inv._id !== id));
+        setInvoices(prev => prev.filter(inv => inv._id !== id));
       } else {
         toast.error("Failed to delete");
       }
@@ -54,16 +74,18 @@ const InvoiceHistory = () => {
     }
   };
 
-  // ✅ 2. FILTER LOGIC (Tab + Search)
+  // ✅ FILTER LOGIC
   const filteredInvoices = invoices.filter(inv => {
-    // Search Filter
-    const matchesSearch = 
-      inv.clientDetails.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      inv.invoiceNo.toLowerCase().includes(searchTerm.toLowerCase());
+    // Search Filter (Safe check for null values)
+    const clientName = inv.clientDetails?.name?.toLowerCase() || '';
+    const invoiceNo = inv.invoiceNo?.toLowerCase() || '';
+    const searchLower = searchTerm.toLowerCase();
+
+    const matchesSearch = clientName.includes(searchLower) || invoiceNo.includes(searchLower);
 
     // Tab Filter (GST check)
-    // taxRate 0-க்கு மேல் இருந்தால் அது GST Invoice
-    const isGST = inv.taxRate && inv.taxRate > 0;
+    // taxRate > 0 means GST Invoice
+    const isGST = inv.taxRate && Number(inv.taxRate) > 0;
 
     if (activeTab === 'gst') {
       return matchesSearch && isGST;
@@ -103,7 +125,7 @@ const InvoiceHistory = () => {
         </button>
       </div>
 
-      {/* --- ✅ TABS SECTION --- */}
+      {/* --- TABS SECTION --- */}
       <div style={{ display: 'flex', gap: '15px', marginBottom: '20px' }}>
         <button
           onClick={() => setActiveTab('gst')}
@@ -180,7 +202,6 @@ const InvoiceHistory = () => {
                 <th style={{ padding: '15px 20px', fontSize: '13px', fontWeight: '600', color: '#6b7280' }}>DATE</th>
                 <th style={{ padding: '15px 20px', fontSize: '13px', fontWeight: '600', color: '#6b7280' }}>CLIENT NAME</th>
                 
-                {/* GST Tab ஆக இருந்தால் Tax % காலமை காட்டு */}
                 {activeTab === 'gst' && (
                   <th style={{ padding: '15px 20px', fontSize: '13px', fontWeight: '600', color: '#6b7280' }}>TAX %</th>
                 )}
@@ -203,14 +224,13 @@ const InvoiceHistory = () => {
                   >
                     <td style={{ padding: '15px 20px', fontWeight: '600', color: '#FF4500' }}>{inv.invoiceNo}</td>
                     <td style={{ padding: '15px 20px', color: '#374151' }}>{new Date(inv.date).toLocaleDateString('en-GB')}</td>
-                    <td style={{ padding: '15px 20px', color: '#374151', fontWeight: '500' }}>{inv.clientDetails.name}</td>
+                    <td style={{ padding: '15px 20px', color: '#374151', fontWeight: '500' }}>{inv.clientDetails?.name || 'N/A'}</td>
                     
-                    {/* GST Tab ஆக இருந்தால் Tax மதிப்பைக் காட்டு */}
                     {activeTab === 'gst' && (
                         <td style={{ padding: '15px 20px', color: '#6b7280' }}>{inv.taxRate}%</td>
                     )}
 
-                    <td style={{ padding: '15px 20px', color: '#111827', fontWeight: '600' }}>₹ {inv.grandTotal.toLocaleString('en-IN')}</td>
+                    <td style={{ padding: '15px 20px', color: '#111827', fontWeight: '600' }}>₹ {inv.grandTotal?.toLocaleString('en-IN') || '0'}</td>
                     <td style={{ padding: '15px 20px' }}>
                       <button 
                         onClick={(e) => { 

@@ -29,6 +29,7 @@ const invoiceSchema = new mongoose.Schema({
   cgst: { type: Number, required: true },
   sgst: { type: Number, required: true },
   grandTotal: { type: Number, required: true },
+  paidAmount: { type: Number, default: 0 },
 
   createdAt: { type: Date, default: Date.now }
 });

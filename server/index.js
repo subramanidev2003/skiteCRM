@@ -49,6 +49,7 @@ import fs from 'fs';
 import leadRoutes from './routes/leadRoutes.js';
 import invoiceRoutes from './routes/invoiceRoutes.js';
 import quoteRoutes from './routes/quoteRoutes.js';
+import transactionRoutes from './routes/transactionRoutes.js';
 
 
 const app = express();
@@ -127,6 +128,7 @@ app.use('/api/tasks', taskRouter);
 app.use('/api/leads', leadRoutes);
 app.use('/api/invoice', invoiceRoutes);
 app.use('/api/quote', quoteRoutes); // Add this line
+app.use('/api/transaction', transactionRoutes);
 
 // ✅ ERROR HANDLING MIDDLEWARE
 app.use((err, req, res, next) => {

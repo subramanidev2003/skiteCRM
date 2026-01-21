@@ -58,3 +58,29 @@ export const getInvoiceById = async (req, res) => {
     res.status(500).json({ message: "Error fetching invoice details" });
   }
 };
+
+// ... பழைய code ...
+
+// ✅ Update Invoice Payment
+export const updatePayment = async (req, res) => {
+  try {
+    const { paidAmount } = req.body;
+    
+    // குறிப்பிட்ட ID உள்ள Invoice-ஐ கண்டுபிடித்து Update செய்தல்
+    const updatedInvoice = await Invoice.findByIdAndUpdate(
+      req.params.id,
+      { paidAmount: paidAmount },
+      { new: true } // புதிய விபரங்களை ரிட்டர்ன் செய்யும்
+    );
+
+    if (!updatedInvoice) {
+      return res.status(404).json({ message: "Invoice not found" });
+    }
+
+    res.status(200).json({ message: "Payment updated successfully!", invoice: updatedInvoice });
+
+  } catch (error) {
+    console.error("Payment Update Error:", error);
+    res.status(500).json({ message: "Failed to update payment", error: error.message });
+  }
+};

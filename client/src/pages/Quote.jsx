@@ -48,6 +48,7 @@ const Quote = () => {
     location: ''
   });
 
+  // ✅ ADDED QTY HERE
   const [items, setItems] = useState([
     { description: 'Social Media Poster', hsn: 'Monthly 10 Poster', price: 9000, qty: 1 }
   ]);
@@ -59,8 +60,9 @@ Final 50% on project completion before deployment.
 The complete website will be built on our subdomain for preview and approval before final deployment.
 Any additional page will be charged at Rs.1,500 per page.`);
 
-  // --- CALCULATIONS ---
+  // --- CALCULATIONS (UPDATED WITH QTY) ---
   const calculateTotal = () => {
+    // ✅ Price * Qty Logic Added
     const subtotal = items.reduce((acc, item) => acc + (item.price * item.qty), 0);
     const taxAmount = (subtotal * taxRate) / 100;
     const grandTotal = subtotal + taxAmount;
@@ -77,6 +79,7 @@ Any additional page will be charged at Rs.1,500 per page.`);
   };
 
   const addItem = () => {
+    // ✅ Default Qty is 1
     setItems([...items, { description: '', hsn: '', price: 0, qty: 1 }]);
   };
 
@@ -97,6 +100,7 @@ Any additional page will be charged at Rs.1,500 per page.`);
         quoteNo: quoteMeta.quoteNo,
         date: quoteMeta.date,
         clientDetails: clientDetails,
+        // ✅ Send Qty and Calculate Item Total for Backend
         items: items.map(item => ({
           ...item,
           total: item.price * item.qty
@@ -130,12 +134,11 @@ Any additional page will be charged at Rs.1,500 per page.`);
   // 🖨️ PDF GENERATION
   const generatePDF = async () => {
     
-    // ✅ 1. Ask for File Name
     let fileName = prompt("Enter PDF File Name:", `Quote_${quoteMeta.quoteNo}`);
     
-    if (fileName === null) return; // Cancel clicked
-    if (!fileName.trim()) fileName = `Quote_${quoteMeta.quoteNo}`; // Default if empty
-    if (!fileName.endsWith('.pdf')) fileName += '.pdf'; // Add extension if missing
+    if (fileName === null) return;
+    if (!fileName.trim()) fileName = `Quote_${quoteMeta.quoteNo}`;
+    if (!fileName.endsWith('.pdf')) fileName += '.pdf';
 
     if (!window.jspdf) {
       await new Promise((resolve, reject) => {
@@ -160,18 +163,15 @@ Any additional page will be charged at Rs.1,500 per page.`);
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     const orangeColor = [255, 69, 0];
-    const lightOrange = [255, 239, 234];
 
     const formatCurrency = (num) => {
       return num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     };
 
-    // 1. LOGO
     try {
         doc.addImage(skitelogo, 'JPG', 14, 10, 40, 29); 
     } catch (e) { console.error("Logo Error:", e); }
 
-    // 2. COMPANY DETAILS
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(0);
@@ -184,13 +184,11 @@ Any additional page will be charged at Rs.1,500 per page.`);
     doc.text(`Website: ${senderDetails.website}`, 14, 57);
     doc.text(`GSTIN: ${senderDetails.gst}`, 14, 62);
 
-    // 3. QUOTE TITLE
     doc.setFontSize(24);
     doc.setTextColor(255, 69, 0);
     doc.setFont("helvetica", "bold");
     doc.text("QUOTE", 196, 20, { align: 'right' });
 
-    // 5. CLIENT DETAILS (Position Reference)
     const clientY = 72;
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
@@ -199,8 +197,6 @@ Any additional page will be charged at Rs.1,500 per page.`);
     doc.setFont("helvetica", "normal");
     doc.text(clientDetails.businessName || clientDetails.name || 'N/A', 14, clientY + 5);
 
-    // 4. QUOTE NO & DATE (Fixed: Down & Aligned)
-    doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
     doc.text("NO:", 155, clientY); 
     doc.setFont("helvetica", "normal");
@@ -213,16 +209,19 @@ Any additional page will be charged at Rs.1,500 per page.`);
     const formattedDate = `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}/${dateObj.getFullYear()}`;
     doc.text(formattedDate, 170, clientY + 6);
 
-    // 6. ITEMS TABLE
+    // ✅ UPDATED TABLE COLUMNS FOR PDF (ADDED QTY & TOTAL)
     const tableBody = items.map(item => [
       item.description,
       item.hsn,
-      formatCurrency(item.price)
+      formatCurrency(item.price),
+      item.qty, // Added Qty
+      formatCurrency(item.price * item.qty) // Added Total
     ]);
 
     doc.autoTable({
       startY: clientY + 15,
-      head: [['DESCRIPTION', 'DETAILS', 'PRICE']],
+      // ✅ Added QTY and TOTAL headers
+      head: [['DESCRIPTION', 'DETAILS', 'PRICE', 'QTY', 'TOTAL']], 
       body: tableBody,
       theme: 'grid',
       tableLineColor: orangeColor,
@@ -247,14 +246,15 @@ Any additional page will be charged at Rs.1,500 per page.`);
       },
       columnStyles: {
         0: { cellWidth: 70, fontStyle: 'bold' },
-        1: { cellWidth: 75 },
-        2: { halign: 'right', cellWidth: 37 }
+        1: { cellWidth: 50 },
+        2: { halign: 'right', cellWidth: 25 },
+        3: { halign: 'right', cellWidth: 15 },
+        4: { halign: 'right', cellWidth: 25 }
       }
     });
 
     let finalY = doc.lastAutoTable.finalY + 12;
 
-    // 7. TERMS & TOTALS
     if (finalY + 60 > 280) {
       doc.addPage();
       finalY = 20;
@@ -312,7 +312,6 @@ Any additional page will be charged at Rs.1,500 per page.`);
 
     finalY = Math.max(termY, totalsStartY + (rowHeight + 1) * 3) + 15;
 
-    // 9. BANK DETAILS & SIGNATURE
     if (finalY + 90 > 285) { 
       doc.addPage();
       finalY = 20;
@@ -351,7 +350,6 @@ Any additional page will be charged at Rs.1,500 per page.`);
     doc.setTextColor(100);
     doc.text("This is a Computer Generated Quote", 105, pageHeight - 10, { align: "center" });
 
-    // ✅ Save with User Provided Name
     doc.save(fileName);
   };
 
@@ -361,9 +359,40 @@ Any additional page will be charged at Rs.1,500 per page.`);
       {/* HEADER SECTION */}
       <div className="quote-header-nav">
         <div className="quote-header-left">
-          <button className="back-btn" onClick={() => navigate('/admin-dashboard')}>
-            <ArrowLeft size={24} color="#333" />
-          </button>
+          <button 
+                onClick={() => navigate('/admin-dashboard')}
+                className="modern-back-btn" // New Class Name
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    background: 'white',
+                    border: '1px solid #e0e0e0',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#4b5563',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                }}
+                onMouseOver={(e) => {
+                    e.currentTarget.style.borderColor = '#FF4500';
+                    e.currentTarget.style.color = '#FF4500';
+                    e.currentTarget.style.backgroundColor = '#fff5f5';
+                    e.currentTarget.style.transform = 'translateX(-3px)';
+                }}
+                onMouseOut={(e) => {
+                    e.currentTarget.style.borderColor = '#e0e0e0';
+                    e.currentTarget.style.color = '#4b5563';
+                    e.currentTarget.style.backgroundColor = 'white';
+                    e.currentTarget.style.transform = 'translateX(0)';
+                }}
+            >
+                <ArrowLeft size={20} />
+                <span>Back</span>
+            </button>
           <h2>Create Quote</h2>
         </div>
         
@@ -438,42 +467,70 @@ Any additional page will be charged at Rs.1,500 per page.`);
             </div>
           </div>
 
-          <div className="items-section">
-            <h3>Items</h3>
+        <div className="items-section">
+            <h3 style={{color: '#FF4500', marginBottom: '15px'}}>Items</h3>
 
-            <div className="items-header">
-              <div className="col-description">Description</div>
-              <div className="col-details">Details</div>
-              <div className="col-price">Price</div>
-              <div className="col-delete"></div>
-            </div>
+            {/* ❌ பழைய Header பகுதி நீக்கப்பட்டது (Labels உள்ளே சேர்க்கப்பட்டுள்ளது) */}
 
             {items.map((item, index) => (
-              <div key={index} className="item-row">
-                <input 
-                  type="text" 
-                  className="input-description"
-                  value={item.description} 
-                  onChange={(e) => handleItemChange(index, 'description', e.target.value)}
-                />
-                <input 
-                  type="text" 
-                  className="input-details"
-                  value={item.hsn} 
-                  onChange={(e) => handleItemChange(index, 'hsn', e.target.value)}
-                />
-                <input 
-                  type="number" 
-                  className="input-price"
-                  value={item.price} 
-                  onChange={(e) => handleItemChange(index, 'price', parseFloat(e.target.value) || 0)}
-                />
-                <button 
-                  onClick={() => removeItem(index)}
-                  className="remove-btn"
-                >
-                  <Trash2 size={16}/>
-                </button>
+              <div key={index} className="item-card">
+                
+                {/* --- வரிசை 1: Description & Details --- */}
+                <div className="item-row-top">
+                  <div className="input-wrapper description-wrapper">
+                    <label>Description</label>
+                    <input 
+                      type="text" 
+                      placeholder="Item Description" 
+                      value={item.description} 
+                      onChange={(e) => handleItemChange(index, 'description', e.target.value)}
+                    />
+                  </div>
+                  <div className="input-wrapper details-wrapper">
+                    <label>HSN / Details</label>
+                    <input 
+                      type="text" 
+                      placeholder="HSN" 
+                      value={item.hsn} 
+                      onChange={(e) => handleItemChange(index, 'hsn', e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {/* --- வரிசை 2: Price, Qty & Delete --- */}
+                <div className="item-row-bottom">
+                  <div className="input-wrapper price-wrapper">
+                    <label>Price</label>
+                    <input 
+                      type="number" 
+                      placeholder="0.00" 
+                      value={item.price} 
+                      onChange={(e) => handleItemChange(index, 'price', parseFloat(e.target.value) || 0)}
+                    />
+                  </div>
+                  
+                  <div className="input-wrapper qty-wrapper">
+                    <label>Qty</label>
+                    <input 
+                      type="number" 
+                      placeholder="1" 
+                      value={item.qty} 
+                      onChange={(e) => handleItemChange(index, 'qty', parseFloat(e.target.value) || 0)}
+                    />
+                  </div>
+
+                  <div className="delete-wrapper">
+                    <label>&nbsp;</label> {/* Empty label for alignment */}
+                    <button 
+                      onClick={() => removeItem(index)}
+                      className="remove-btn"
+                      title="Remove Item"
+                    >
+                      <Trash2 size={18}/>
+                    </button>
+                  </div>
+                </div>
+
               </div>
             ))}
 
@@ -528,15 +585,20 @@ Any additional page will be charged at Rs.1,500 per page.`);
 
           <div className="preview-client">
             <h4>QUOTE TO:</h4>
+            <p>{clientDetails.clientName || clientDetails.name || 'N/A'}</p>
             <p>{clientDetails.businessName || clientDetails.name || 'N/A'}</p>
+
           </div>
 
+          {/* ✅ UPDATED PREVIEW TABLE WITH QTY & TOTAL */}
           <table className="preview-table">
             <thead>
               <tr>
                 <th>DESCRIPTION</th>
                 <th>DETAILS</th>
                 <th>PRICE</th>
+                <th>QTY</th>
+                <th>TOTAL</th>
               </tr>
             </thead>
             <tbody>
@@ -545,6 +607,8 @@ Any additional page will be charged at Rs.1,500 per page.`);
                   <td>{item.description}</td>
                   <td>{item.hsn}</td>
                   <td>₹ {item.price.toLocaleString('en-IN')}</td>
+                  <td>{item.qty}</td>
+                  <td>₹ {(item.price * item.qty).toLocaleString('en-IN')}</td>
                 </tr>
               ))}
             </tbody>

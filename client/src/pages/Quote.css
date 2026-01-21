@@ -614,3 +614,154 @@
     width: 100%;
   }
 }
+
+/* --- Qty Column Styling --- */
+
+/* 1. Header & Input Width Control */
+/* Qty காலமை சிறியதாக காட்ட flex: 0.6 கொடுக்கப்பட்டுள்ளது */
+.col-qty, 
+.input-qty { 
+  flex: 0.6;  
+  text-align: center; /* எழுத்துக்களை நடுவில் வைக்க */
+  min-width: 60px;
+}
+
+/* 2. Input Specific Styling */
+.input-qty {
+  text-align: center; /* நம்பரை பாக்ஸின் நடுவில் காட்ட */
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  outline: none;
+  background: #fff;
+  transition: border-color 0.2s;
+  margin-right: 10px; /* Delete பட்டனுக்கும் இதற்கும் இடைவெளி */
+}
+
+/* Focus ஆகும்போது */
+.input-qty:focus {
+  border-color: #ff4500;
+  box-shadow: 0 0 0 3px rgba(255, 69, 0, 0.1);
+}
+
+/* --- Mobile Responsiveness for Qty --- */
+@media (max-width: 768px) {
+  .col-qty, .input-qty {
+    flex: 1; /* மொபைலில் கொஞ்சம் பெரிதாகத் தெரிய */
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+/* --- ITEMS CARD LAYOUT (New 2-Line Design) --- */
+
+.items-section {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+/* ஒவ்வொரு Item-ம் ஒரு கார்டு போல இருக்கும் */
+.item-card {
+  background-color: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 15px; /* மேல் வரிசைக்கும் கீழ் வரிசைக்கும் இடைவெளி */
+}
+
+/* வரிசை 1 & 2 பொதுவான ஸ்டைல் */
+.item-row-top, 
+.item-row-bottom {
+  display: flex;
+  gap: 15px;
+  align-items: flex-start;
+}
+
+/* Input Wrapper (Label + Input) */
+.input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.input-wrapper label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.input-wrapper input {
+  padding: 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  outline: none;
+  font-size: 0.95rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.input-wrapper input:focus {
+  border-color: #ff4500;
+  box-shadow: 0 0 0 2px rgba(255, 69, 0, 0.1);
+}
+
+/* --- Column Widths --- */
+
+/* வரிசை 1 */
+.description-wrapper { flex: 2; } /* Description பெரியதாக இருக்கும் */
+.details-wrapper { flex: 1; }
+
+/* வரிசை 2 */
+.price-wrapper { flex: 1; }
+.qty-wrapper { flex: 0.5; } /* Qty சிறியதாக இருக்கும் */
+.delete-wrapper { width: 45px; display: flex; flex-direction: column; }
+
+/* Delete Button Styling */
+.remove-btn {
+  background: #fee2e2;
+  color: #ef4444;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  height: 38px; /* Input உயரத்திற்கு சமமாக */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.remove-btn:hover {
+  background: #ef4444;
+  color: white;
+  border-color: #ef4444;
+}
+
+/* --- Mobile Responsive --- */
+@media (max-width: 600px) {
+  .item-row-top {
+    flex-direction: column; /* மொபைலில் ஒன்றன் கீழ் ஒன்று */
+    gap: 10px;
+  }
+  
+  .item-row-bottom {
+    gap: 10px;
+  }
+  
+  .qty-wrapper { flex: 1; } /* மொபைலில் Qty கொஞ்சம் பெரிதாக */
+}

@@ -317,8 +317,39 @@ const Invoice = () => {
       {/* HEADER SECTION */}
       <div className="invoice-header-nav">
         <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
-            <button className="back-btn" onClick={() => navigate('/admin-dashboard')}>
-                <ArrowLeft size={24} color="#333" />
+           <button 
+                onClick={() => navigate('/admin-dashboard')}
+                className="modern-back-btn" // New Class Name
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    background: 'white',
+                    border: '1px solid #e0e0e0',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#4b5563',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                }}
+                onMouseOver={(e) => {
+                    e.currentTarget.style.borderColor = '#FF4500';
+                    e.currentTarget.style.color = '#FF4500';
+                    e.currentTarget.style.backgroundColor = '#fff5f5';
+                    e.currentTarget.style.transform = 'translateX(-3px)';
+                }}
+                onMouseOut={(e) => {
+                    e.currentTarget.style.borderColor = '#e0e0e0';
+                    e.currentTarget.style.color = '#4b5563';
+                    e.currentTarget.style.backgroundColor = 'white';
+                    e.currentTarget.style.transform = 'translateX(0)';
+                }}
+            >
+                <ArrowLeft size={20} />
+                <span>Back</span>
             </button>
             <h2 style={{ margin: 0, color: '#333' }}>Create Invoice</h2>
         </div>
@@ -418,68 +449,123 @@ const Invoice = () => {
           </div>
 
           {/* Card 3: Items */}
+        {/* Card 3: Items - UPDATED LAYOUT */}
           <div className="form-section">
-            <h3 className="section-title" style={{color: '#FF4500', marginBottom: '15px'}}>Items</h3>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'15px', borderBottom:'2px solid #f0f0f0', paddingBottom:'10px'}}>
+               <h3 className="section-title" style={{color: '#FF4500', margin:0}}>Items</h3>
+               <button onClick={addItem} className="add-item-btn" style={{width:'auto', padding:'5px 15px', fontSize:'13px'}}>
+                  <Plus size={14}/> Add New
+               </button>
+            </div>
+
             {items.map((item, index) => (
-              <div key={index} className="item-row" style={{marginBottom: '15px', paddingBottom: '15px', borderBottom: '1px solid #eee'}}>
-                <div style={{display: 'flex', gap: '10px', marginBottom: '10px'}}>
+              <div key={index} className="item-card" style={{
+                  background: '#fff',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '8px',
+                  padding: '15px',
+                  marginBottom: '15px',
+                  boxShadow: '0 2px 5px rgba(0,0,0,0.02)'
+              }}>
+                
+                {/* ROW 1: Description & HSN */}
+                <div style={{display: 'flex', gap: '15px', marginBottom: '15px'}}>
                     <div style={{flex: 2}}>
-                        <label style={{display: 'block', fontSize: '12px', color: '#666', marginBottom: '4px'}}>Description</label>
+                        <label style={{display: 'block', fontSize: '11px', fontWeight:'600', color: '#888', marginBottom: '5px', textTransform:'uppercase'}}>Description</label>
                         <input 
                         type="text" 
-                        placeholder="Description" 
+                        placeholder="Item Description" 
                         value={item.description} 
                         onChange={(e) => handleItemChange(index, 'description', e.target.value)}
-                        style={{width: '100%'}}
+                        style={{width: '100%', padding:'10px', border:'1px solid #ddd', borderRadius:'6px', outline:'none', fontSize:'14px'}}
                         />
                     </div>
                     <div style={{flex: 1}}>
-                        <label style={{display: 'block', fontSize: '12px', color: '#666', marginBottom: '4px'}}>HSN</label>
+                        <label style={{display: 'block', fontSize: '11px', fontWeight:'600', color: '#888', marginBottom: '5px', textTransform:'uppercase'}}>HSN Code</label>
                         <input 
                         type="text" 
                         placeholder="HSN" 
                         value={item.hsn} 
                         onChange={(e) => handleItemChange(index, 'hsn', e.target.value)}
-                        style={{width: '100%'}}
+                        style={{width: '100%', padding:'10px', border:'1px solid #ddd', borderRadius:'6px', outline:'none', fontSize:'14px'}}
                         />
                     </div>
                 </div>
-                <div style={{display: 'flex', gap: '10px', alignItems: 'flex-end'}}>
+
+                {/* ROW 2: Price, Qty, Total & Delete */}
+                <div style={{display: 'flex', gap: '15px', alignItems: 'flex-end'}}>
                     <div style={{flex: 1}}>
-                        <label style={{display: 'block', fontSize: '12px', color: '#666', marginBottom: '4px'}}>Price</label>
+                        <label style={{display: 'block', fontSize: '11px', fontWeight:'600', color: '#888', marginBottom: '5px', textTransform:'uppercase'}}>Unit Price</label>
                         <input 
                         type="number" 
-                        placeholder="Price" 
+                        placeholder="0.00" 
                         value={item.price} 
                         onChange={(e) => handleItemChange(index, 'price', parseFloat(e.target.value) || 0)}
-                        style={{width: '100%'}}
+                        style={{width: '100%', padding:'10px', border:'1px solid #ddd', borderRadius:'6px', outline:'none', fontSize:'14px'}}
                         />
                     </div>
-                    <div style={{flex: 0.5}}>
-                        <label style={{display: 'block', fontSize: '12px', color: '#666', marginBottom: '4px'}}>Qty</label>
+                    
+                    <div style={{flex: 0.8}}>
+                        <label style={{display: 'block', fontSize: '11px', fontWeight:'600', color: '#888', marginBottom: '5px', textTransform:'uppercase'}}>Qty</label>
                         <input 
                         type="number" 
-                        placeholder="Qty" 
+                        placeholder="1" 
                         value={item.qty} 
                         onChange={(e) => handleItemChange(index, 'qty', parseFloat(e.target.value) || 0)}
-                        style={{width: '100%'}}
+                        style={{width: '100%', padding:'10px', border:'1px solid #ddd', borderRadius:'6px', outline:'none', fontSize:'14px', textAlign:'center'}}
                         />
                     </div>
+
+                    <div style={{flex: 1}}>
+                        <label style={{display: 'block', fontSize: '11px', fontWeight:'600', color: '#888', marginBottom: '5px', textTransform:'uppercase'}}>Total</label>
+                        <div style={{
+                            padding: '10px', 
+                            background: '#f9f9f9', 
+                            border: '1px solid #eee', 
+                            borderRadius: '6px', 
+                            fontSize: '14px', 
+                            fontWeight: 'bold', 
+                            color: '#333',
+                            textAlign: 'right'
+                        }}>
+                            ₹ {(item.price * item.qty).toLocaleString()}
+                        </div>
+                    </div>
+
                     <button 
                         onClick={() => removeItem(index)}
-                        className="remove-btn"
-                        style={{height: '38px', marginTop: 'auto'}}
+                        style={{
+                            height: '40px', 
+                            width: '40px',
+                            background: '#fee2e2', 
+                            color: '#ef4444', 
+                            border: '1px solid #fecaca', 
+                            borderRadius: '6px', 
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'all 0.2s'
+                        }}
+                        title="Remove Item"
                     >
-                        <Trash2 size={16}/>
+                        <Trash2 size={18}/>
                     </button>
                 </div>
+
               </div>
             ))}
-            <button onClick={addItem} className="add-item-btn">
-              <Plus size={16}/> Add Item
+
+            {items.length === 0 && (
+                <div style={{textAlign:'center', padding:'20px', color:'#999', border:'1px dashed #ddd', borderRadius:'8px', marginBottom:'15px'}}>
+                    No items added yet.
+                </div>
+            )}
+            
+            <button onClick={addItem} className="add-item-btn" style={{width:'100%', padding:'12px', fontSize:'14px', fontWeight:'bold', border:'1px dashed #FF4500', background:'#fff5f0', color:'#FF4500'}}>
+              <Plus size={16}/> Add New Item
             </button>
           </div>
-
           {/* Card 4: Tax Rate & Total */}
           <div className="form-section">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

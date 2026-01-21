@@ -1,5 +1,5 @@
 // D:/Desktop/skite/client/src/pages/AdminDashboard.jsx
-import { CalendarCheck, Megaphone, Users, IndianRupee, FileText, ScrollText } from 'lucide-react'; // ✅ ScrollText added for Quote
+import { CalendarCheck, Megaphone, Users, IndianRupee, FileText, ScrollText, Landmark } from 'lucide-react'; // ✅ Landmark Added for Accounts
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom'; 
 import skitelogo from '../assets/skitelogo.png'; 
@@ -76,12 +76,21 @@ const DashboardCards = ({ handleCardClick }) => (
             <div className="card-accent"></div>
         </div>
 
-        {/* ✅ New Quote Card Added Here */}
+        {/* Quote Card */}
         <div className="card" onClick={() => handleCardClick('quote')}>
             <div className="card-icon">
                 <ScrollText size={40} color="#FF4500" />
             </div>
             <div className="card-title1">Quote</div>
+            <div className="card-accent"></div>
+        </div>
+
+        {/* ✅ New Accounts Card Added Here */}
+        <div className="card" onClick={() => handleCardClick('accounts')}>
+            <div className="card-icon">
+                <Landmark size={40} color="#FF4500" />
+            </div>
+            <div className="card-title1">Accounts</div>
             <div className="card-accent"></div>
         </div>
 
@@ -148,9 +157,13 @@ const AdminDashboard = () => {
             navigate('/admin-dashboard/invoice'); 
             return;
         }
-        // ✅ Quote Page Navigation Added
         if (type === 'quote') {
             navigate('/admin-dashboard/quote'); 
+            return;
+        }
+        // ✅ Accounts Page Navigation Added
+        if (type === 'accounts') {
+            navigate('/admin-dashboard/accounts'); 
             return;
         }
     };

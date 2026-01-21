@@ -203,9 +203,40 @@ const PayRoll = () => {
   return (
     <div className="attendance-page1">
       <div className="flex items-center justify-between mb-4">
-        <button className="task-btn-back" onClick={() => navigate(-1)}>
-            <ArrowLeft size={20} /> Back
-        </button>
+        <button 
+                onClick={() => navigate('/admin-dashboard')}
+                className="modern-back-btn" // New Class Name
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    background: 'white',
+                    border: '1px solid #e0e0e0',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#4b5563',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                }}
+                onMouseOver={(e) => {
+                    e.currentTarget.style.borderColor = '#FF4500';
+                    e.currentTarget.style.color = '#FF4500';
+                    e.currentTarget.style.backgroundColor = '#fff5f5';
+                    e.currentTarget.style.transform = 'translateX(-3px)';
+                }}
+                onMouseOut={(e) => {
+                    e.currentTarget.style.borderColor = '#e0e0e0';
+                    e.currentTarget.style.color = '#4b5563';
+                    e.currentTarget.style.backgroundColor = 'white';
+                    e.currentTarget.style.transform = 'translateX(0)';
+                }}
+            >
+                <ArrowLeft size={20} />
+                <span>Back</span>
+            </button>
         <h2 className="page-title">Employee Payroll</h2>
       </div>
 

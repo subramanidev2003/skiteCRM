@@ -27,6 +27,10 @@ import Invoice from "./pages/Invoice.jsx";
 import InvoiceHistory from "./pages/InvoiceHistory.jsx";
 import Quote from "./pages/Quote.jsx";
 import QuoteHistory from "./pages/QuoteHistory.jsx";
+import Accounts from "./pages/Accounts.jsx";
+import InvoicePayment from "./pages/InvoicePayment.jsx";
+import IncomeExpense from "./pages/IncomeExpense.jsx";
+import FinancialGraph from "./pages/FinancialGraph.jsx";
 
 function App() {
   return (
@@ -107,6 +111,13 @@ function App() {
               path="/admin-dashboard/quote-history"
               element={<QuoteHistory />}
             />
+            {/* ✅ Accounts Route Added */}
+            <Route path="/admin-dashboard/accounts" element={<Accounts />} />
+            <Route path="financial-graph" element={<FinancialGraph />}/>
+           
+
+<Route path="invoice-payment" element={<InvoicePayment />} />
+<Route path="income-expense" element={<IncomeExpense />} />
           </Route>
 
           <Route path="/add-employee" element={<AddEmployee />} />

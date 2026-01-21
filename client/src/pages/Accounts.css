@@ -1,0 +1,117 @@
+/* --- Accounts.css --- */
+
+.accounts-container {
+  padding: 30px;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* Header */
+.accounts-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 40px;
+}
+
+.accounts-header h2 {
+  font-size: 24px;
+  color: #333;
+  margin: 0;
+  font-weight: 700;
+}
+
+.back-btn0 {
+  background: white;
+  border: 1px solid #ddd;
+  padding: 8px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.back-btn:hover {
+  background: #f0f0f0;
+  transform: translateX(-3px);
+}
+
+/* Grid Layout */
+.accounts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+  max-width: 900px;
+  margin: 0 auto; /* Center alignment */
+}
+
+/* Card Style */
+.account-card {
+  background: white;
+  padding: 40px 30px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.account-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(255, 69, 0, 0.15); /* Orange shadow on hover */
+  border-color: #ff4500;
+}
+
+.account-card h3 {
+  font-size: 20px;
+  color: #333;
+  margin: 0;
+  font-weight: 600;
+}
+
+.account-card p {
+  color: #666;
+  font-size: 14px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Icons */
+.icon-box {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.icon-box.orange {
+  background: linear-gradient(135deg, #ff4500, #ff8c00);
+  box-shadow: 0 4px 15px rgba(255, 69, 0, 0.3);
+}
+
+.icon-box.green {
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+/* Mobile Responsive */
+@media (max-width: 600px) {
+  .accounts-container {
+    padding: 20px;
+  }
+  
+  .accounts-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,195 @@
+/* --- InvoicePayment.css --- */
+
+.payment-container {
+    padding: 30px;
+    background-color: #f8f9fa;
+    min-height: 100vh;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* Header */
+.payment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    flex-wrap: wrap; /* மொபைலில் Header மடிய (Wrap) */
+    gap: 15px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.header-left h2 {
+    font-size: 24px;
+    color: #333;
+    margin: 0;
+}
+
+/* Stats */
+.stat-card {
+    background: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border-left: 4px solid #d32f2f;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    white-space: nowrap; /* டெக்ஸ்ட் உடையாமல் இருக்க */
+}
+
+.stat-card span { font-size: 12px; color: #666; text-transform: uppercase; font-weight: bold; }
+.stat-card h3 { margin: 5px 0 0; color: #333; font-size: 20px; }
+
+/* Search */
+.search-bar-wrapper {
+    background: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 25px;
+    border: 1px solid #e5e7eb;
+}
+
+.search-bar-wrapper input {
+    border: none;
+    outline: none;
+    width: 100%;
+    font-size: 15px;
+}
+
+/* ✅ TABLE SCROLL FIX (Mobile Responsive) */
+.payment-table-wrapper {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    
+    /* 👇 இந்த இரண்டு வரிகள் முக்கியம் */
+    overflow-x: auto; /* கிடைமட்ட ஸ்க்ரோல் அனுமதிக்கும் */
+    -webkit-overflow-scrolling: touch; /* மொபைலில் ஸ்மூத் ஸ்க்ரோல் */
+}
+
+.payment-table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    text-align: left; 
+    min-width: 800px; /* 👇 டேபிள் சுருங்காமல் இருக்க குறைந்தபட்ச அகலம் */
+}
+
+.payment-table th { background: #f3f4f6; padding: 15px 20px; font-size: 13px; color: #555; text-transform: uppercase; font-weight: 600; white-space: nowrap; }
+.payment-table td { padding: 15px 20px; border-bottom: 1px solid #f3f4f6; font-size: 14px; color: #333; white-space: nowrap; }
+
+/* Status Badges */
+.badge { padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+.status-paid { background: #e6fffa; color: #047857; }
+.status-partial { background: #fffbeb; color: #b45309; }
+.status-unpaid { background: #fff5f5; color: #c53030; }
+
+/* Action Button */
+.pay-btn {
+    background: #FF4500;
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: 0.2s;
+    white-space: nowrap;
+}
+.pay-btn:hover { background: #e03e00; }
+
+/* --- MODAL STYLES --- */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(2px);
+    padding: 20px; /* மொபைலில் ஒட்டி வராமல் இருக்க */
+}
+
+.modal-box {
+    background: white;
+    width: 100%;
+    max-width: 400px; /* அதிகபட்ச அகலம் */
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.modal-header h3 { margin: 0; color: #333; font-size: 18px; }
+.modal-header button { background: none; border: none; cursor: pointer; color: #666; }
+
+.modal-body { margin-bottom: 25px; }
+.modal-info { margin: 5px 0; font-size: 14px; color: #555; }
+
+.balance-info {
+    background: #fff5f5; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: center; border: 1px dashed #fc8181;
+}
+.balance-info span { font-size: 13px; color: #666; font-weight: 600; text-transform: uppercase; }
+.balance-info h2 { margin: 5px 0 0; }
+
+.input-group label { display: block; font-size: 13px; font-weight: 600; color: #333; margin-bottom: 8px; }
+.input-group input { 
+    width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; outline: none; box-sizing: border-box;
+}
+.input-group input:focus { border-color: #FF4500; box-shadow: 0 0 0 3px rgba(255, 69, 0, 0.1); }
+
+.modal-footer { display: flex; gap: 10px; }
+.confirm-btn { flex: 1; background: #10b981; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; }
+.cancel-btn { flex: 1; background: #e2e8f0; color: #333; border: none; padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; }
+
+/* Mobile Specific Tweaks */
+@media (max-width: 600px) {
+    .payment-container { padding: 15px; }
+    .header-left h2 { font-size: 20px; }
+    .payment-stats { width: 100%; }
+    .stat-card { width: 100%; box-sizing: border-box; }
+}
+
+/* --- Modern Back Button Style --- */
+.modern-back-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* ஐகானுக்கும் எழுத்துக்கும் இடைவெளி */
+    background-color: white;
+    border: 1px solid #e0e0e0;
+    padding: 8px 16px;
+    border-radius: 8px; /* வளைந்த முனைகள் */
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: #4b5563;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05); /* லேசான நிழல் */
+    margin-right: 15px;
+}
+
+/* Hover Effect - மவுஸ் வைத்தால் மாறும் நிறம் */
+.modern-back-btn:hover {
+    border-color: #FF4500;
+    color: #FF4500;
+    background-color: #fff5f5;
+    transform: translateX(-3px); /* லேசாக பின்னோக்கி நகரும் */
+    box-shadow: 0 2px 5px rgba(255, 69, 0, 0.15);
+}
+
+/* Mobile Adjustments */
+@media (max-width: 600px) {
+    .modern-back-btn span {
+        display: none; /* மொபைலில் 'Back' எழுத்து மறைந்து ஐகான் மட்டும் தெரியும் */
+    }
+    .modern-back-btn {
+        padding: 8px; /* மொபைலில் சிறியதாக */
+        border-radius: 50%; /* வட்டமாக */
+    }
+}
