@@ -219,36 +219,41 @@ Any additional page will be charged at Rs.1,500 per page.`);
       formatCurrency(item.price)
     ]);
 
-    doc.autoTable({
-      startY: clientY + 15,
-      head: [['DESCRIPTION', 'DETAILS', 'PRICE']],
-      body: tableBody,
-      theme: 'grid',
-      tableLineColor: orangeColor,
-      tableLineWidth: 0.1, // Fixed: Light border
-      margin: { left: 14, right: 14 },
-      headStyles: {
-        fillColor: orangeColor,
-        textColor: 255,
-        fontStyle: 'bold',
-        lineColor: orangeColor,
-        lineWidth: 0.1,
-        halign: 'center', // Fixed: Center Header
-        fontSize: 10
-      },
-      bodyStyles: {
-        textColor: 0,
-        cellPadding: 6,
-        lineColor: orangeColor,
-        lineWidth: 0.1,
-        fontSize: 9
-      },
-      columnStyles: {
-        0: { cellWidth: 70, fontStyle: 'bold' },
-        1: { cellWidth: 75 },
-        2: { halign: 'right', cellWidth: 37 }
-      }
-    });
+// ... existing code inside generatePDF function ...
+
+    doc.autoTable({
+      startY: clientY + 15,
+      head: [['DESCRIPTION', 'DETAILS', 'PRICE']],
+      body: tableBody,
+      theme: 'grid',
+      tableLineColor: orangeColor,
+      tableLineWidth: 0.1,
+      margin: { left: 14, right: 14 },
+      headStyles: {
+        fillColor: orangeColor,
+        textColor: 255,
+        fontStyle: 'bold',
+        lineColor: orangeColor,
+        lineWidth: 0.1,
+        halign: 'center',
+        fontSize: 10,
+        cellPadding: 3 // ✅ Reduced from default to 3
+      },
+      bodyStyles: {
+        textColor: 0,
+        cellPadding: 3, // ✅ மாற்றப்பட்டது: 6ல் இருந்து 3க்கு குறைக்கப்பட்டுள்ளது
+        lineColor: orangeColor,
+        lineWidth: 0.1,
+        fontSize: 9
+      },
+      columnStyles: {
+        0: { cellWidth: 70, fontStyle: 'bold' },
+        1: { cellWidth: 75 },
+        2: { halign: 'right', cellWidth: 37 }
+      }
+    });
+
+// ... existing code ...
 
     let finalY = doc.lastAutoTable.finalY + 12;
 
@@ -280,7 +285,7 @@ Any additional page will be charged at Rs.1,500 per page.`);
     });
 
     const totalsX = 125;
-    const totalsStartY = finalY + 6;
+    const totalsStartY = finalY - 9;
     const rowHeight = 8;
 
     // Subtotal
@@ -451,39 +456,52 @@ doc.addImage(skiteseal, 'PNG', 75, finalY - 20, 60, 75);
             </div>
           </div>
 
-          <div style={{ background: '#fff', padding: '20px', borderRadius: '8px', border: '1px solid #e0e0e0' }}>
-            <h3 style={{ marginTop: 0, color: '#FF4500' }}>Items</h3>
-            {items.map((item, index) => (
-              <div key={index} style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-                <input 
-                  type="text" 
-                  placeholder="Description" 
-                  value={item.description} 
-                  onChange={(e) => handleItemChange(index, 'description', e.target.value)}
-                  style={{ flex: 2, padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
-                />
-                <input 
-                  type="text" 
-                  placeholder="Details" 
-                  value={item.hsn} 
-                  onChange={(e) => handleItemChange(index, 'hsn', e.target.value)}
-                  style={{ flex: 2, padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
-                />
-                <input 
-                  type="number" 
-                  placeholder="Price" 
-                  value={item.price} 
-                  onChange={(e) => handleItemChange(index, 'price', parseFloat(e.target.value) || 0)}
-                  style={{ flex: 1, padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
-                />
-                <button 
-                  onClick={() => removeItem(index)}
-                  style={{ padding: '8px', background: '#ff4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                >
-                  <Trash2 size={16}/>
-                </button>
-              </div>
-            ))}
+{/* ... existing code inside the Form section ... */}
+
+<div style={{ background: '#fff', padding: '20px', borderRadius: '8px', border: '1px solid #e0e0e0' }}>
+  <h3 style={{ marginTop: 0, color: '#FF4500' }}>Items</h3>
+
+  {/* ✅ புதிதாக சேர்க்கப்பட்ட Headings Section */}
+  <div style={{ display: 'flex', gap: '10px', marginBottom: '10px', color: '#555', fontSize: '14px', fontWeight: 'bold' }}>
+    <div style={{ flex: 2 }}>Description</div>
+    <div style={{ flex: 2 }}>Details</div>
+    <div style={{ flex: 1 }}>Price</div>
+    <div style={{ width: '40px' }}></div> {/* Delete பட்டனுக்கான காலி இடம் */}
+  </div>
+
+  {items.map((item, index) => (
+    <div key={index} style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+      <input 
+        type="text" 
+        // placeholder="Description"  <-- Heading இருப்பதால் இது தேவையில்லை, ஆனால் இருக்கலாம்
+        value={item.description} 
+        onChange={(e) => handleItemChange(index, 'description', e.target.value)}
+        style={{ flex: 2, padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
+      />
+      <input 
+        type="text" 
+        // placeholder="Details" 
+        value={item.hsn} 
+        onChange={(e) => handleItemChange(index, 'hsn', e.target.value)}
+        style={{ flex: 2, padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
+      />
+      <input 
+        type="number" 
+        // placeholder="Price" 
+        value={item.price} 
+        onChange={(e) => handleItemChange(index, 'price', parseFloat(e.target.value) || 0)}
+        style={{ flex: 1, padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
+      />
+      <button 
+        onClick={() => removeItem(index)}
+        style={{ padding: '8px', background: '#ff4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', width: '40px' }}
+      >
+        <Trash2 size={16}/>
+      </button>
+    </div>
+  ))}
+
+{/* ... existing Add Item button code ... */}
             <button 
               onClick={addItem}
               style={{ 

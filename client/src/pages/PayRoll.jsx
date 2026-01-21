@@ -6,7 +6,7 @@ import autoTable from 'jspdf-autotable';
 import { toast } from 'react-toastify';
 import './Attendance.css'; 
 
-const API_BASE = 'http://skite-crm.onrender.com/api';
+const API_BASE = 'https://skite-crm.onrender.com/api'; 
 
 const PayRoll = () => {
   const navigate = useNavigate();
@@ -20,7 +20,7 @@ const PayRoll = () => {
   // --- FILTER STATE ---
   const [searchTerm, setSearchTerm] = useState('');
   
-  // DEFAULT DATE LOGIC (7th to 7th Cycle)
+  // ✅ FIX 1: DATE CYCLE (IST Friendly)
   const getCycleDates = () => {
     const now = new Date();
     const currentDay = now.getDate();
@@ -34,16 +34,19 @@ const PayRoll = () => {
       end = new Date(now.getFullYear(), now.getMonth(), 7);
     }
 
-    const toLocalISO = (date) => {
-        const offset = date.getTimezoneOffset() * 60000;
-        return new Date(date - offset).toISOString().split('T')[0];
-    };
-
-    return { start: toLocalISO(start), end: toLocalISO(end) };
+    const format = (d) => d.toLocaleDateString('en-CA'); 
+    return { start: format(start), end: format(end) };
   };
 
   const [startDate, setStartDate] = useState(getCycleDates().start);
   const [endDate, setEndDate] = useState(getCycleDates().end);
+
+  // ✅ FIX 2: END DATE INCLUSIVE HELPER
+  const addOneDay = (dateStr) => {
+    const d = new Date(dateStr);
+    d.setDate(d.getDate() + 1);
+    return d.toLocaleDateString('en-CA');
+  };
 
   // AUTH TOKEN
   const token = localStorage.getItem('adminToken') || localStorage.getItem('managerToken');
@@ -78,22 +81,38 @@ const PayRoll = () => {
     fetchData();
   }, [token]);
 
-  // 2. CALCULATE PAYROLL LOGIC (Updated for Sorting & Filtering)
+  // 2. CALCULATE PAYROLL LOGIC (✅ CLEAN & FIXED)
   useEffect(() => {
     if (employees.length === 0) return;
 
+    // End date calculation
+    const nextDayAfterEnd = addOneDay(endDate);
+    
     const calculatedData = employees.map((emp) => {
-      const perDaySalary = emp.salaryPerDay || 0; 
-
+      // ✅ SALARY FALLBACK: Try all possible field names
+      const perDaySalary = Number(emp.salaryPerDay) || Number(emp.salary) || Number(emp.amount) || 0; 
+      
       const empAttendance = attendanceRecords.filter((record) => {
+        // --- 1. ID CHECK ---
         const recordUserId = record.userId?._id || record.userId;
-        const isUserMatch = recordUserId === emp._id;
+        const isIdMatch = String(recordUserId) === String(emp._id);
+
+        // --- 2. NAME CHECK (FALLBACK for Ghost Records) ---
+        let isNameMatch = false;
+        if (record.userId && record.userId.name) {
+             isNameMatch = record.userId.name.trim().toLowerCase() === emp.name.trim().toLowerCase();
+        } else if (record.employeeName) { 
+             isNameMatch = record.employeeName.trim().toLowerCase() === emp.name.trim().toLowerCase();
+        }
+
+        const isUserMatch = isIdMatch || isNameMatch;
         
+        // --- 3. DATE CHECK ---
         const rawCheckIn = record.checkIn || record.checkInTime;
         if (!rawCheckIn) return false;
 
-        const recordDate = new Date(rawCheckIn).toISOString().split('T')[0];
-        const isDateMatch = recordDate >= startDate && recordDate <= endDate;
+        const recordDate = new Date(rawCheckIn).toLocaleDateString('en-CA');
+        const isDateMatch = recordDate >= startDate && recordDate < nextDayAfterEnd;
 
         return isUserMatch && isDateMatch;
       });
@@ -106,7 +125,14 @@ const PayRoll = () => {
 
         if (rawCheckIn) {
           const start = new Date(rawCheckIn);
-          const end = rawCheckOut ? new Date(rawCheckOut) : new Date(); 
+          let end;
+
+          // ✅ HANDLE ACTIVE SESSIONS
+          if (rawCheckOut) {
+             end = new Date(rawCheckOut);
+          } else {
+             end = new Date(); // Use current time if active
+          }
           
           const diffMs = end - start;
           const hours = diffMs / (1000 * 60 * 60);
@@ -124,7 +150,7 @@ const PayRoll = () => {
       return {
         id: emp._id,
         name: emp.name,
-        designation: emp.designation || "", // Ensure string to avoid crash
+        designation: emp.designation || "", 
         perDaySalary: perDaySalary,
         presentDays: totalDays,
         totalSalary: totalSalary,
@@ -132,23 +158,19 @@ const PayRoll = () => {
       };
     });
 
-    // --- ✅ CHANGED LOGIC HERE ---
-
-    // 1. FILTER: Search Term AND Remove "Team Lead"
+    // FILTER & SORT LOGIC
     let processedData = calculatedData.filter(item => {
         const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
         const isTeamLead = item.designation.toLowerCase().includes('team lead'); 
-        return matchesSearch && !isTeamLead; // Exclude Team Lead
+        return matchesSearch && !isTeamLead; 
     });
 
-    // 2. SORT: Move Interns to the Bottom
     processedData.sort((a, b) => {
         const isAIntern = a.designation.toLowerCase().includes('intern');
         const isBIntern = b.designation.toLowerCase().includes('intern');
-
-        if (isAIntern && !isBIntern) return 1; // A is Intern -> Move Down
-        if (!isAIntern && isBIntern) return -1; // B is Intern -> Move Down
-        return 0; // No change if both are same category
+        if (isAIntern && !isBIntern) return 1; 
+        if (!isAIntern && isBIntern) return -1; 
+        return 0; 
     });
 
     setPayrollData(processedData);
@@ -265,10 +287,10 @@ const PayRoll = () => {
         </table>
       </div>
       <div style={{marginTop:'15px', fontSize:'0.85rem', color:'#666', fontStyle:'italic'}}>
-        * Calculation Logic: Work hours &ge; 6 hrs = 1 Day | 3 hrs - 6 hrs = 0.5 Day
+        * Calculation Logic: Work hours &ge; 6 hrs = 1 Day | 3 hrs - 6 hrs = 0.5 Day (Active sessions included)
       </div>
     </div>
   );
 }
 
-export default PayRoll;
+export default PayRoll; 

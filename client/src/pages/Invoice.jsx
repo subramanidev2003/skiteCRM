@@ -7,6 +7,7 @@ import { toast } from 'react-toastify';
 import './Invoice.css';
 
 // ✅ IMAGES IMPORT
+// Make sure these paths are correct for your project structure
 import skitelogo from '../assets/skite-logo.jpg'; 
 import skitesign from '../assets/sign.jpg';
 import skiteseal from '../assets/seal.png'; 
@@ -312,7 +313,7 @@ const Invoice = () => {
             <button className="back-btn" onClick={() => navigate('/admin-dashboard')}>
                 <ArrowLeft size={24} color="#333" />
             </button>
-            <h2>Create Invoice</h2>
+            <h2 style={{ margin: 0, color: '#333' }}>Create Invoice</h2>
         </div>
         
         {/* ACTION BUTTONS */}
@@ -351,7 +352,7 @@ const Invoice = () => {
           
           {/* Card 1: Invoice Details */}
           <div className="form-section">
-            <h3>Invoice Details</h3>
+            <h3 className="section-title">Invoice Details</h3>
             <div className="row-inputs">
               <div className="input-group">
                 <label>Invoice No</label>
@@ -374,7 +375,7 @@ const Invoice = () => {
 
           {/* Card 2: Client Details */}
           <div className="form-section">
-            <h3>Issued To</h3>
+            <h3 className="section-title">Issued To</h3>
             <div className="input-group">
               <label>Client Name</label>
               <input 
@@ -411,43 +412,60 @@ const Invoice = () => {
 
           {/* Card 3: Items */}
           <div className="form-section">
-            <h3>Items</h3>
+            <h3 className="section-title" style={{color: '#FF4500', marginBottom: '15px'}}>Items</h3>
             {items.map((item, index) => (
-              <div key={index} className="item-row">
-                <input 
-                  type="text" 
-                  placeholder="Description" 
-                  value={item.description} 
-                  onChange={(e) => handleItemChange(index, 'description', e.target.value)}
-                  style={{ flex: 2 }}
-                />
-                <input 
-                  type="text" 
-                  placeholder="HSN" 
-                  value={item.hsn} 
-                  onChange={(e) => handleItemChange(index, 'hsn', e.target.value)}
-                  style={{ flex: 1 }}
-                />
-                <input 
-                  type="number" 
-                  placeholder="Price" 
-                  value={item.price} 
-                  onChange={(e) => handleItemChange(index, 'price', parseFloat(e.target.value) || 0)}
-                  style={{ flex: 1 }}
-                />
-                <input 
-                  type="number" 
-                  placeholder="Qty" 
-                  value={item.qty} 
-                  onChange={(e) => handleItemChange(index, 'qty', parseFloat(e.target.value) || 0)}
-                  style={{ flex: 0.5 }}
-                />
-                <button 
-                  onClick={() => removeItem(index)}
-                  className="remove-btn"
-                >
-                  <Trash2 size={16}/>
-                </button>
+              <div key={index} className="item-row" style={{marginBottom: '15px', paddingBottom: '15px', borderBottom: '1px solid #eee'}}>
+                <div style={{display: 'flex', gap: '10px', marginBottom: '10px'}}>
+                    <div style={{flex: 2}}>
+                        <label style={{display: 'block', fontSize: '12px', color: '#666', marginBottom: '4px'}}>Description</label>
+                        <input 
+                        type="text" 
+                        placeholder="Description" 
+                        value={item.description} 
+                        onChange={(e) => handleItemChange(index, 'description', e.target.value)}
+                        style={{width: '100%'}}
+                        />
+                    </div>
+                    <div style={{flex: 1}}>
+                        <label style={{display: 'block', fontSize: '12px', color: '#666', marginBottom: '4px'}}>HSN</label>
+                        <input 
+                        type="text" 
+                        placeholder="HSN" 
+                        value={item.hsn} 
+                        onChange={(e) => handleItemChange(index, 'hsn', e.target.value)}
+                        style={{width: '100%'}}
+                        />
+                    </div>
+                </div>
+                <div style={{display: 'flex', gap: '10px', alignItems: 'flex-end'}}>
+                    <div style={{flex: 1}}>
+                        <label style={{display: 'block', fontSize: '12px', color: '#666', marginBottom: '4px'}}>Price</label>
+                        <input 
+                        type="number" 
+                        placeholder="Price" 
+                        value={item.price} 
+                        onChange={(e) => handleItemChange(index, 'price', parseFloat(e.target.value) || 0)}
+                        style={{width: '100%'}}
+                        />
+                    </div>
+                    <div style={{flex: 0.5}}>
+                        <label style={{display: 'block', fontSize: '12px', color: '#666', marginBottom: '4px'}}>Qty</label>
+                        <input 
+                        type="number" 
+                        placeholder="Qty" 
+                        value={item.qty} 
+                        onChange={(e) => handleItemChange(index, 'qty', parseFloat(e.target.value) || 0)}
+                        style={{width: '100%'}}
+                        />
+                    </div>
+                    <button 
+                        onClick={() => removeItem(index)}
+                        className="remove-btn"
+                        style={{height: '38px', marginTop: 'auto'}}
+                    >
+                        <Trash2 size={16}/>
+                    </button>
+                </div>
               </div>
             ))}
             <button onClick={addItem} className="add-item-btn">
