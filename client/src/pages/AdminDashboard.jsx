@@ -1,13 +1,13 @@
-// D:/Desktop/skite/client/src/pages/AdminDashboard.jsx
-import { CalendarCheck, Megaphone, Users, IndianRupee, FileText, ScrollText, Landmark } from 'lucide-react'; // ✅ Landmark Added for Accounts
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom'; 
+import { CalendarCheck, Megaphone, Users, IndianRupee, FileText, ScrollText, Landmark } from 'lucide-react';
 import skitelogo from '../assets/skitelogo.png'; 
 import './AdminDashboard.css'; 
 
+// ✅ Localhost API URL
 const API_BASE = 'https://skitecrm.onrender.com/api';
 
-// --- SVG Icons (EXPORTED for use in Task.jsx) ---
+// --- SVG Icons Components ---
 export const LogoutIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
 );
@@ -20,152 +20,153 @@ export const TeamIcon = () => (
 export const TaskIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#FF4500" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>
 );
-export const TaskCloseIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-);
 
-// Component to display the initial cards only
-const DashboardCards = ({ handleCardClick }) => (
+// --- Dashboard Cards Component ---
+const DashboardCards = ({ handleCardClick, role }) => (
     <div className="cards-container">
-        <div className="card" onClick={() => handleCardClick('add')}>
-            <div className="card-icon"><PlusIcon /></div>
-            <div className="card-title1">Add employee</div>
-            <div className="card-accent"></div>
-        </div>
+        
+        {/* --- GROUP 1: ONLY ADMIN SEES THESE --- */}
+        {role === 'admin' && (
+            <>
+                <div className="card" onClick={() => handleCardClick('add')}>
+                    <div className="card-icon"><PlusIcon /></div>
+                    <div className="card-title1">Add employee</div>
+                    <div className="card-accent"></div>
+                </div>
 
-        <div className="card" onClick={() => handleCardClick('teams')}>
-            <div className="card-icon"><TeamIcon /></div>
-            <div className="card-title1">Teams</div>
-            <div className="card-accent"></div>
-        </div>
+                <div className="card" onClick={() => handleCardClick('teams')}>
+                    <div className="card-icon"><TeamIcon /></div>
+                    <div className="card-title1">Teams</div>
+                    <div className="card-accent"></div>
+                </div>
 
-        <div className="card" onClick={() => handleCardClick('tasks')}>
-            <div className="card-icon"><TaskIcon /></div>
-            <div className="card-title1">Task</div>
-            <div className="card-accent"></div>
-        </div>
+                <div className="card" onClick={() => handleCardClick('tasks')}>
+                    <div className="card-icon"><TaskIcon /></div>
+                    <div className="card-title1">Task</div>
+                    <div className="card-accent"></div>
+                </div>
 
-        <div className="card" onClick={() => handleCardClick('attendance')}>
-            <div className="card-icon"><CalendarCheck size={40} color="#FF4500" /></div>
-            <div className="card-title1">Attendance</div>
-            <div className="card-accent"></div>
-        </div>
+                <div className="card" onClick={() => handleCardClick('attendance')}>
+                    <div className="card-icon"><CalendarCheck size={40} color="#FF4500" /></div>
+                    <div className="card-title1">Attendance</div>
+                    <div className="card-accent"></div>
+                </div>
 
-        <div className="card" onClick={() => handleCardClick('leads')}>
-            <div className="card-icon">
-                <Megaphone size={40} color="#FF4500" />
-            </div>
-            <div className="card-title1">Leads</div>
-            <div className="card-accent"></div>
-        </div>
+                <div className="card" onClick={() => handleCardClick('leads')}>
+                    <div className="card-icon"><Megaphone size={40} color="#FF4500" /></div>
+                    <div className="card-title1">Leads</div>
+                    <div className="card-accent"></div>
+                </div>
 
-        <div className="card" onClick={() => handleCardClick('payroll')}>
-            <div className="card-icon">
-                <IndianRupee size={40} color="#FF4500" />
-            </div>
-            <div className="card-title1">Payroll</div>
-            <div className="card-accent"></div>
-        </div>
+                <div className="card" onClick={() => handleCardClick('quote')}>
+                    <div className="card-icon"><ScrollText size={40} color="#FF4500" /></div>
+                    <div className="card-title1">Quote</div>
+                    <div className="card-accent"></div>
+                </div>
+            </>
+        )}
 
-        {/* Invoice Card */}
-        <div className="card" onClick={() => handleCardClick('invoice')}>
-            <div className="card-icon">
-                <FileText size={40} color="#FF4500" />
-            </div>
-            <div className="card-title1">Invoice</div>
-            <div className="card-accent"></div>
-        </div>
+        {/* --- GROUP 2: BOTH ADMIN AND ACCOUNTANT SEE THESE --- */}
+        {(role === 'admin' || role === 'accountant') && (
+            <>
+                <div className="card" onClick={() => handleCardClick('payroll')}>
+                    <div className="card-icon"><IndianRupee size={40} color="#FF4500" /></div>
+                    <div className="card-title1">Payroll</div>
+                    <div className="card-accent"></div>
+                </div>
 
-        {/* Quote Card */}
-        <div className="card" onClick={() => handleCardClick('quote')}>
-            <div className="card-icon">
-                <ScrollText size={40} color="#FF4500" />
-            </div>
-            <div className="card-title1">Quote</div>
-            <div className="card-accent"></div>
-        </div>
+                <div className="card" onClick={() => handleCardClick('invoice')}>
+                    <div className="card-icon"><FileText size={40} color="#FF4500" /></div>
+                    <div className="card-title1">Invoice</div>
+                    <div className="card-accent"></div>
+                </div>
+                 <div className="card" onClick={() => handleCardClick('quote')}>
+                    <div className="card-icon"><ScrollText size={40} color="#FF4500" /></div>
+                    <div className="card-title1">Quote</div>
+                    <div className="card-accent"></div>
+                </div>
 
-        {/* ✅ New Accounts Card Added Here */}
-        <div className="card" onClick={() => handleCardClick('accounts')}>
-            <div className="card-icon">
-                <Landmark size={40} color="#FF4500" />
-            </div>
-            <div className="card-title1">Accounts</div>
-            <div className="card-accent"></div>
-        </div>
+                <div className="card" onClick={() => handleCardClick('accounts')}>
+                    <div className="card-icon"><Landmark size={40} color="#FF4500" /></div>
+                    <div className="card-title1">Accounts</div>
+                    <div className="card-accent"></div>
+                </div>
+            </>
+        )}
 
     </div>
 );
 
-
-// ---------------- AdminDashboard Component ----------------
+// ---------------- AdminDashboard Main Component ----------------
 const AdminDashboard = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    
+    // State to store the current user's role (admin or accountant)
+    const [userRole, setUserRole] = useState('');
+
     useEffect(() => {
+        // 1. Check tokens
         const adminToken = localStorage.getItem('adminToken');
-        const adminUser = localStorage.getItem('adminUser');
+        const accountantToken = localStorage.getItem('accountantToken');
         
-        if (!adminToken || !adminUser) {
+        // 2. Check stored role
+        const storedRole = localStorage.getItem('userRole'); 
+
+        // 3. Logic: If no token at all, kick out
+        if (!adminToken && !accountantToken) {
             navigate('/');
+        } else {
+            // 4. Set Role State
+            // If storedRole exists, use it. Else deduce from token existence.
+            if (storedRole) {
+                setUserRole(storedRole);
+            } else if (adminToken) {
+                setUserRole('admin');
+            } else if (accountantToken) {
+                setUserRole('accountant');
+            }
         }
     }, [navigate]);
     
-    // Check if we are exactly on the base dashboard URL
+    // Check if we are on the main dashboard page to show cards
     const isBaseDashboard = location.pathname === '/admin-dashboard' || location.pathname === '/admin-dashboard/';
 
-    // --- Handlers ---
+    // --- Logout Handler ---
+    // --- Logout Handler ---
     const handleLogout = async () => {
         try {
-            await fetch(`${API_BASE}/auth/admin-logout`, { method: 'POST' });
-        } catch (err) { 
-            console.log(err); 
+            // ✅ நீங்கள் கேட்ட குறிப்பிட்ட API அழைப்பு
+            await fetch(`${API_BASE}/auth/admin-logout`, { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            console.log("Admin logged out from server");
+
+        } catch (error) {
+            console.error("Logout API Error:", error);
         } finally {
-            localStorage.removeItem('adminToken');
-            localStorage.removeItem('adminUser');
+            // API வேலை செய்தாலும் செய்யாவிட்டாலும், இது கண்டிப்பாக நடக்கும்
+            localStorage.clear(); 
             navigate('/');
-            window.location.reload(true);
+            window.location.reload(); 
         }
     };
 
+    // --- Navigation Handler ---
     const handleCardClick = (type) => {
-        if (type === 'add') {
-            navigate('/add-employee'); 
-            return;
-        }
-        if (type === 'teams') {
-            navigate('/admin-dashboard/teams'); 
-            return;
-        }
-        if (type === 'tasks') {
-            navigate('/admin-dashboard/tasks'); 
-            return;
-        }
-         if (type === 'attendance') {
-            navigate('/admin-dashboard/attendance'); 
-            return;
-        }
-        if (type === 'leads') {
-            navigate('/admin-dashboard/leads'); 
-            return;
-        }
-        if (type === 'payroll') {
-            navigate('/admin-dashboard/payroll'); 
-            return;
-        }
-        if (type === 'invoice') {
-            navigate('/admin-dashboard/invoice'); 
-            return;
-        }
-        if (type === 'quote') {
-            navigate('/admin-dashboard/quote'); 
-            return;
-        }
-        // ✅ Accounts Page Navigation Added
-        if (type === 'accounts') {
-            navigate('/admin-dashboard/accounts'); 
-            return;
-        }
+        const routes = {
+            'add': '/add-employee',
+            'teams': '/admin-dashboard/teams',
+            'tasks': '/admin-dashboard/tasks',
+            'attendance': '/admin-dashboard/attendance',
+            'leads': '/admin-dashboard/leads',
+            'payroll': '/admin-dashboard/payroll',
+            'invoice': '/admin-dashboard/invoice',
+            'quote': '/admin-dashboard/quote',
+            'accounts': '/admin-dashboard/accounts'
+        };
+        if(routes[type]) navigate(routes[type]);
     };
     
     return (
@@ -175,7 +176,9 @@ const AdminDashboard = () => {
                      <div className="logo-container">
                          <img src={skitelogo} alt="Skite Logo" className="logo" />
                      </div>
-                     <div className="header-title">Wellcome back sasiprakash!</div>
+                     <div className="header-title">
+                        Welcome back {userRole === 'accountant' ? 'Accountant' : 'Admin'}!
+                     </div>
                  </div>
                  <button className="logout-button" onClick={handleLogout}>
                      Logout <LogoutIcon />
@@ -183,10 +186,11 @@ const AdminDashboard = () => {
              </header>
 
              <main className={isBaseDashboard ? "main-content1" : "main-content-child"}>
-                {/* IF we are on the base dashboard path, show the cards */}
-                {isBaseDashboard && <DashboardCards handleCardClick={handleCardClick} />}
+                
+                {/* Show Cards only on base path */}
+                {isBaseDashboard && <DashboardCards handleCardClick={handleCardClick} role={userRole} />}
 
-                {/* The <Outlet /> renders the child component */}
+                {/* Render nested routes (like invoice, accounts, etc.) */}
                 <Outlet />
             </main>
         </div>

@@ -26,100 +26,66 @@ const Login = () => {
         });
     };
 
-    const handleLogin = async (e) => {
+const handleLogin = async (e) => {
         e.preventDefault();
-        
-        console.log('Login attempt started');
-        
         setStatus({ loading: true, error: '' });
-
-        // ✅ CLEAR ALL PREVIOUS AUTH DATA
         localStorage.clear(); 
-        
+
         try {
             const res = await fetch(`${API_BASE}/auth/login`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                // credentials: 'include', // Uncomment if using cookies/sessions
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
             });
 
-            console.log('Response status:', res.status);
-            
             const data = await res.json();
-            console.log('Response data:', data);
 
             if (res.ok) {
-                console.log('Login successful!');
-                console.log('User role:', data.user.role);
-                
                 setStatus({ loading: false, error: '' });
+                const role = data.user.role.toLowerCase(); // Role check
 
-                // Ensure role is lowercase for comparison
-                const role = data.user.role.toLowerCase();
-                
                 // --- ADMIN ---
                 if (role === 'admin') {
                     localStorage.setItem('adminToken', data.token);
-                    localStorage.setItem('adminUser', JSON.stringify(data.user));
-                    
-                    setTimeout(() => {
-                        navigate('/admin-dashboard', { replace: true });
-                    }, 100);
+                    localStorage.setItem('userRole', 'admin'); // ✅ Role store panrom
+                    localStorage.setItem('userData', JSON.stringify(data.user));
+                    setTimeout(() => navigate('/admin-dashboard', { replace: true }), 100);
                 } 
+                
+                // --- ACCOUNTANT (NEW) ✅ ---
+                else if (role === 'accountant') {
+                    localStorage.setItem('accountantToken', data.token); // Accountant Token
+                    localStorage.setItem('userRole', 'accountant'); // ✅ Role store panrom
+                    localStorage.setItem('userData', JSON.stringify(data.user));
+                    
+                    // Admin Dashboard-kku anupurom, aana anga filter pannuvom
+                    setTimeout(() => navigate('/admin-dashboard', { replace: true }), 100);
+                }
+
                 // --- MANAGER ---
                 else if (role === 'manager') {
                     localStorage.setItem('managerToken', data.token);
-                    localStorage.setItem('managerUser', JSON.stringify(data.user));
-                    
-                    setTimeout(() => {
-                        navigate('/manager-dashboard', { replace: true });
-                    }, 100);
+                    setTimeout(() => navigate('/manager-dashboard', { replace: true }), 100);
                 }
-                // --- SALES (NEW ADDITION) ---
+                // --- SALES ---
                 else if (role === 'sales') {
                     localStorage.setItem('salesToken', data.token);
-                    localStorage.setItem('salesUser', JSON.stringify(data.user));
-
-                    console.log('Sales credentials stored');
-
-                    setTimeout(() => {
-                        navigate('/sales-dashboard', { replace: true });
-                    }, 100);
+                    setTimeout(() => navigate('/sales-dashboard', { replace: true }), 100);
                 }
                 // --- EMPLOYEE ---
                 else if (role === 'employee') {
                     localStorage.setItem('employeeToken', data.token);
-                    localStorage.setItem('employeeUser', JSON.stringify(data.user));
-                    
-                    setTimeout(() => {
-                        navigate('/employee-dashboard', { replace: true });
-                    }, 100);
+                    setTimeout(() => navigate('/employee-dashboard', { replace: true }), 100);
                 } 
-                // --- UNKNOWN ---
                 else {
-                    console.error('Unknown role:', data.user.role);
-                    setStatus({ 
-                        loading: false, 
-                        error: 'Invalid user role. Please contact administrator.' 
-                    });
+                    setStatus({ loading: false, error: 'Invalid role' });
                 }
 
             } else {
-                console.error('Login failed:', data);
-                setStatus({ 
-                    loading: false, 
-                    error: data.message || 'Login failed. Please check your credentials.' 
-                });
+                setStatus({ loading: false, error: data.message || 'Login failed' });
             }
         } catch (err) {
-            console.error('Login error:', err);
-            setStatus({
-                loading: false,
-                error: 'Network error. Please check if the server is running on port 4000.'
-            });
+            setStatus({ loading: false, error: 'Server error' });
         }
     };
 

@@ -82,7 +82,7 @@ function App() {
         </Route>
 
         {/* --- ADMIN ROUTES --- */}
-        <Route element={<ProtectedRoute allowedRoles={["Admin"]} />}>
+        <Route element={<ProtectedRoute allowedRoles={["Admin","accountant"]} />}>
           <Route path="/admin-dashboard" element={<AdminDashboard />}>
             <Route index element={null} />
             <Route path="teams" element={<Team />} />

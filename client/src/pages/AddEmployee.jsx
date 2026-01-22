@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import './Addemployee.css';
 
 
-const API_BASE = 'https://skitecrm.onrender.com/api'
+const API_BASE = 'https://skitecrm.onrender.com/api';
 
 
 const AddEmployee = () => {
@@ -221,6 +221,7 @@ const AddEmployee = () => {
                 {/* Added Manager Option Below */}
                 <option value="Manager">Manager</option>
                 <option value="Sales">Sales</option>
+                <option value="Accountant">Accountant</option>
                 <option value="employee">Employee</option>
                 <option value="Admin">Admin</option>
               </select>
