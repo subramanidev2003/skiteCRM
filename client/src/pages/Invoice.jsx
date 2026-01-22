@@ -11,6 +11,21 @@ import skitelogo from '../assets/skite-logo.jpg';
 import skitesign from '../assets/sign.jpg';
 import skiteseal from '../assets/seal.png'; 
 
+// ✅ DATA FROM YOUR IMAGE
+const SERVICES_LIST = [
+  { name: 'UX/UI DESIGN', hsn: '998314' },
+  { name: 'WEB DEVELOPMENT', hsn: '998314' },
+  { name: 'META ADS', hsn: '998365' },
+  { name: 'VIDEO SHOOT', hsn: '998382' },
+  { name: 'VIDEO EDITING', hsn: '998386' },
+  { name: 'CONTENT WRITING', hsn: '999612' },
+  { name: 'SOCIAL MEDIA MANAGEMENT', hsn: '998313' },
+  { name: 'LINKEDIN CONTENT CREATION', hsn: '998361' },
+  { name: 'SEO', hsn: '998319' },
+  { name: 'GRAPHIC DESIGN', hsn: '998392' },
+  { name: 'APP DEVELOPMENT', hsn: '998314' }
+];
+
 const Invoice = () => {
   const navigate = useNavigate();
 
@@ -44,7 +59,8 @@ const Invoice = () => {
     name: '',
     addressLine1: '',
     addressLine2: '',
-    location: ''
+    location: '',
+    gstNo: '' // ✅ Added Client GST
   });
 
   const [items, setItems] = useState([
@@ -64,14 +80,57 @@ const Invoice = () => {
 
   const { subtotal, cgst, sgst, grandTotal } = calculateTotal();
 
-  const numberToWords = (num) => {
-    return `Indian Rupees ${Math.floor(num).toString()} Only`; 
+  // ✅ IMPROVED NUMBER TO WORDS FUNCTION
+  const numberToWords = (price) => {
+    const sglDigit = ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"];
+    const dblDigit = ["Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+    const tensPlace = ["", "Ten", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+
+    const convert = (num) => {
+      let str = "";
+      if (num < 10) return sglDigit[num];
+      if (num < 20) return dblDigit[num - 10];
+      if (num < 100) {
+        str = tensPlace[Math.floor(num / 10)];
+        if (num % 10 !== 0) str += " " + sglDigit[num % 10];
+        return str;
+      }
+      if (num < 1000) {
+        str = sglDigit[Math.floor(num / 100)] + " Hundred";
+        if (num % 100 !== 0) str += " and " + convert(num % 100);
+        return str;
+      }
+      if (num < 100000) {
+        str = convert(Math.floor(num / 1000)) + " Thousand";
+        if (num % 1000 !== 0) str += " " + convert(num % 1000);
+        return str;
+      }
+      if (num < 10000000) {
+        str = convert(Math.floor(num / 100000)) + " Lakh";
+        if (num % 100000 !== 0) str += " " + convert(num % 100000);
+        return str;
+      }
+      return "Number too large";
+    };
+
+    const num = Math.floor(price);
+    if (num === 0) return "Zero Rupees Only";
+    return "Indian Rupees " + convert(num) + " Only";
   };
 
   // --- HANDLERS ---
   const handleItemChange = (index, field, value) => {
     const newItems = [...items];
     newItems[index][field] = value;
+
+    // ✅ AUTO FILL HSN IF SERVICE SELECTED
+    if (field === 'description') {
+        const foundService = SERVICES_LIST.find(s => s.name === value);
+        if (foundService) {
+            newItems[index].hsn = foundService.hsn;
+        }
+    }
+
     setItems(newItems);
   };
 
@@ -136,9 +195,9 @@ const Invoice = () => {
     // ✅ 1. Ask for File Name (Popup)
     let fileName = prompt("Enter PDF File Name:", `Invoice_${invoiceMeta.invoiceNo.replace(/\//g, '-')}`);
     
-    if (fileName === null) return; // If cancel is clicked, stop
-    if (!fileName.trim()) fileName = `Invoice_${invoiceMeta.invoiceNo.replace(/\//g, '-')}`; // Default name
-    if (!fileName.endsWith('.pdf')) fileName += '.pdf'; // Add extension if missing
+    if (fileName === null) return; 
+    if (!fileName.trim()) fileName = `Invoice_${invoiceMeta.invoiceNo.replace(/\//g, '-')}`; 
+    if (!fileName.endsWith('.pdf')) fileName += '.pdf'; 
 
     const doc = new jsPDF();
     const orangeColor = [255, 69, 0]; 
@@ -161,18 +220,12 @@ const Invoice = () => {
       });
     };
 
-    // 1. ADD LOGO with proper base64 conversion
+    // 1. ADD LOGO 
     try {
         const logoBase64 = await getImageBase64(skitelogo);
         doc.addImage(logoBase64, 'JPG', 14, 10, 40, 29); 
     } catch (e) { 
         console.error("Logo Error:", e);
-        doc.setFillColor(255, 69, 0);
-        doc.rect(14, 10, 40, 29, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(18);
-        doc.setFont("helvetica", "bold");
-        doc.text("SKITE", 34, 28, { align: 'center' });
     }
 
     // 2. HEADER DETAILS
@@ -206,6 +259,12 @@ const Invoice = () => {
     doc.text(clientDetails.addressLine1, 14, infoStartY + 11);
     doc.text(clientDetails.addressLine2, 14, infoStartY + 16);
     doc.text(clientDetails.location, 14, infoStartY + 21);
+    
+    // ✅ Add Client GST in PDF
+    if(clientDetails.gstNo) {
+        doc.setFont("helvetica", "bold");
+        doc.text(`GST: ${clientDetails.gstNo}`, 14, infoStartY + 26);
+    }
 
     doc.setFont("helvetica", "bold");
     doc.text("INVOICE NO:", 120, infoStartY);
@@ -267,6 +326,7 @@ const Invoice = () => {
 
     // 5. Amount in Words
     doc.setFontSize(10);
+    doc.setFont("helvetica", "bold"); // Made label bold
     doc.text("Amount in Words:", 14, finalY);
     doc.setFont("helvetica", "italic");
     doc.text(numberToWords(grandTotal), 45, finalY);
@@ -288,7 +348,7 @@ const Invoice = () => {
     doc.text(senderDetails.website, 14, finalY + 60);
     doc.text(senderDetails.phone, 14, finalY + 65);
 
-    // 7. SIGNATORY & SEAL with base64 conversion
+    // 7. SIGNATORY & SEAL
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(0);
@@ -307,7 +367,6 @@ const Invoice = () => {
     doc.setFont("helvetica", "bold");
     doc.text("Authorised Signatory", 150, finalY + 70);
 
-    // ✅ Save with User Name
     doc.save(fileName);
   };
 
@@ -319,33 +378,12 @@ const Invoice = () => {
         <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
            <button 
                 onClick={() => navigate('/admin-dashboard')}
-                className="modern-back-btn" // New Class Name
+                className="modern-back-btn" 
                 style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    background: 'white',
-                    border: '1px solid #e0e0e0',
-                    padding: '8px 16px',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    color: '#4b5563',
-                    transition: 'all 0.2s ease',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-                }}
-                onMouseOver={(e) => {
-                    e.currentTarget.style.borderColor = '#FF4500';
-                    e.currentTarget.style.color = '#FF4500';
-                    e.currentTarget.style.backgroundColor = '#fff5f5';
-                    e.currentTarget.style.transform = 'translateX(-3px)';
-                }}
-                onMouseOut={(e) => {
-                    e.currentTarget.style.borderColor = '#e0e0e0';
-                    e.currentTarget.style.color = '#4b5563';
-                    e.currentTarget.style.backgroundColor = 'white';
-                    e.currentTarget.style.transform = 'translateX(0)';
+                    display: 'flex', alignItems: 'center', gap: '8px', background: 'white',
+                    border: '1px solid #e0e0e0', padding: '8px 16px', borderRadius: '8px',
+                    cursor: 'pointer', fontSize: '14px', fontWeight: '600', color: '#4b5563',
+                    transition: 'all 0.2s ease', boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
                 }}
             >
                 <ArrowLeft size={20} />
@@ -356,33 +394,19 @@ const Invoice = () => {
         
         {/* ACTION BUTTONS */}
         <div className="header-actions">
-            <button 
-                className="action-btn" 
-                onClick={() => navigate('/admin-dashboard/invoice-history')}
-                style={{ backgroundColor: '#6c757d' }} 
-            >
+            <button className="action-btn" onClick={() => navigate('/admin-dashboard/invoice-history')} style={{ backgroundColor: '#6c757d' }}>
                 <History size={18} /> History
             </button>
-
-            <button 
-                className="action-btn" 
-                onClick={saveInvoiceToDB}
-                style={{ backgroundColor: '#28a745' }} 
-            >
+            <button className="action-btn" onClick={saveInvoiceToDB} style={{ backgroundColor: '#28a745' }}>
                 <Save size={18} /> Save
             </button>
-
-            <button 
-                className="action-btn" 
-                onClick={generatePDF}
-                style={{ backgroundColor: '#FF4500' }} 
-            >
+            <button className="action-btn" onClick={generatePDF} style={{ backgroundColor: '#FF4500' }}>
                 <Download size={18} /> PDF
             </button>
         </div>
       </div>
 
-      {/* MAIN SPLIT LAYOUT (2 TABS VIEW) */}
+      {/* MAIN SPLIT LAYOUT */}
       <div className="invoice-workspace">
         
         {/* LEFT COLUMN: FORM INPUTS */}
@@ -394,19 +418,11 @@ const Invoice = () => {
             <div className="row-inputs">
               <div className="input-group">
                 <label>Invoice No</label>
-                <input 
-                  type="text" 
-                  value={invoiceMeta.invoiceNo} 
-                  onChange={(e) => setInvoiceMeta({...invoiceMeta, invoiceNo: e.target.value})} 
-                />
+                <input type="text" value={invoiceMeta.invoiceNo} onChange={(e) => setInvoiceMeta({...invoiceMeta, invoiceNo: e.target.value})} />
               </div>
               <div className="input-group">
                 <label>Date</label>
-                <input 
-                  type="date" 
-                  value={invoiceMeta.date} 
-                  onChange={(e) => setInvoiceMeta({...invoiceMeta, date: e.target.value})} 
-                />
+                <input type="date" value={invoiceMeta.date} onChange={(e) => setInvoiceMeta({...invoiceMeta, date: e.target.value})} />
               </div>
             </div>
           </div>
@@ -416,40 +432,24 @@ const Invoice = () => {
             <h3 className="section-title">Issued To</h3>
             <div className="input-group">
               <label>Client Name</label>
-              <input 
-                type="text" 
-                value={clientDetails.name} 
-                onChange={(e) => setClientDetails({...clientDetails, name: e.target.value})}
-                placeholder="Client Name"
-              />
+              <input type="text" value={clientDetails.name} onChange={(e) => setClientDetails({...clientDetails, name: e.target.value})} placeholder="Client Name"/>
             </div>
+            
+            {/* ✅ Added Client GST Field */}
+            <div className="input-group">
+              <label>Client GST No</label>
+              <input type="text" value={clientDetails.gstNo} onChange={(e) => setClientDetails({...clientDetails, gstNo: e.target.value})} placeholder="Ex: 33AAAAA0000A1Z5"/>
+            </div>
+
             <div className="input-group">
               <label>Address</label>
-              <input 
-                type="text" 
-                value={clientDetails.addressLine1} 
-                onChange={(e) => setClientDetails({...clientDetails, addressLine1: e.target.value})}
-                placeholder="Line 1"
-              />
-              <input 
-                type="text" 
-                value={clientDetails.addressLine2} 
-                onChange={(e) => setClientDetails({...clientDetails, addressLine2: e.target.value})}
-                placeholder="Line 2"
-                style={{marginTop:'5px'}}
-              />
-              <input 
-                type="text" 
-                value={clientDetails.location} 
-                onChange={(e) => setClientDetails({...clientDetails, location: e.target.value})}
-                placeholder="City / State"
-                style={{marginTop:'5px'}}
-              />
+              <input type="text" value={clientDetails.addressLine1} onChange={(e) => setClientDetails({...clientDetails, addressLine1: e.target.value})} placeholder="Line 1"/>
+              <input type="text" value={clientDetails.addressLine2} onChange={(e) => setClientDetails({...clientDetails, addressLine2: e.target.value})} placeholder="Line 2" style={{marginTop:'5px'}}/>
+              <input type="text" value={clientDetails.location} onChange={(e) => setClientDetails({...clientDetails, location: e.target.value})} placeholder="City / State" style={{marginTop:'5px'}}/>
             </div>
           </div>
 
-          {/* Card 3: Items */}
-        {/* Card 3: Items - UPDATED LAYOUT */}
+          {/* Card 3: Items - UPDATED WITH DROPDOWN */}
           <div className="form-section">
             <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'15px', borderBottom:'2px solid #f0f0f0', paddingBottom:'10px'}}>
                <h3 className="section-title" style={{color: '#FF4500', margin:0}}>Items</h3>
@@ -460,25 +460,26 @@ const Invoice = () => {
 
             {items.map((item, index) => (
               <div key={index} className="item-card" style={{
-                  background: '#fff',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '8px',
-                  padding: '15px',
-                  marginBottom: '15px',
-                  boxShadow: '0 2px 5px rgba(0,0,0,0.02)'
+                  background: '#fff', border: '1px solid #e0e0e0', borderRadius: '8px',
+                  padding: '15px', marginBottom: '15px', boxShadow: '0 2px 5px rgba(0,0,0,0.02)'
               }}>
                 
                 {/* ROW 1: Description & HSN */}
                 <div style={{display: 'flex', gap: '15px', marginBottom: '15px'}}>
                     <div style={{flex: 2}}>
                         <label style={{display: 'block', fontSize: '11px', fontWeight:'600', color: '#888', marginBottom: '5px', textTransform:'uppercase'}}>Description</label>
-                        <input 
-                        type="text" 
-                        placeholder="Item Description" 
-                        value={item.description} 
-                        onChange={(e) => handleItemChange(index, 'description', e.target.value)}
-                        style={{width: '100%', padding:'10px', border:'1px solid #ddd', borderRadius:'6px', outline:'none', fontSize:'14px'}}
-                        />
+                        
+                        {/* ✅ Changed to Dropdown (Select) */}
+                        <select 
+                          value={item.description}
+                          onChange={(e) => handleItemChange(index, 'description', e.target.value)}
+                          style={{width: '100%', padding:'10px', border:'1px solid #ddd', borderRadius:'6px', outline:'none', fontSize:'14px', background:'white'}}
+                        >
+                          <option value="">Select Service...</option>
+                          {SERVICES_LIST.map((service, i) => (
+                            <option key={i} value={service.name}>{service.name}</option>
+                          ))}
+                        </select>
                     </div>
                     <div style={{flex: 1}}>
                         <label style={{display: 'block', fontSize: '11px', fontWeight:'600', color: '#888', marginBottom: '5px', textTransform:'uppercase'}}>HSN Code</label>
@@ -487,7 +488,7 @@ const Invoice = () => {
                         placeholder="HSN" 
                         value={item.hsn} 
                         onChange={(e) => handleItemChange(index, 'hsn', e.target.value)}
-                        style={{width: '100%', padding:'10px', border:'1px solid #ddd', borderRadius:'6px', outline:'none', fontSize:'14px'}}
+                        style={{width: '100%', padding:'10px', border:'1px solid #ddd', borderRadius:'6px', outline:'none', fontSize:'14px', background:'#f9f9f9'}}
                         />
                     </div>
                 </div>
@@ -519,53 +520,32 @@ const Invoice = () => {
                     <div style={{flex: 1}}>
                         <label style={{display: 'block', fontSize: '11px', fontWeight:'600', color: '#888', marginBottom: '5px', textTransform:'uppercase'}}>Total</label>
                         <div style={{
-                            padding: '10px', 
-                            background: '#f9f9f9', 
-                            border: '1px solid #eee', 
-                            borderRadius: '6px', 
-                            fontSize: '14px', 
-                            fontWeight: 'bold', 
-                            color: '#333',
-                            textAlign: 'right'
+                            padding: '10px', background: '#f9f9f9', border: '1px solid #eee', 
+                            borderRadius: '6px', fontSize: '14px', fontWeight: 'bold', 
+                            color: '#333', textAlign: 'right'
                         }}>
                             ₹ {(item.price * item.qty).toLocaleString()}
                         </div>
                     </div>
 
-                    <button 
-                        onClick={() => removeItem(index)}
+                    <button onClick={() => removeItem(index)}
                         style={{
-                            height: '40px', 
-                            width: '40px',
-                            background: '#fee2e2', 
-                            color: '#ef4444', 
-                            border: '1px solid #fecaca', 
-                            borderRadius: '6px', 
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            transition: 'all 0.2s'
-                        }}
-                        title="Remove Item"
-                    >
+                            height: '40px', width: '40px', background: '#fee2e2', color: '#ef4444', 
+                            border: '1px solid #fecaca', borderRadius: '6px', cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        }} title="Remove Item">
                         <Trash2 size={18}/>
                     </button>
                 </div>
 
               </div>
             ))}
-
-            {items.length === 0 && (
-                <div style={{textAlign:'center', padding:'20px', color:'#999', border:'1px dashed #ddd', borderRadius:'8px', marginBottom:'15px'}}>
-                    No items added yet.
-                </div>
-            )}
             
             <button onClick={addItem} className="add-item-btn" style={{width:'100%', padding:'12px', fontSize:'14px', fontWeight:'bold', border:'1px dashed #FF4500', background:'#fff5f0', color:'#FF4500'}}>
               <Plus size={16}/> Add New Item
             </button>
           </div>
+
           {/* Card 4: Tax Rate & Total */}
           <div className="form-section">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -611,6 +591,7 @@ const Invoice = () => {
           <div style={{ marginBottom: '20px' }}>
             <h4 style={{ color: '#FF4500', margin: '0 0 5px 0' }}>ISSUED TO:</h4>
             <p style={{ margin: 0, fontWeight: '600' }}>{clientDetails.name || 'Client Name'}</p>
+            {clientDetails.gstNo && <p style={{ margin: '2px 0', fontSize: '13px', fontWeight:'bold' }}>GST: {clientDetails.gstNo}</p>}
             <p style={{ margin: '2px 0', fontSize: '13px', color: '#666' }}>{clientDetails.addressLine1}</p>
             <p style={{ margin: '2px 0', fontSize: '13px', color: '#666' }}>{clientDetails.addressLine2}</p>
             <p style={{ margin: '2px 0', fontSize: '13px', color: '#666' }}>{clientDetails.location}</p>
@@ -656,6 +637,11 @@ const Invoice = () => {
               <span>TOTAL</span>
               <span>₹ {grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
             </div>
+            
+            {/* Amount in Words in Preview */}
+             <div style={{ marginTop:'10px', fontSize:'12px', fontStyle:'italic', color:'#555' }}>
+                <strong>Amount in Words:</strong> {numberToWords(grandTotal)}
+             </div>
           </div>
 
         </div>
