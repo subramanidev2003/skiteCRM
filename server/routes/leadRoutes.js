@@ -1,15 +1,13 @@
 import express from 'express';
-import Lead from '../models/Lead.js'; // Ensure this path is correct
+import Lead from '../models/Lead.js'; // ஃபைல் பெயர் சரியாக இருக்கிறதா என்று பார்த்துக்கொள்ளுங்கள்
 
 const router = express.Router();
 
-// 1. ADD NEW LEAD
-// server/routes/leadRoutes.js
-
+// 1. ADD NEW LEAD (POST)
 router.post('/add', async (req, res) => {
     try {
         const { 
-            date, name, companyName, business, location, phoneNumber, 
+            date, name, email, companyName, business, location, phoneNumber, 
             serviceType, priority, requirement, callStatus, followUpStatus, 
             callbackDate, leadStatus, payment, closing, salesAgentId 
         } = req.body;
@@ -20,22 +18,24 @@ router.post('/add', async (req, res) => {
         }
 
         const newLead = new Lead({
-            date, name, companyName, business, location, phoneNumber, 
+            date, name, 
+            email, // ✅ Email இங்கேயும் சரியாக உள்ளது
+            companyName, business, location, phoneNumber, 
             serviceType, priority, requirement, callStatus, followUpStatus, 
             callbackDate, leadStatus, payment, closing, 
-            salesAgentId // ✅ Just save the ID directly
+            salesAgentId
         });
 
         await newLead.save();
         res.status(201).json({ message: "Lead added successfully", lead: newLead });
 
     } catch (error) {
-        console.error("Error adding lead:", error); // ✅ Log error to terminal to see details
+        console.error("Error adding lead:", error);
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 });
 
-// 2. GET ALL LEADS FOR USER
+// 2. GET ALL LEADS FOR A SPECIFIC USER (GET)
 router.get('/all/:userId', async (req, res) => {
   try {
     const leads = await Lead.find({ salesAgentId: req.params.userId }).sort({ createdAt: -1 });
@@ -45,14 +45,18 @@ router.get('/all/:userId', async (req, res) => {
   }
 });
 
-// ✅ THIS IS THE CRITICAL LINE THAT WAS MISSING OR WRONG
-// ... inside server/routes/leadRoutes.js
-
-// 3. UPDATE LEAD (PUT /api/leads/update/:id)
+// 3. UPDATE LEAD (PUT)
+// 3. UPDATE LEAD (PUT)
 router.put('/update/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const updatedLead = await Lead.findByIdAndUpdate(id, req.body, { new: true });
+    
+    // ✅ { runValidators: true } சேர்த்தால் தவறான status/priority வராது
+    const updatedLead = await Lead.findByIdAndUpdate(
+        id, 
+        req.body, 
+        { new: true, runValidators: true } 
+    );
 
     if (!updatedLead) {
       return res.status(404).json({ message: 'Lead not found' });
@@ -63,27 +67,18 @@ router.put('/update/:id', async (req, res) => {
     res.status(500).json({ message: 'Server Error', error: error.message });
   }
 });
+
+// 4. GET ALL LEADS FOR ADMIN (GET)
 router.get('/admin/all', async (req, res) => {
   try {
-    // Fetch all leads from the database, sorted by newest
     const leads = await Lead.find().sort({ createdAt: -1 });
     res.status(200).json(leads);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching all leads' });
   }
 });
-router.get('/common/all', async (req, res) => {
-  try {
-    // Fetch all leads, sorted by newest first
-    const leads = await Lead.find().sort({ createdAt: -1 });
-    res.status(200).json(leads);
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching leads' });
-  }
-});
-// server/routes/leadRoutes.js
 
-// ✅ Delete Lead Route
+// 5. DELETE LEAD (DELETE)
 router.delete('/delete/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -93,6 +88,5 @@ router.delete('/delete/:id', async (req, res) => {
     res.status(500).json({ message: "Error deleting lead" });
   }
 });
-
 
 export default router;

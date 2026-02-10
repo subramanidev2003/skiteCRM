@@ -117,7 +117,8 @@ const EmployeeDashboard = () => {
     fetchFreshProfile();
   }, [EMPLOYEE_ID, token]); 
 
-  // --- 2. CALCULATE PAYROLL STATUS (New Logic) ---
+  // --- 2. CALCULATE PAYROLL STATUS (UPDATED LOGIC) ---
+// --- 2. CALCULATE PAYROLL STATUS (UPDATED LOGIC WITH STRICT RULES) ---
   const calculateDailyStatus = async () => {
     if (!EMPLOYEE_ID) return;
     try {
@@ -126,38 +127,67 @@ const EmployeeDashboard = () => {
         });
         if (res.ok) {
             const history = await res.json();
-            const todayStr = new Date().toDateString();
+            const now = new Date();
+            const todayStr = now.toDateString();
             
             // Filter only today's records
             const todayRecords = Array.isArray(history) ? history.filter(r => new Date(r.checkInTime).toDateString() === todayStr) : [];
             
             let totalMillis = 0;
-            
+            let ruleViolation = false; // New Flag for Rules
+
             // Sum completed sessions
             todayRecords.forEach(r => {
                 if(r.checkOutTime) {
-                    totalMillis += new Date(r.checkOutTime) - new Date(r.checkInTime);
+                    const inTime = new Date(r.checkInTime);
+                    const outTime = new Date(r.checkOutTime);
+                    
+                    // RULE 1: If Checkout is Next Day (மறுநாள் செக்-அவுட்)
+                    if (inTime.toDateString() !== outTime.toDateString()) {
+                        ruleViolation = true;
+                    }
+
+                    // RULE 2: If Checkout is after 9:00 PM (21:00) (9 மணிக்கு மேல்)
+                    if (outTime.getHours() >= 21) { 
+                        ruleViolation = true;
+                    }
+
+                    totalMillis += outTime - inTime;
                 }
             });
 
             // Add CURRENT live session if checked in
             if (isCheckedIn && startTime) {
-                totalMillis += new Date() - new Date(startTime);
+                const start = new Date(startTime);
+                if (start.toDateString() === todayStr) {
+                    const currentSessionMillis = now - start;
+                    totalMillis += currentSessionMillis;
+
+                    // Live Check: If currently it is past 9 PM
+                    if (now.getHours() >= 21) {
+                        ruleViolation = true;
+                    }
+                }
             }
 
             const hours = totalMillis / (1000 * 60 * 60);
             setTodayWorkHours(hours);
 
-            // Logic: 6 Hours = Present, 3 Hours = Half Day
-            if (hours >= 6) setPayrollStatus("Present");
-            else if (hours >= 3) setPayrollStatus("Half Day");
-            else setPayrollStatus("Absent / Short");
+            // --- FINAL STATUS LOGIC ---
+            if (ruleViolation) {
+                // விதிமுறை மீறப்பட்டால் Absent
+                setPayrollStatus("Absent ❌"); 
+            } else {
+                // Normal Logic
+                if (hours >= 6) setPayrollStatus("Present");
+                else if (hours >= 3) setPayrollStatus("Half Day");
+                else setPayrollStatus("Absent / Short");
+            }
         }
     } catch (err) {
         console.error("Payroll Calc Error:", err);
     }
   };
-
   // Run calculation every minute OR when check-in status changes
   useEffect(() => {
     calculateDailyStatus();
@@ -210,7 +240,20 @@ const EmployeeDashboard = () => {
         const response = await fetch(`${ATTENDANCE_URL}/status/${EMPLOYEE_ID}`, { headers: { 'Authorization': `Bearer ${token}` } });
         if (response.ok) {
           const data = await response.json();
-          if (data.isCheckedIn) { setIsCheckedIn(true); setStartTime(new Date(data.checkInTime)); return; }
+          
+          if (data.isCheckedIn) { 
+              const sessionStart = new Date(data.checkInTime);
+              // Check if session is stale (started on a previous day)
+              if (sessionStart.toDateString() !== new Date().toDateString()) {
+                  // User forgot to checkout yesterday. 
+                  // We show them as checked in, BUT calculateDailyStatus will ignore the hours for TODAY.
+                  // When they checkout, the backend will record the checkout time.
+                  // Since the hours belong to yesterday, they won't count for today's "Present".
+              }
+              setIsCheckedIn(true); 
+              setStartTime(sessionStart); 
+              return; 
+          }
           if (data.lastSession) setLastSession(data.lastSession);
         }
         if (savedSession && savedSession.userId === EMPLOYEE_ID) { setIsCheckedIn(true); setStartTime(new Date(savedSession.startTime)); }
@@ -241,8 +284,18 @@ const EmployeeDashboard = () => {
     } catch (error) { toast.error("Network Error"); } finally { setLoading(false); }
   };
 
-  const handleCheckOut = async () => {
+const handleCheckOut = async () => {
     if (!taskDescription.trim()) { toast.warning("⚠️ Enter task description to checkout."); return; }
+    
+    const now = new Date();
+
+    // Check strict rules immediately upon checkout click
+    if (now.getHours() >= 21) {
+        toast.error("Late Checkout (After 9 PM). Marked as Absent.");
+    } else if (startTime && new Date(startTime).toDateString() !== now.toDateString()) {
+        toast.error("Next Day Checkout detected. Marked as Absent.");
+    }
+
     setLoading(true);
     try {
       await fetch(`${ATTENDANCE_URL}/checkout`, {
@@ -251,12 +304,16 @@ const EmployeeDashboard = () => {
       });
       setIsCheckedIn(false); setStartTime(null); setTaskDescription(''); 
       localStorage.removeItem('activeAttendanceSession');
-      toast.success("Checked Out Successfully!");
+      
+      // Success message logic
+      if (now.getHours() < 21) {
+          toast.success("Checked Out Successfully!");
+      }
+      
       setLastSession({ checkInTime: new Date() }); 
       calculateDailyStatus(); // Update status immediately
     } catch (error) { toast.error("Network Error"); } finally { setLoading(false); }
   };
-
   const handleToggleTask = async (taskId, currentStatus) => {
     const newStatus = currentStatus === 'Completed' ? 'Pending' : 'Completed';
     setTasks(prev => prev.map(t => t._id === taskId ? { ...t, status: newStatus } : t));
@@ -544,8 +601,8 @@ const EmployeeDashboard = () => {
                           {task.title}
                         </h4>
                         
-                         {/* Toggle Checkbox Button */}
-                         <button
+                          {/* Toggle Checkbox Button */}
+                          <button
                             className={`btn-check ${
                               task.status === "Completed" ? "checked" : ""
                             }`}
@@ -565,16 +622,16 @@ const EmployeeDashboard = () => {
                       
                       {/* Description - Added Here! */}
                       <p style={{
-                         margin: '0',
-                         fontSize: '0.9rem',
-                         color: '#666',
-                         lineHeight: '1.4',
-                         display: '-webkit-box',
-                         WebkitLineClamp: '3',
-                         WebkitBoxOrient: 'vertical',
-                         overflow: 'hidden'
+                          margin: '0',
+                          fontSize: '0.9rem',
+                          color: '#666',
+                          lineHeight: '1.4',
+                          display: '-webkit-box',
+                          WebkitLineClamp: '3',
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden'
                       }}>
-                         {task.description}
+                          {task.description}
                       </p>
 
                       {/* Middle: Big Due Date Box */}
@@ -586,22 +643,22 @@ const EmployeeDashboard = () => {
                         border: '1px solid #eee',
                         margin: '5px 0'
                       }}>
-                         <span style={{ fontSize: '0.75rem', color: '#888', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '4px' }}>
-                           <CalendarDays size={12} style={{ marginRight: '4px', verticalAlign: 'text-bottom' }} />
-                           Due Date
-                         </span>
-                         <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#333' }}>
-                           {formatDateWithDay(task.dueDate)}
-                         </span>
+                          <span style={{ fontSize: '0.75rem', color: '#888', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '4px' }}>
+                            <CalendarDays size={12} style={{ marginRight: '4px', verticalAlign: 'text-bottom' }} />
+                            Due Date
+                          </span>
+                          <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#333' }}>
+                            {formatDateWithDay(task.dueDate)}
+                          </span>
                       </div>
 
                       {/* Bottom: Footer Info */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
-                         <span style={{ color: '#888' }}>
-                           Assigned: {new Date(task.createdAt).toLocaleDateString()}
-                         </span>
-                         
-                         <span
+                          <span style={{ color: '#888' }}>
+                            Assigned: {new Date(task.createdAt).toLocaleDateString()}
+                          </span>
+                          
+                          <span
                           className={`status-text ${task.status.toLowerCase()}`}
                           style={{ fontWeight: '600' }}
                         >

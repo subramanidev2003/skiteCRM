@@ -1,10 +1,10 @@
-/* --- EditEmployee.css --- */
+/* --- EditEmployee.css (Orange & White Theme) --- */
 
 /* Main Container */
 .ee-container {
   width: 100%;
   min-height: 100vh;
-  background-color: #f8fafc;
+  background-color: #fffaf5; /* Very light orange/cream tint */
   padding: 1rem;
   box-sizing: border-box;
   display: flex;
@@ -13,12 +13,13 @@
 
 .ee-wrapper {
   width: 100%;
-  max-width: 1000px; /* Limits width on big screens */
-  background: white;
+  max-width: 1000px;
+  background: #ffffff; /* Pure White */
   border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px -5px rgba(249, 115, 22, 0.1); /* Subtle orange shadow */
   overflow: hidden;
   padding: 1.5rem;
+  border: 1px solid #ffedd5;
 }
 
 /* Header Section */
@@ -27,14 +28,14 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 2px solid #fff7ed;
   padding-bottom: 1rem;
 }
 
 .ee-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #1e293b;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #7c2d12; /* Deep Burnt Orange for text */
   margin: 0;
 }
 
@@ -43,19 +44,20 @@
   align-items: center;
   gap: 0.5rem;
   background: none;
-  border: none;
-  color: #64748b;
-  font-weight: 500;
+  border: 1px solid #fed7aa;
+  color: #ea580c;
+  font-weight: 600;
   cursor: pointer;
-  font-size: 0.95rem;
-  padding: 0.5rem;
-  border-radius: 6px;
+  font-size: 0.9rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
   transition: all 0.2s;
 }
 
 .ee-back-btn:hover {
-  background-color: #f1f5f9;
-  color: #0f172a;
+  background-color: #fff7ed;
+  border-color: #f97316;
+  color: #c2410c;
 }
 
 /* Profile Image Section */
@@ -70,10 +72,10 @@
   width: 130px;
   height: 130px;
   border-radius: 50%;
-  border: 4px solid #fff;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  border: 4px solid #ffffff;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2);
   overflow: hidden;
-  background: #f1f5f9;
+  background: #fff7ed;
 }
 
 .ee-image-preview {
@@ -88,7 +90,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #cbd5e1;
+  color: #fdba74;
 }
 
 .ee-upload-overlay {
@@ -96,7 +98,7 @@
   bottom: 0;
   left: 0;
   width: 100%;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(234, 88, 12, 0.85); /* Orange overlay */
   color: white;
   font-size: 0.75rem;
   padding: 8px 0;
@@ -109,7 +111,7 @@
 }
 
 .ee-upload-overlay:hover {
-  background: rgba(0, 0, 0, 0.8);
+  background: #c2410c;
 }
 
 /* --- RESPONSIVE GRID LAYOUT --- */
@@ -122,31 +124,32 @@
 /* Individual Cards inside Grid */
 .ee-card {
   background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  border: 1px solid #fed7aa; /* Light orange border */
+  border-radius: 12px;
   padding: 1.25rem;
-  transition: box-shadow 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .ee-card:hover {
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(249, 115, 22, 0.08);
 }
 
 .ee-card-title {
   font-size: 1rem;
-  font-weight: 600;
-  color: #334155;
-  margin-bottom: 1rem;
+  font-weight: 700;
+  color: #9a3412;
+  margin-bottom: 1.25rem;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  border-bottom: 2px solid #f1f5f9;
-  padding-bottom: 0.5rem;
+  gap: 0.6rem;
+  border-bottom: 2px solid #fff7ed;
+  padding-bottom: 0.6rem;
 }
 
 /* Form Inputs */
 .ee-form-group {
-  margin-bottom: 1rem;
+  margin-bottom: 1.2rem;
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
@@ -154,27 +157,32 @@
 
 .ee-form-group label {
   font-size: 0.85rem;
-  font-weight: 500;
-  color: #64748b;
+  font-weight: 600;
+  color: #7c2d12;
 }
 
 .ee-input,
 .ee-select {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #cbd5e1;
+  border: 1px solid #fdba74;
   border-radius: 8px;
   font-size: 0.95rem;
-  background-color: #fff;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  box-sizing: border-box; /* Important for padding */
+  background-color: #ffffff;
+  transition: all 0.2s;
+  box-sizing: border-box;
+  color: #431407;
 }
 
 .ee-input:focus,
 .ee-select:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  border-color: #f97316;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+}
+
+.ee-input::placeholder {
+  color: #fdba74;
 }
 
 /* Save Button */
@@ -182,32 +190,41 @@
   margin-top: 2rem;
   display: flex;
   justify-content: flex-end;
-  border-top: 1px solid #e2e8f0;
+  border-top: 2px solid #fff7ed;
   padding-top: 1.5rem;
 }
 
 .ee-save-btn {
-  background: #2563eb;
+  background: #f97316; /* Primary Orange */
   color: white;
   border: none;
-  padding: 0.85rem 2rem;
+  padding: 0.85rem 2.5rem;
   border-radius: 8px;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 1rem;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
+  box-shadow: 0 4px 10px rgba(249, 115, 22, 0.3);
 }
 
 .ee-save-btn:hover {
-  background: #1d4ed8;
+  background: #ea580c;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(249, 115, 22, 0.4);
+}
+
+.ee-save-btn:active {
+  transform: translateY(0);
 }
 
 .ee-save-btn:disabled {
-  background: #94a3b8;
+  background: #ffedd5;
+  color: #fdba74;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 /* --- SCROLL FIX FOR NUMBERS --- */
@@ -222,24 +239,9 @@ input[type=number] {
 
 /* --- MOBILE SPECIFIC TWEAKS --- */
 @media (max-width: 768px) {
-  .ee-container {
-    padding: 0.5rem;
-  }
-  
-  .ee-wrapper {
-    padding: 1rem;
-  }
-
-  .ee-grid-container {
-    grid-template-columns: 1fr; /* Force single column on mobile */
-  }
-
-  .ee-save-btn {
-    width: 100%; /* Full width button on mobile */
-    justify-content: center;
-  }
-  
-  .ee-title {
-    font-size: 1.1rem;
-  }
+  .ee-container { padding: 0.5rem; }
+  .ee-wrapper { padding: 1rem; border-radius: 0; }
+  .ee-grid-container { grid-template-columns: 1fr; }
+  .ee-save-btn { width: 100%; justify-content: center; }
+  .ee-title { font-size: 1.2rem; }
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Plus, Trash2, TrendingUp, TrendingDown, Wallet, FileText, CheckCircle, Filter } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, TrendingUp, TrendingDown, FileText, CheckCircle, Filter } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import './IncomeExpense.css';
@@ -21,7 +21,15 @@ const IncomeExpense = () => {
     to: new Date().toISOString().split('T')[0]         
   });
 
-  // Expense Form
+  // --- FORMS STATE ---
+  // ✅ 1. NEW INCOME FORM STATE
+  const [incomeForm, setIncomeForm] = useState({
+    description: '',
+    amount: '',
+    date: new Date().toISOString().split('T')[0]
+  });
+
+  // 2. EXPENSE FORM STATE
   const [expenseForm, setExpenseForm] = useState({ 
     description: '', 
     amount: '', 
@@ -67,16 +75,38 @@ const IncomeExpense = () => {
   const invoiceIncome = filteredInvoices.reduce((acc, inv) => acc + (inv.paidAmount || 0), 0);
   const manualIncomeTotal = filteredManualIncomes.reduce((acc, curr) => acc + curr.amount, 0);
   
-  // மொத்த வருமானம்
+  // Total Income
   const totalIncome = invoiceIncome + manualIncomeTotal;
   
-  // மொத்த செலவு
+  // Total Expense
   const totalExpense = filteredExpenses.reduce((acc, curr) => acc + curr.amount, 0);
   
-  // ✅ Net Balance (வருமானம் - செலவு)
+  // Net Balance
   const netBalance = totalIncome - totalExpense;
 
   // --- HANDLERS ---
+  
+  // ✅ 2. HANDLE ADD INCOME (New Function)
+  const handleAddIncome = async (e) => {
+    e.preventDefault();
+    if(!incomeForm.description || !incomeForm.amount) return toast.warning("Fill all fields");
+
+    try {
+      const res = await fetch(`${API_BASE}/transaction/add`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...incomeForm, type: 'income', category: 'General' }) 
+      });
+
+      if (res.ok) {
+        toast.success("Income Added!");
+        fetchData();
+        setIncomeForm({ description: '', amount: '', date: new Date().toISOString().split('T')[0] });
+      }
+    } catch (err) { toast.error("Server Error"); }
+  };
+
+  // HANDLE ADD EXPENSE
   const handleAddExpense = async (e) => {
     e.preventDefault();
     if(!expenseForm.description || !expenseForm.amount) return toast.warning("Fill all fields");
@@ -111,15 +141,13 @@ const IncomeExpense = () => {
       {/* HEADER */}
       <div className="ie-header">
         <div className="header-left">
-                    {/* ✅ UPDATED BUTTON */}
-                    <button className="modern-back-btn" onClick={() => navigate('/admin-dashboard/accounts')}>
-                        <ArrowLeft size={20} />
-                        <span>Back</span>
-                    </button>
-                    <h2>Accounts Overview</h2>
-                </div>
+            <button className="modern-back-btn" onClick={() => navigate('/admin-dashboard/accounts')}>
+                <ArrowLeft size={20} />
+                <span>Back</span>
+            </button>
+            <h2>Accounts Overview</h2>
+        </div>
         
-        {/* Optional: Show Total Revenue separately here if needed */}
         <div className="net-balance-card" style={{background: '#e0f2fe', border: '1px solid #bae6fd'}}>
             <span style={{color: '#0284c7'}}>Total Revenue</span>
             <h4 style={{margin:0, color: '#0369a1'}}>₹ {totalIncome.toLocaleString()}</h4>
@@ -151,19 +179,50 @@ const IncomeExpense = () => {
       {/* GRID LAYOUT */}
       <div className="ie-grid-layout">
         
-        {/* --- LEFT COLUMN: NET BALANCE (Income - Expense) --- */}
+        {/* --- LEFT COLUMN: INCOME --- */}
         <div className="column-section income-section">
             <div className="section-header green-header">
                 <TrendingUp size={20} /> 
-                {/* ✅ CHANGE HERE: Showing Net Balance instead of Total Income */}
                 <div>
                   <h3 style={{margin:0}}>Cash in Hand: ₹ {netBalance.toLocaleString()}</h3>
                   <span style={{fontSize: '12px', fontWeight: 'normal'}}>(Income - Expense)</span>
                 </div>
             </div>
 
+            {/* ✅ 3. INCOME FORM (New Addition) */}
+            <form className="expense-form income-form-style" onSubmit={handleAddIncome} style={{marginBottom:'15px', padding:'10px', background:'#ecfdf5', borderRadius:'8px', border:'1px solid #d1fae5'}}>
+                <div className="input-row">
+                    <input 
+                        type="date" 
+                        value={incomeForm.date}
+                        onChange={(e) => setIncomeForm({...incomeForm, date: e.target.value})}
+                        style={{width: '130px'}} 
+                        required
+                    />
+                    <input 
+                        type="text" 
+                        placeholder="Income Description" 
+                        value={incomeForm.description}
+                        onChange={(e) => setIncomeForm({...incomeForm, description: e.target.value})}
+                        style={{flex: 2}}
+                        required
+                    />
+                    <input 
+                        type="number" 
+                        placeholder="Amount" 
+                        value={incomeForm.amount}
+                        onChange={(e) => setIncomeForm({...incomeForm, amount: e.target.value})}
+                        style={{flex: 1}}
+                        required
+                    />
+                    <button type="submit" style={{backgroundColor: '#10b981'}}><Plus size={18}/></button>
+                </div>
+            </form>
+
             <div className="scrollable-list">
                 <h4 className="list-title">Income Sources</h4>
+                
+                {/* 1. Invoice Incomes */}
                 {filteredInvoices.filter(inv => (inv.paidAmount || 0) > 0).map(inv => (
                     <div key={inv._id} className="income-item invoice-item">
                         <div className="item-left">
@@ -178,8 +237,9 @@ const IncomeExpense = () => {
                         </div>
                     </div>
                 ))}
-                 {/* Manual Incomes List... */}
-                 {filteredManualIncomes.map(inc => (
+
+                {/* 2. Manual Incomes */}
+                {filteredManualIncomes.map(inc => (
                     <div key={inc._id} className="income-item">
                         <div className="item-left">
                             <CheckCircle size={16} color="#10b981"/>
@@ -204,6 +264,7 @@ const IncomeExpense = () => {
                 <h3>Total Expense: ₹ {totalExpense.toLocaleString()}</h3>
             </div>
 
+            {/* EXPENSE FORM */}
             <form className="expense-form" onSubmit={handleAddExpense}>
                 <div className="input-row">
                     <input 

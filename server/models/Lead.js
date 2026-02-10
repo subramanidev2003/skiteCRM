@@ -4,14 +4,19 @@ const leadSchema = new mongoose.Schema({
   salesAgentId: {
     type: mongoose.Schema.Types.ObjectId,
     required: true
-    // ref: 'User' (Removed to allow Admin ID)
+    // ref: 'User' (Optional: Removed to allow Admin ID)
   },
   date: { type: String, required: true },
   name: { type: String, required: true },
+  
+  // ✅ Email சேர்க்கப்பட்டுள்ளது
+  email: { type: String, required: false },
+
   companyName: { type: String },
   business: { type: String },
   location: { type: String },
   phoneNumber: { type: String, required: true },
+  
   serviceType: { 
     type: String, 
     default: 'Web Development',
@@ -24,7 +29,6 @@ const leadSchema = new mongoose.Schema({
   },
   requirement: { type: String },
   
-  // ✅ UPDATED: Added 'Callback' option
   callStatus: { 
     type: String, 
     default: 'Not Attend',
@@ -39,7 +43,6 @@ const leadSchema = new mongoose.Schema({
   
   callbackDate: { type: String },
 
-  // ✅ FIXED: Added default 'Not' so it is never empty
   leadStatus: { 
     type: String, 
     default: 'Not', 

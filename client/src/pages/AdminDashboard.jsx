@@ -58,11 +58,11 @@ const DashboardCards = ({ handleCardClick, role }) => (
                     <div className="card-accent"></div>
                 </div>
 
-                <div className="card" onClick={() => handleCardClick('quote')}>
+                {/* <div className="card" onClick={() => handleCardClick('quote')}>
                     <div className="card-icon"><ScrollText size={40} color="#FF4500" /></div>
                     <div className="card-title1">Quote</div>
                     <div className="card-accent"></div>
-                </div>
+                </div> */}
             </>
         )}
 

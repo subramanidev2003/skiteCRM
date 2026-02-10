@@ -4,7 +4,7 @@ import {
   LogOut, Target, Users, TrendingUp, Plus, X, 
   Clock, ArrowDown, ArrowUp, CalendarDays, MapPin 
 } from "lucide-react";
-import "./SalesDashboard.css"; // ✅ Uses the new CSS below
+import "./SalesDashboard.css"; 
 import { toast } from "react-toastify";
 
 // --- CONFIGURATION ---
@@ -34,9 +34,16 @@ const SalesDashboard = () => {
     "Web Development", "SEO", "Paid Campaigns", "Personal Branding", "Full Digital Marketing",
   ];
 
+  // ✅ ADDED: 'email' field to form data
   const [formData, setFormData] = useState({
-    date: "", name: "", companyName: "", phoneNumber: "", 
-    serviceType: "Web Development", business: "", location: "",
+    date: "", 
+    name: "", 
+    email: "", // ✨ New Email Field
+    companyName: "", 
+    phoneNumber: "", 
+    serviceType: "Web Development", 
+    business: "", 
+    location: "",
   });
 
   // 1. CLOCK & INIT
@@ -87,7 +94,6 @@ const SalesDashboard = () => {
           setStartTime(new Date(data.checkInTime));
         }
       } else {
-        // Fallback to local storage
         const saved = JSON.parse(localStorage.getItem('activeSalesSession'));
         if (saved && saved.userId === userId) {
           setIsCheckedIn(true);
@@ -176,7 +182,10 @@ const SalesDashboard = () => {
         setLeads([data.lead, ...leads]);
         calculateStats([data.lead, ...leads]);
         setIsModalOpen(false);
-        setFormData({ date: "", name: "", companyName: "", phoneNumber: "", serviceType: "Web Development", business: "", location: "" });
+        
+        // ✅ RESET FORM including Email
+        setFormData({ date: "", name: "", email: "", companyName: "", phoneNumber: "", serviceType: "Web Development", business: "", location: "" });
+        
         toast.success("Lead Saved!");
       } else { toast.error(data.message); }
     } catch (error) { toast.error("Server Error"); }
@@ -298,13 +307,31 @@ const SalesDashboard = () => {
             </div>
             <form onSubmit={handleSubmit}>
               <div className="input-grid">
+                
+                {/* 1. Date */}
                 <div className="inp-group"><label>Date</label><input type="date" required value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} /></div>
+                
+                {/* 2. Name */}
                 <div className="inp-group"><label>Client Name</label><input type="text" placeholder="Name" required value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} /></div>
+                
+                {/* 3. EMAIL (✅ NEW) */}
+                <div className="inp-group"><label>Email</label><input type="email" placeholder="Client Email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} /></div>
+
+                {/* 4. Company */}
                 <div className="inp-group"><label>Company</label><input type="text" placeholder="Company Name" value={formData.companyName} onChange={(e) => setFormData({...formData, companyName: e.target.value})} /></div>
+                
+                {/* 5. Phone */}
                 <div className="inp-group"><label>Phone</label><input type="tel" placeholder="Phone" required value={formData.phoneNumber} onChange={(e) => setFormData({...formData, phoneNumber: e.target.value})} /></div>
+                
+                {/* 6. Service */}
                 <div className="inp-group"><label>Service</label><select value={formData.serviceType} onChange={(e) => setFormData({...formData, serviceType: e.target.value})}>{serviceOptions.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
+                
+                {/* 7. Business */}
                 <div className="inp-group"><label>Business Type</label><input type="text" placeholder="Type" value={formData.business} onChange={(e) => setFormData({...formData, business: e.target.value})} /></div>
+                
+                {/* 8. Location */}
                 <div className="inp-group full"><label>Location</label><input type="text" placeholder="Location" value={formData.location} onChange={(e) => setFormData({...formData, location: e.target.value})} /></div>
+              
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn-text" onClick={() => setIsModalOpen(false)}>Cancel</button>

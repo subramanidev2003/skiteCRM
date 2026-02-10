@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Check, X, Phone, User, Briefcase, MapPin, Calendar, 
-  CreditCard, Activity, Tag, ClipboardCheck, MessageSquare, Lock 
+  CreditCard, Activity, Tag, ClipboardCheck, MessageSquare, Lock, Mail 
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import './LeadPageModern.css'; 
 
-// --- UPDATED ACTION ROW COMPONENT (With Disabled Logic) ---
+// --- ACTION ROW COMPONENT (EDITABLE FIELD) ---
 const ActionRow = ({ label, icon: Icon, name, value, type = "text", options = [], onSave, colorClass = "", disabled = false }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [tempValue, setTempValue] = useState(value);
@@ -19,9 +19,10 @@ const ActionRow = ({ label, icon: Icon, name, value, type = "text", options = []
 
   const handleEditClick = () => {
     if (!disabled) {
+      setTempValue(value); // Reset temp value to current value before editing
       setIsEditing(true);
     } else {
-      toast.info("Complete Call Status, Follow Up, and Lead Status to unlock this field.");
+      toast.info("This field is locked.");
     }
   };
 
@@ -52,7 +53,7 @@ const ActionRow = ({ label, icon: Icon, name, value, type = "text", options = []
             title={disabled ? "Locked" : "Click to Edit"}
         >
           <div className={`value-pill ${colorClass}`}>
-            {value || (disabled ? 'Locked' : 'Set Value')}
+            {value || <span style={{opacity: 0.5, fontStyle: 'italic'}}>Set Value</span>}
           </div>
           {disabled && <Lock size={14} className="lock-icon" />}
         </div>
@@ -85,8 +86,6 @@ const AdminLeadPage = () => {
     return '';
   };
 
-  // --- LOGIC GATE ---
-  // The rows are unlocked ONLY if these 3 conditions are met
   const isPaymentUnlocked = 
     currentLead.callStatus === 'Attend' && 
     currentLead.followUpStatus === 'Yes' && 
@@ -148,7 +147,7 @@ const AdminLeadPage = () => {
                     onClick={() => setIsEditingPriority(true)}
                     title="Click to edit priority"
                 >
-                    {currentLead.priority} Priority
+                    {currentLead.priority || 'Medium'} Priority
                 </span>
             )}
         </div>
@@ -157,42 +156,65 @@ const AdminLeadPage = () => {
       {/* 2. GRID LAYOUT */}
       <div className="details-grid-layout">
         
-        {/* LEFT COL: CLIENT PROFILE */}
+        {/* LEFT COL: CLIENT PROFILE (NOW EDITABLE) */}
         <div className="info-card">
             <div className="card-heading">
                 <User size={20} color="#ff7f50"/> Client Profile
             </div>
-            <div className="info-list">
-                <div className="info-row">
-                    <span className="info-label">Full Name</span>
-                    <span className="info-value">{currentLead.name}</span>
+            
+            {/* ✅ அனைத்து ஃபீல்டுகளும் இப்போது EDIT செய்யக்கூடிய ActionRow ஆக மாற்றப்பட்டுள்ளன */}
+            <div className="action-list">
+                
+                <ActionRow 
+                    label="Full Name" icon={User} name="name" 
+                    value={currentLead.name} type="text" onSave={updateField} 
+                />
+
+                <ActionRow 
+                    label="Email" icon={Mail} name="email" 
+                    value={currentLead.email} type="email" onSave={updateField} 
+                />
+
+                <ActionRow 
+                    label="Company" icon={Briefcase} name="companyName" 
+                    value={currentLead.companyName} type="text" onSave={updateField} 
+                />
+
+                <ActionRow 
+                    label="Phone" icon={Phone} name="phoneNumber" 
+                    value={currentLead.phoneNumber} type="tel" onSave={updateField} 
+                />
+
+                <ActionRow 
+                    label="Business Type" icon={Activity} name="business" 
+                    value={currentLead.business} type="text" onSave={updateField} 
+                />
+
+                 <ActionRow 
+                    label="Location" icon={MapPin} name="location" 
+                    value={currentLead.location} type="text" onSave={updateField} 
+                />
+
+                {/* Date Added (Read Only) */}
+                <div style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
+                    padding: '12px 0', borderBottom: '1px solid #f3f4f6', fontSize: '14px'
+                }}>
+                    <div style={{display: 'flex', alignItems: 'center', gap: '10px', color: '#9ca3af'}}>
+                        <Calendar size={18} />
+                        <span>Date Added</span>
+                    </div>
+                    <span style={{fontWeight: '500', color: '#374151'}}>
+                        {currentLead.date ? new Date(currentLead.date).toLocaleDateString() : 'N/A'}
+                    </span>
                 </div>
-                <div className="info-row">
-                    <span className="info-label">Company</span>
-                    <span className="info-value">{currentLead.companyName || 'N/A'}</span>
-                </div>
-                <div className="info-row">
-                    <span className="info-label">Phone</span>
-                    <span className="info-value">{currentLead.phoneNumber}</span>
-                </div>
-                <div className="info-row">
-                    <span className="info-label">Business Type</span>
-                    <span className="info-value">{currentLead.business || 'N/A'}</span>
-                </div>
-                 <div className="info-row">
-                    <span className="info-label">Location</span>
-                    <span className="info-value">{currentLead.location || 'N/A'}</span>
-                </div>
-                <div className="info-row">
-                    <span className="info-label">Date Added</span>
-                    <span className="info-value">{currentLead.date}</span>
-                </div>
+
             </div>
         </div>
 
-        {/* RIGHT COL: LEAD CONSOLE */}
+        {/* RIGHT COL: LEAD CONSOLE (ALREADY EDITABLE) */}
         <div className="info-card">
-             <div className="card-heading">
+              <div className="card-heading">
                 <Activity size={20} color="#ff7f50"/> Lead Console
             </div>
 
@@ -229,7 +251,7 @@ const AdminLeadPage = () => {
                 
                 <ActionRow 
                     label="Callback Remainder" icon={Calendar} name="callbackDate" 
-                    value={currentLead.callbackDate} type="text" onSave={updateField} 
+                    value={currentLead.callbackDate} type="date" onSave={updateField} 
                 />
                 
                 <ActionRow 
@@ -240,15 +262,10 @@ const AdminLeadPage = () => {
                     label="Advance Payment" icon={CreditCard} name="payment" 
                     value={currentLead.payment} type="number" onSave={updateField}
                     colorClass="green"
-                    // disabled={!isPaymentUnlocked} 
                 />
                 
                 <div style={{margin: '15px 0', borderTop: '1px dashed #e5e7eb'}}></div>
-
-                {/* 7. Payment (Disabled if logic not met) */}
-               
                 
-                {/* 8. Closing (Disabled if logic not met) */}
                 <ActionRow 
                     label="Deal Closed?" icon={CreditCard} name="closing" 
                     value={currentLead.closing} type="select" options={['Yes', 'No']} onSave={updateField} 

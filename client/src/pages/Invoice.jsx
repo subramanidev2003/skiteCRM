@@ -1,17 +1,17 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Plus, Trash2, Download, Save, History } from 'lucide-react'; 
+import React, { useState, useEffect, useRef } from 'react';
+import { ArrowLeft, Plus, Trash2, Download, Save, History, ChevronDown } from 'lucide-react'; 
 import { useNavigate } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { toast } from 'react-toastify'; 
 import './Invoice.css';
 
-// ✅ IMAGES IMPORT
+// IMAGES IMPORT
 import skitelogo from '../assets/skite-logo.jpg'; 
 import skitesign from '../assets/sign.jpg';
 import skiteseal from '../assets/seal.png'; 
 
-// ✅ DATA FROM YOUR IMAGE
+// DATA LIST
 const SERVICES_LIST = [
   { name: 'UX/UI DESIGN', hsn: '998314' },
   { name: 'WEB DEVELOPMENT', hsn: '998314' },
@@ -60,27 +60,49 @@ const Invoice = () => {
     addressLine1: '',
     addressLine2: '',
     location: '',
-    gstNo: '' // ✅ Added Client GST
+    gstNo: ''
   });
 
   const [items, setItems] = useState([
-    { description: 'META ADS', hsn: '998365', price: 1500, qty: 15 }
+    { description: '', hsn: '', price: '', qty: 1 }
   ]);
 
   const [taxRate, setTaxRate] = useState(9); 
+  
+  const [activeDropdownIndex, setActiveDropdownIndex] = useState(null);
+  const dropdownRef = useRef(null); 
 
-  // --- CALCULATIONS ---
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setActiveDropdownIndex(null); 
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // --- CALCULATIONS (MODIFIED) ---
   const calculateTotal = () => {
-    const subtotal = items.reduce((acc, item) => acc + (item.price * item.qty), 0);
+    const subtotal = items.reduce((acc, item) => {
+        const itemPrice = parseFloat(item.price) || 0;
+        const itemQty = parseFloat(item.qty) || 0;
+        return acc + (itemPrice * itemQty);
+    }, 0);
+
     const cgst = (subtotal * taxRate) / 100;
     const sgst = (subtotal * taxRate) / 100;
-    const grandTotal = subtotal + cgst + sgst;
+    
+    // ✅ MODIFICATION: Math.round() பயன்படுத்தப்பட்டுள்ளது
+    // இது .50க்கு மேல் இருந்தால் அடுத்த எண்ணிற்கும் (131), குறைவாக இருந்தால் முந்தைய எண்ணிற்கும் (130) மாற்றும்.
+    const grandTotal = Math.round(subtotal + cgst + sgst); 
+    
     return { subtotal, cgst, sgst, grandTotal };
   };
 
   const { subtotal, cgst, sgst, grandTotal } = calculateTotal();
 
-  // ✅ IMPROVED NUMBER TO WORDS FUNCTION
+  // Number to Words
   const numberToWords = (price) => {
     const sglDigit = ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"];
     const dblDigit = ["Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
@@ -122,20 +144,19 @@ const Invoice = () => {
   const handleItemChange = (index, field, value) => {
     const newItems = [...items];
     newItems[index][field] = value;
-
-    // ✅ AUTO FILL HSN IF SERVICE SELECTED
-    if (field === 'description') {
-        const foundService = SERVICES_LIST.find(s => s.name === value);
-        if (foundService) {
-            newItems[index].hsn = foundService.hsn;
-        }
-    }
-
     setItems(newItems);
   };
 
+  const handleServiceSelect = (index, service) => {
+      const newItems = [...items];
+      newItems[index].description = service.name;
+      newItems[index].hsn = service.hsn; 
+      setItems(newItems);
+      setActiveDropdownIndex(null); 
+  };
+
   const addItem = () => {
-    setItems([...items, { description: '', hsn: '', price: 0, qty: 1 }]);
+    setItems([...items, { description: '', hsn: '', price: '', qty: 1 }]);
   };
 
   const removeItem = (index) => {
@@ -143,9 +164,7 @@ const Invoice = () => {
     setItems(newItems);
   };
 
-  // ==========================================
-  // 💾 SAVE TO DB
-  // ==========================================
+  // SAVE TO DB
   const saveInvoiceToDB = async () => {
     if (!clientDetails.name) {
         toast.error("Please enter Client Name!");
@@ -159,13 +178,15 @@ const Invoice = () => {
         clientDetails: clientDetails,
         items: items.map(item => ({
           ...item,
-          total: item.price * item.qty
+          price: parseFloat(item.price) || 0,
+          qty: parseFloat(item.qty) || 0,
+          total: (parseFloat(item.price) || 0) * (parseFloat(item.qty) || 0)
         })),
         subtotal,
         taxRate,
         cgst,
         sgst,
-        grandTotal
+        grandTotal // This is already rounded
       };
 
       const response = await fetch('https://skitecrm.onrender.com/api/invoice/create', {
@@ -187,12 +208,8 @@ const Invoice = () => {
     }
   };
 
-  // ==========================================
-  // 🖨️ PDF GENERATION
-  // ==========================================
+  // PDF GENERATION
   const generatePDF = async () => {
-    
-    // ✅ 1. Ask for File Name (Popup)
     let fileName = prompt("Enter PDF File Name:", `Invoice_${invoiceMeta.invoiceNo.replace(/\//g, '-')}`);
     
     if (fileName === null) return; 
@@ -202,7 +219,6 @@ const Invoice = () => {
     const doc = new jsPDF();
     const orangeColor = [255, 69, 0]; 
 
-    // Helper function to convert image to base64
     const getImageBase64 = (imgSrc) => {
       return new Promise((resolve, reject) => {
         const img = new Image();
@@ -220,7 +236,6 @@ const Invoice = () => {
       });
     };
 
-    // 1. ADD LOGO 
     try {
         const logoBase64 = await getImageBase64(skitelogo);
         doc.addImage(logoBase64, 'JPG', 14, 10, 40, 29); 
@@ -228,7 +243,6 @@ const Invoice = () => {
         console.error("Logo Error:", e);
     }
 
-    // 2. HEADER DETAILS
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(0); 
@@ -242,12 +256,10 @@ const Invoice = () => {
     doc.text(senderDetails.addressLine3, 14, 56);
     doc.text(`GST NO: ${senderDetails.gst}`, 14, 62);
 
-    // INVOICE Label 
     doc.setFontSize(22);
     doc.setTextColor(255, 69, 0);
     doc.text("INVOICE", 195, 25, { align: 'right' });
 
-    // 3. CLIENT DETAILS & INVOICE META
     const infoStartY = 75;
 
     doc.setFontSize(10);
@@ -260,7 +272,6 @@ const Invoice = () => {
     doc.text(clientDetails.addressLine2, 14, infoStartY + 16);
     doc.text(clientDetails.location, 14, infoStartY + 21);
     
-    // ✅ Add Client GST in PDF
     if(clientDetails.gstNo) {
         doc.setFont("helvetica", "bold");
         doc.text(`GST: ${clientDetails.gstNo}`, 14, infoStartY + 26);
@@ -279,20 +290,24 @@ const Invoice = () => {
     const formattedDate = `${dateObj.getDate()}/${dateObj.getMonth() + 1}/${dateObj.getFullYear()}`;
     doc.text(formattedDate, 155, infoStartY + 6);
 
-    // 4. TABLE
-    const tableBody = items.map(item => [
-      item.description,
-      item.hsn,
-      `${item.price}`,
-      `${item.qty}`,
-      (item.price * item.qty).toFixed(2)
-    ]);
+    const tableBody = items.map(item => {
+        const price = parseFloat(item.price) || 0;
+        const qty = parseFloat(item.qty) || 0;
+        return [
+            item.description,
+            item.hsn,
+            price.toFixed(2),
+            qty,
+            (price * qty).toFixed(2)
+        ];
+    });
 
+    // ✅ MODIFICATION: PDF-ல் Total-க்கு Decimals வேண்டாம் (.toFixed(2) நீக்கப்பட்டது)
     tableBody.push(
       ['', '', '', 'Subtotal', subtotal.toFixed(2)],
       ['', '', '', `CGST ${taxRate}%`, cgst.toFixed(2)],
       ['', '', '', `SGST ${taxRate}%`, sgst.toFixed(2)],
-      ['', '', '', 'TOTAL', grandTotal.toFixed(2)]
+      ['', '', '', 'TOTAL', grandTotal] // No decimals for Grand Total
     );
 
     autoTable(doc, {
@@ -324,14 +339,12 @@ const Invoice = () => {
 
     const finalY = doc.lastAutoTable.finalY + 10;
 
-    // 5. Amount in Words
     doc.setFontSize(10);
-    doc.setFont("helvetica", "bold"); // Made label bold
+    doc.setFont("helvetica", "bold"); 
     doc.text("Amount in Words:", 14, finalY);
     doc.setFont("helvetica", "italic");
     doc.text(numberToWords(grandTotal), 45, finalY);
 
-    // 6. Bank Details 
     doc.setFont("helvetica", "normal");
     doc.text("PAY TO:", 14, finalY + 15);
     doc.setFont("helvetica", "bold");
@@ -342,13 +355,11 @@ const Invoice = () => {
     doc.text(`IFSC: ${bankDetails.ifsc}`, 14, finalY + 35);
     doc.text(`Branch: ${bankDetails.branch}`, 14, finalY + 40);
 
-    // Contact Info
     doc.setFontSize(9);
     doc.text(senderDetails.email, 14, finalY + 55);
     doc.text(senderDetails.website, 14, finalY + 60);
     doc.text(senderDetails.phone, 14, finalY + 65);
 
-    // 7. SIGNATORY & SEAL
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(0);
@@ -435,7 +446,6 @@ const Invoice = () => {
               <input type="text" value={clientDetails.name} onChange={(e) => setClientDetails({...clientDetails, name: e.target.value})} placeholder="Client Name"/>
             </div>
             
-            {/* ✅ Added Client GST Field */}
             <div className="input-group">
               <label>Client GST No</label>
               <input type="text" value={clientDetails.gstNo} onChange={(e) => setClientDetails({...clientDetails, gstNo: e.target.value})} placeholder="Ex: 33AAAAA0000A1Z5"/>
@@ -449,7 +459,7 @@ const Invoice = () => {
             </div>
           </div>
 
-          {/* Card 3: Items - UPDATED WITH DROPDOWN */}
+          {/* Card 3: Items - CUSTOM DROPDOWN INPUT */}
           <div className="form-section">
             <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'15px', borderBottom:'2px solid #f0f0f0', paddingBottom:'10px'}}>
                <h3 className="section-title" style={{color: '#FF4500', margin:0}}>Items</h3>
@@ -466,23 +476,64 @@ const Invoice = () => {
                 
                 {/* ROW 1: Description & HSN */}
                 <div style={{display: 'flex', gap: '15px', marginBottom: '15px'}}>
-                    <div style={{flex: 2}}>
+                    
+                    {/* CUSTOM SEARCHABLE DROPDOWN */}
+                    <div style={{flex: 2, position: 'relative'}} ref={dropdownRef}>
                         <label style={{display: 'block', fontSize: '11px', fontWeight:'600', color: '#888', marginBottom: '5px', textTransform:'uppercase'}}>Description</label>
                         
-                        {/* ✅ Changed to Dropdown (Select) */}
-                        <select 
-                          value={item.description}
-                          onChange={(e) => handleItemChange(index, 'description', e.target.value)}
-                          style={{width: '100%', padding:'10px', border:'1px solid #ddd', borderRadius:'6px', outline:'none', fontSize:'14px', background:'white'}}
-                        >
-                          <option value="">Select Service...</option>
-                          {SERVICES_LIST.map((service, i) => (
-                            <option key={i} value={service.name}>{service.name}</option>
-                          ))}
-                        </select>
+                        <div style={{position: 'relative', display: 'flex', alignItems: 'center'}}>
+                            <input 
+                                type="text" 
+                                placeholder="Type or Select Service..."
+                                value={item.description}
+                                onChange={(e) => {
+                                    handleItemChange(index, 'description', e.target.value);
+                                    setActiveDropdownIndex(index); // Open dropdown when typing
+                                }}
+                                onFocus={() => setActiveDropdownIndex(index)} // Open dropdown on click
+                                style={{width: '100%', padding:'10px', paddingRight: '35px', border:'1px solid #ddd', borderRadius:'6px', outline:'none', fontSize:'14px'}}
+                            />
+                            {/* Chevron Icon */}
+                            <ChevronDown 
+                                size={16} 
+                                style={{position: 'absolute', right: '10px', color: '#999', pointerEvents: 'none'}} 
+                            />
+                        </div>
+
+                        {/* Dropdown List */}
+                        {activeDropdownIndex === index && (
+                            <div style={{
+                                position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10,
+                                background: 'white', border: '1px solid #ddd', borderRadius: '6px',
+                                marginTop: '5px', maxHeight: '150px', overflowY: 'auto',
+                                boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                            }}>
+                                {SERVICES_LIST.filter(s => s.name.toLowerCase().includes(item.description.toLowerCase())).map((service, i) => (
+                                    <div 
+                                        key={i}
+                                        onMouseDown={() => handleServiceSelect(index, service)} // ✅ Fixed: onMouseDown prevents blur
+                                        style={{
+                                            padding: '10px', cursor: 'pointer', borderBottom: '1px solid #f0f0f0',
+                                            fontSize: '13px', display: 'flex', justifyContent: 'space-between'
+                                        }}
+                                        onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f9f9f9'}
+                                        onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                                    >
+                                        <span>{service.name}</span>
+                                        <span style={{color: '#888', fontSize: '11px'}}>{service.hsn}</span>
+                                    </div>
+                                ))}
+                                {SERVICES_LIST.filter(s => s.name.toLowerCase().includes(item.description.toLowerCase())).length === 0 && (
+                                    <div style={{padding: '10px', color: '#999', fontSize: '13px', fontStyle: 'italic'}}>
+                                        No matching service found. Keep typing...
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
+
                     <div style={{flex: 1}}>
-                        <label style={{display: 'block', fontSize: '11px', fontWeight:'600', color: '#888', marginBottom: '5px', textTransform:'uppercase'}}>HSN Code</label>
+                        <label style={{display:'block', fontSize: '11px', fontWeight:'600', color: '#888', marginBottom: '5px', textTransform:'uppercase'}}>HSN Code</label>
                         <input 
                         type="text" 
                         placeholder="HSN" 
@@ -496,35 +547,35 @@ const Invoice = () => {
                 {/* ROW 2: Price, Qty, Total & Delete */}
                 <div style={{display: 'flex', gap: '15px', alignItems: 'flex-end'}}>
                     <div style={{flex: 1}}>
-                        <label style={{display: 'block', fontSize: '11px', fontWeight:'600', color: '#888', marginBottom: '5px', textTransform:'uppercase'}}>Unit Price</label>
+                        <label style={{display:'block', fontSize: '11px', fontWeight:'600', color: '#888', marginBottom: '5px', textTransform:'uppercase'}}>Unit Price</label>
                         <input 
                         type="number" 
                         placeholder="0.00" 
                         value={item.price} 
-                        onChange={(e) => handleItemChange(index, 'price', parseFloat(e.target.value) || 0)}
+                        onChange={(e) => handleItemChange(index, 'price', e.target.value)} // Keep raw value to allow typing
                         style={{width: '100%', padding:'10px', border:'1px solid #ddd', borderRadius:'6px', outline:'none', fontSize:'14px'}}
                         />
                     </div>
                     
                     <div style={{flex: 0.8}}>
-                        <label style={{display: 'block', fontSize: '11px', fontWeight:'600', color: '#888', marginBottom: '5px', textTransform:'uppercase'}}>Qty</label>
+                        <label style={{display:'block', fontSize: '11px', fontWeight:'600', color: '#888', marginBottom: '5px', textTransform:'uppercase'}}>Qty</label>
                         <input 
                         type="number" 
                         placeholder="1" 
                         value={item.qty} 
-                        onChange={(e) => handleItemChange(index, 'qty', parseFloat(e.target.value) || 0)}
+                        onChange={(e) => handleItemChange(index, 'qty', e.target.value)}
                         style={{width: '100%', padding:'10px', border:'1px solid #ddd', borderRadius:'6px', outline:'none', fontSize:'14px', textAlign:'center'}}
                         />
                     </div>
 
                     <div style={{flex: 1}}>
-                        <label style={{display: 'block', fontSize: '11px', fontWeight:'600', color: '#888', marginBottom: '5px', textTransform:'uppercase'}}>Total</label>
+                        <label style={{display:'block', fontSize: '11px', fontWeight:'600', color: '#888', marginBottom: '5px', textTransform:'uppercase'}}>Total</label>
                         <div style={{
                             padding: '10px', background: '#f9f9f9', border: '1px solid #eee', 
                             borderRadius: '6px', fontSize: '14px', fontWeight: 'bold', 
                             color: '#333', textAlign: 'right'
                         }}>
-                            ₹ {(item.price * item.qty).toLocaleString()}
+                            ₹ {((parseFloat(item.price)||0) * (parseFloat(item.qty)||0)).toLocaleString()}
                         </div>
                     </div>
 
@@ -560,6 +611,7 @@ const Invoice = () => {
               </div>
               <div style={{ textAlign: 'right' }}>
                 <h3 style={{ color: '#FF4500', fontSize: '24px', margin: 0 }}>
+                  {/* ✅ MODIFICATION: Total-க்கு Decimals வேண்டாம் (toLocaleString() மூலம்) */}
                   Total: ₹{grandTotal.toLocaleString('en-IN')}
                 </h3>
               </div>
@@ -612,9 +664,9 @@ const Invoice = () => {
                 <tr key={i}>
                   <td style={{ padding: '10px', border: '1px solid #FF4500', fontWeight: '600' }}>{item.description}</td>
                   <td style={{ padding: '10px', textAlign: 'center', border: '1px solid #FF4500' }}>{item.hsn}</td>
-                  <td style={{ padding: '10px', textAlign: 'right', border: '1px solid #FF4500' }}>₹ {item.price.toLocaleString('en-IN')}</td>
+                  <td style={{ padding: '10px', textAlign: 'right', border: '1px solid #FF4500' }}>₹ {(parseFloat(item.price)||0).toLocaleString('en-IN')}</td>
                   <td style={{ padding: '10px', textAlign: 'right', border: '1px solid #FF4500' }}>{item.qty}</td>
-                  <td style={{ padding: '10px', textAlign: 'right', border: '1px solid #FF4500' }}>₹ {(item.price * item.qty).toLocaleString('en-IN')}</td>
+                  <td style={{ padding: '10px', textAlign: 'right', border: '1px solid #FF4500' }}>₹ {((parseFloat(item.price)||0) * (parseFloat(item.qty)||0)).toLocaleString('en-IN')}</td>
                 </tr>
               ))}
             </tbody>
@@ -635,12 +687,12 @@ const Invoice = () => {
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: '#FF4500', color: '#fff', fontWeight: 'bold' }}>
               <span>TOTAL</span>
-              <span>₹ {grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+              {/* ✅ MODIFICATION: Total-க்கு Decimals வேண்டாம் (.toFixed(2) நீக்கப்பட்டது) */}
+              <span>₹ {grandTotal.toLocaleString('en-IN')}</span>
             </div>
             
-            {/* Amount in Words in Preview */}
              <div style={{ marginTop:'10px', fontSize:'12px', fontStyle:'italic', color:'#555' }}>
-                <strong>Amount in Words:</strong> {numberToWords(grandTotal)}
+               <strong>Amount in Words:</strong> {numberToWords(grandTotal)}
              </div>
           </div>
 

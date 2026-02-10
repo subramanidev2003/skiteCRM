@@ -17,7 +17,7 @@ const AdminSalesDashboard = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [leads, setLeads] = useState([]);
   
-  // ✅ NEW: State to store list of Sales Agents
+  // State to store list of Sales Agents (Optional if needed later)
   const [agents, setAgents] = useState([]);
 
   // --- STATS STATE ---
@@ -29,25 +29,25 @@ const AdminSalesDashboard = () => {
     "Web Development", "SEO", "Paid Campaigns", "Personal Branding", "Full Digital Marketing"
   ];
 
-  // ✅ ADDED: 'assignedTo' field to form
+  // ✅ ADDED: 'email' field to form data
   const [formData, setFormData] = useState({
     date: "", 
     name: "", 
+    email: "", // ✨ New Email Field
     companyName: "", 
     phoneNumber: "", 
     serviceType: "Web Development", 
     business: "", 
     location: "",
-    assignedTo: "" // Stores the ID of the selected Sales Agent
+    assignedTo: "" 
   });
 
-  // 1. LOAD DATA (Admin, Leads, Agents)
+  // 1. LOAD DATA
   useEffect(() => {
     const storedAdmin = localStorage.getItem("adminUser");
     if (storedAdmin) {
       setAdmin(JSON.parse(storedAdmin));
       
-      // A. Fetch All Leads
       fetch("https://skitecrm.onrender.com/api/leads/admin/all")
         .then((res) => (res.ok ? res.json() : []))
         .then((data) => {
@@ -55,7 +55,6 @@ const AdminSalesDashboard = () => {
           setLeads(validLeads);
           calculateStats(validLeads);
         });
-
 
     } else {
       navigate("/");
@@ -81,7 +80,6 @@ const AdminSalesDashboard = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // ✅ KEY FIX: Use the Selected Agent ID. If none selected, use Admin ID.
     const finalAgentId = formData.assignedTo || admin?._id || admin?.id;
 
     if (!finalAgentId) {
@@ -93,7 +91,6 @@ const AdminSalesDashboard = () => {
       const response = await fetch("https://skitecrm.onrender.com/api/leads/add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // Send finalAgentId as the owner of the lead
         body: JSON.stringify({ ...formData, salesAgentId: finalAgentId }),
       });
 
@@ -105,10 +102,12 @@ const AdminSalesDashboard = () => {
         calculateStats(newLeads);
         
         setIsModalOpen(false);
+        // ✅ RESET FORM including Email
         setFormData({
-            date: "", name: "", companyName: "", phoneNumber: "", 
+            date: "", name: "", email: "", // Reset Email
+            companyName: "", phoneNumber: "", 
             serviceType: "Web Development", business: "", location: "",
-            assignedTo: "" // Reset assignment
+            assignedTo: "" 
         });
         toast.success("Lead Added!");
       } else {
@@ -128,27 +127,25 @@ const AdminSalesDashboard = () => {
             <ArrowLeft size={20} /> Back to Admin Home
         </button>
 
-        {/* Stats & Overview (Same as before) */}
+        {/* Stats & Overview */}
         <div className="stats-grid">
           <div className="stat-card">
             <div className="stat-icon target"><Target size={24} /></div>
             <div className="stat-info"><h3>Company Targets</h3><p className="stat-number">{closedCount} / {TARGET_GOAL}</p></div>
           </div>
           <div 
-  className="stat-card"
-  // ✅ ADD CLICK ACTION
-  onClick={() => navigate('/admin-dashboard/all-leads')} 
-  style={{ cursor: 'pointer' }}
->
-  <div className="stat-icon leads"><Users size={24} /></div>
-  <div className="stat-info">
-      <h3>Total Company Leads</h3>
-      <p className="stat-number">{leads.length}</p>
-  </div>
-</div>
+            className="stat-card"
+            onClick={() => navigate('/admin-dashboard/all-leads')} 
+            style={{ cursor: 'pointer' }}
+          >
+            <div className="stat-icon leads"><Users size={24} /></div>
+            <div className="stat-info">
+                <h3>Total Company Leads</h3>
+                <p className="stat-number">{leads.length}</p>
+            </div>
+          </div>
           <div 
             className="stat-card" 
-            // ✅ ADDED: onClick and cursor style
             onClick={() => navigate('/admin-dashboard/conversion')}
             style={{ cursor: 'pointer' }} 
           >
@@ -177,7 +174,7 @@ const AdminSalesDashboard = () => {
         </div>
       </div>
 
-      {/* ✅ MODAL FORM WITH AGENT SELECTION */}
+      {/* ✅ MODAL FORM WITH EMAIL */}
       {isModalOpen && (
         <div className="modal-overlay">
           <div className="modal-content">
@@ -201,10 +198,16 @@ const AdminSalesDashboard = () => {
                     <input type="text" name="name" required placeholder="Client Name" value={formData.name} onChange={handleChange} />
                 </div>
 
-                {/* 3. COMPANY NAME */}
+                {/* 3. EMAIL (✅ NEW FIELD) */}
                 <div className="form-group">
-                    <label>Company Name</label>
-                    <input type="text" name="companyName" placeholder="Company Name" value={formData.companyName} onChange={handleChange} />
+                    <label>Email</label>
+                    <input 
+                        type="email" 
+                        name="email" 
+                        placeholder="Client Email (Optional)" 
+                        value={formData.email} 
+                        onChange={handleChange} 
+                    />
                 </div>
 
                 {/* 4. PHONE NUMBER */}
@@ -213,7 +216,13 @@ const AdminSalesDashboard = () => {
                     <input type="tel" name="phoneNumber" required placeholder="Phone Number" value={formData.phoneNumber} onChange={handleChange} />
                 </div>
 
-                {/* 5. SERVICE TYPE */}
+                {/* 5. COMPANY NAME */}
+                <div className="form-group">
+                    <label>Company Name</label>
+                    <input type="text" name="companyName" placeholder="Company Name" value={formData.companyName} onChange={handleChange} />
+                </div>
+
+                {/* 6. SERVICE TYPE */}
                 <div className="form-group">
                     <label>Service Type</label>
                     <select name="serviceType" value={formData.serviceType} onChange={handleChange}>
@@ -221,13 +230,13 @@ const AdminSalesDashboard = () => {
                     </select>
                 </div>
 
-                {/* 6. BUSINESS TYPE */}
+                {/* 7. BUSINESS TYPE */}
                 <div className="form-group">
                     <label>Business Type</label>
                     <input type="text" name="business" placeholder="Business Type" value={formData.business} onChange={handleChange} />
                 </div>
 
-                {/* 7. LOCATION */}
+                {/* 8. LOCATION */}
                 <div className="form-group">
                     <label>Location</label>
                     <input type="text" name="location" placeholder="City / Location" value={formData.location} onChange={handleChange} />

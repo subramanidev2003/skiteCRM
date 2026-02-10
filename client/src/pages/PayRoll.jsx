@@ -17,10 +17,13 @@ const PayRoll = () => {
   const [attendanceRecords, setAttendanceRecords] = useState([]);
   const [payrollData, setPayrollData] = useState([]);
 
+  // ✅ NEW STATE: கைகலப்பு நாட்களை (Manual Days) சேமிக்க
+  const [manualDays, setManualDays] = useState({});
+
   // --- FILTER STATE ---
   const [searchTerm, setSearchTerm] = useState('');
   
-  // ✅ FIX 1: DATE CYCLE (IST Friendly)
+  // DATE CYCLE (IST Friendly)
   const getCycleDates = () => {
     const now = new Date();
     const currentDay = now.getDate();
@@ -41,7 +44,6 @@ const PayRoll = () => {
   const [startDate, setStartDate] = useState(getCycleDates().start);
   const [endDate, setEndDate] = useState(getCycleDates().end);
 
-  // ✅ FIX 2: END DATE INCLUSIVE HELPER
   const addOneDay = (dateStr) => {
     const d = new Date(dateStr);
     d.setDate(d.getDate() + 1);
@@ -81,7 +83,7 @@ const PayRoll = () => {
     fetchData();
   }, [token]);
 
-  // 2. CALCULATE PAYROLL LOGIC (✅ CLEAN & FIXED)
+  // 2. CALCULATE PAYROLL LOGIC
   useEffect(() => {
     if (employees.length === 0) return;
 
@@ -89,15 +91,13 @@ const PayRoll = () => {
     const nextDayAfterEnd = addOneDay(endDate);
     
     const calculatedData = employees.map((emp) => {
-      // ✅ SALARY FALLBACK: Try all possible field names
+      // SALARY FALLBACK
       const perDaySalary = Number(emp.salaryPerDay) || Number(emp.salary) || Number(emp.amount) || 0; 
       
       const empAttendance = attendanceRecords.filter((record) => {
-        // --- 1. ID CHECK ---
         const recordUserId = record.userId?._id || record.userId;
         const isIdMatch = String(recordUserId) === String(emp._id);
 
-        // --- 2. NAME CHECK (FALLBACK for Ghost Records) ---
         let isNameMatch = false;
         if (record.userId && record.userId.name) {
              isNameMatch = record.userId.name.trim().toLowerCase() === emp.name.trim().toLowerCase();
@@ -107,7 +107,6 @@ const PayRoll = () => {
 
         const isUserMatch = isIdMatch || isNameMatch;
         
-        // --- 3. DATE CHECK ---
         const rawCheckIn = record.checkIn || record.checkInTime;
         if (!rawCheckIn) return false;
 
@@ -126,14 +125,26 @@ const PayRoll = () => {
         if (rawCheckIn) {
           const start = new Date(rawCheckIn);
           let end;
+          let isCheckout = false;
 
-          // ✅ HANDLE ACTIVE SESSIONS
           if (rawCheckOut) {
              end = new Date(rawCheckOut);
+             isCheckout = true;
           } else {
-             end = new Date(); // Use current time if active
+             end = new Date(); 
           }
           
+          if (start.toDateString() !== end.toDateString()) {
+              return; 
+          }
+
+          if (isCheckout) {
+              const checkoutHour = end.getHours();
+              if (checkoutHour >= 21) {
+                  return; 
+              }
+          }
+
           const diffMs = end - start;
           const hours = diffMs / (1000 * 60 * 60);
 
@@ -145,15 +156,13 @@ const PayRoll = () => {
         }
       });
 
-      const totalSalary = totalDays * perDaySalary;
-
+      // குறிப்பு: இங்கே Total Salary கணக்கிடப்படவில்லை, அது கீழே Table-ல் கணக்கிடப்படும்
       return {
         id: emp._id,
         name: emp.name,
         designation: emp.designation || "", 
         perDaySalary: perDaySalary,
-        presentDays: totalDays,
-        totalSalary: totalSalary,
+        presentDays: totalDays, 
         attendanceCount: empAttendance.length
       };
     });
@@ -177,21 +186,35 @@ const PayRoll = () => {
 
   }, [employees, attendanceRecords, startDate, endDate, searchTerm]);
 
-  // 3. DOWNLOAD PDF
+  // ✅ HANDLE MANUAL DAYS CHANGE
+  const handleManualDaysChange = (id, value) => {
+    setManualDays(prev => ({
+        ...prev,
+        [id]: parseFloat(value) || 0
+    }));
+  };
+
+  // 3. DOWNLOAD PDF (Updated with Manual Days)
   const downloadPDF = () => {
     const doc = new jsPDF();
     doc.text(`Payroll Report (${startDate} to ${endDate})`, 14, 15);
     
-    const tableRows = payrollData.map(row => [
-        row.name,
-        row.designation,
-        `Rs. ${row.perDaySalary}`,
-        row.presentDays,
-        `Rs. ${row.totalSalary.toLocaleString('en-IN')}`
-    ]);
+    const tableRows = payrollData.map(row => {
+        const addedDays = manualDays[row.id] || 0;
+        const finalDays = row.presentDays + addedDays;
+        const finalSalary = finalDays * row.perDaySalary;
+
+        return [
+            row.name,
+            row.designation,
+            `Rs. ${row.perDaySalary}`,
+            `${row.presentDays} + ${addedDays} = ${finalDays}`, // Showing breakdown
+            `Rs. ${finalSalary.toLocaleString('en-IN')}`
+        ];
+    });
 
     autoTable(doc, { 
-        head: [["Employee", "Role", "Per Day", "Paid Days", "Total Salary"]], 
+        head: [["Employee", "Role", "Per Day", "Days (Calc + Add)", "Total Salary"]], 
         body: tableRows, 
         startY: 20 
     });
@@ -205,33 +228,12 @@ const PayRoll = () => {
       <div className="flex items-center justify-between mb-4">
         <button 
                 onClick={() => navigate('/admin-dashboard')}
-                className="modern-back-btn" // New Class Name
+                className="modern-back-btn" 
                 style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    background: 'white',
-                    border: '1px solid #e0e0e0',
-                    padding: '8px 16px',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    color: '#4b5563',
-                    transition: 'all 0.2s ease',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-                }}
-                onMouseOver={(e) => {
-                    e.currentTarget.style.borderColor = '#FF4500';
-                    e.currentTarget.style.color = '#FF4500';
-                    e.currentTarget.style.backgroundColor = '#fff5f5';
-                    e.currentTarget.style.transform = 'translateX(-3px)';
-                }}
-                onMouseOut={(e) => {
-                    e.currentTarget.style.borderColor = '#e0e0e0';
-                    e.currentTarget.style.color = '#4b5563';
-                    e.currentTarget.style.backgroundColor = 'white';
-                    e.currentTarget.style.transform = 'translateX(0)';
+                    display: 'flex', alignItems: 'center', gap: '8px', background: 'white',
+                    border: '1px solid #e0e0e0', padding: '8px 16px', borderRadius: '8px',
+                    cursor: 'pointer', fontSize: '14px', fontWeight: '600', color: '#4b5563',
+                    transition: 'all 0.2s ease', boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
                 }}
             >
                 <ArrowLeft size={20} />
@@ -285,43 +287,76 @@ const PayRoll = () => {
             <tr>
               <th>EMPLOYEE</th>
               <th>DESIGNATION</th>
-              <th>PER DAY SALARY</th>
-              <th>PRESENT DAYS</th>
+              <th>PER DAY</th>
+              <th>CALC DAYS</th>
+              <th>ADD DAYS</th> {/* ✅ NEW COLUMN */}
               <th>TOTAL SALARY</th>
             </tr>
           </thead>
           <tbody>
             {payrollData.length === 0 ? (
-              <tr><td colSpan="5" className="text-center">No records found for this period.</td></tr>
+              <tr><td colSpan="6" className="text-center">No records found for this period.</td></tr>
             ) : (
-              payrollData.map((row) => (
-                <tr key={row.id}>
-                  <td><strong>{row.name}</strong></td>
-                  <td>{row.designation}</td>
-                  <td>
-                    <div style={{display:'flex', alignItems:'center', gap:'4px', color:'#555'}}>
-                        <IndianRupee size={14}/> {row.perDaySalary}
-                    </div>
-                  </td>
-                  <td style={{fontWeight:'bold', color: row.presentDays > 0 ? '#2e7d32' : '#c62828'}}>
-                    {row.presentDays} Days
-                  </td>
-                  <td>
-                    <div style={{display:'inline-flex', alignItems:'center', gap:'4px', fontWeight:'bold', color:'#fff', background: '#FF4500', padding: '5px 12px', borderRadius: '20px', fontSize: '0.9rem'}}>
-                        <IndianRupee size={14}/> {row.totalSalary.toLocaleString('en-IN')}
-                    </div>
-                  </td>
-                </tr>
-              ))
+              payrollData.map((row) => {
+                // ✅ DYNAMIC CALCULATION
+                const addedDays = manualDays[row.id] || 0;
+                const finalDays = row.presentDays + addedDays;
+                const finalSalary = finalDays * row.perDaySalary;
+
+                return (
+                  <tr key={row.id}>
+                    <td><strong>{row.name}</strong></td>
+                    <td>{row.designation}</td>
+                    <td>
+                      <div style={{display:'flex', alignItems:'center', gap:'4px', color:'#555'}}>
+                          <IndianRupee size={14}/> {row.perDaySalary}
+                      </div>
+                    </td>
+                    <td style={{fontWeight:'bold', color: '#2e7d32'}}>
+                      {row.presentDays} Days
+                    </td>
+                    
+                    {/* ✅ NEW INPUT FOR ADDING DAYS */}
+                    <td>
+                        <input 
+                            type="number" 
+                            placeholder="0"
+                            min="0"
+                            step="0.5"
+                            value={manualDays[row.id] || ''}
+                            onChange={(e) => handleManualDaysChange(row.id, e.target.value)}
+                            style={{
+                                width: '60px', 
+                                padding: '5px', 
+                                border: '1px solid #FF4500', 
+                                borderRadius: '5px',
+                                textAlign: 'center',
+                                fontWeight: 'bold'
+                            }}
+                        />
+                    </td>
+
+                    {/* ✅ UPDATED TOTAL SALARY */}
+                    <td>
+                      <div style={{display:'inline-flex', alignItems:'center', gap:'4px', fontWeight:'bold', color:'#fff', background: '#FF4500', padding: '5px 12px', borderRadius: '20px', fontSize: '0.9rem'}}>
+                          <IndianRupee size={14}/> {finalSalary.toLocaleString('en-IN')}
+                      </div>
+                      <div style={{fontSize:'10px', color:'#888', marginTop:'2px'}}>
+                          ({row.presentDays} + {addedDays} = {finalDays} days)
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
       </div>
       <div style={{marginTop:'15px', fontSize:'0.85rem', color:'#666', fontStyle:'italic'}}>
-        * Calculation Logic: Work hours &ge; 6 hrs = 1 Day | 3 hrs - 6 hrs = 0.5 Day (Active sessions included)
+        * Calculation Logic: &ge;6 hrs = 1 Day | &ge;3 hrs = 0.5 Day. Use "Add Days" column to adjust salary manually.
       </div>
     </div>
   );
 }
 
-export default PayRoll; 
+export default PayRoll;

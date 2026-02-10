@@ -1,15 +1,17 @@
---- EmployeeDetail.css ---
+/* --- EmployeeDetail.css (Orange & White Theme) --- */
 
 /* Root Variables for Colors */
 :root {
-  --ed-primary: #ff4500;
-  --ed-bg: #f8fafc;
-  --ed-card-bg: #ffffff;
-  --ed-text-main: #1e293b;
-  --ed-text-sub: #64748b;
-  --ed-border: #e2e8f0;
-  --ed-danger: #ef4444;
-  --ed-success: #10b981;
+  --ed-primary: #f97316;       /* Vibrant Orange */
+  --ed-primary-dark: #ea580c;  /* Deep Orange for hover */
+  --ed-bg: #fffaf5;            /* Very light cream/peach tint */
+  --ed-card-bg: #ffffff;       /* Pure White */
+  --ed-text-main: #431407;     /* Deep Chocolate/Burnt Orange for text */
+  --ed-text-sub: #9a3412;      /* Muted Burnt Orange */
+  --ed-border: #fed7aa;       /* Light Orange border */
+  --ed-danger: #dc2626;        /* Warm Red */
+  --ed-success: #16a34a;       /* Forest Green */
+  --ed-accent: #fff7ed;        /* Extremely light orange for card interiors */
 }
 
 /* Main Container */
@@ -25,14 +27,15 @@
 
 .ed-wrapper {
   width: 100%;
-  max-width: 1100px; /* Limits width on large screens */
+  max-width: 1100px;
   background: var(--ed-card-bg);
   border-radius: 16px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px -5px rgba(249, 115, 22, 0.1); /* Subtle orange glow */
   overflow: hidden;
   padding: 2rem;
   display: flex;
   flex-direction: column;
+  border: 1px solid #ffedd5;
 }
 
 /* Header Section */
@@ -42,7 +45,7 @@
   align-items: center;
   margin-bottom: 2rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid var(--ed-border);
+  border-bottom: 2px solid var(--ed-accent);
 }
 
 .ed-back-btn {
@@ -50,18 +53,19 @@
   align-items: center;
   gap: 0.5rem;
   background: transparent;
-  border: none;
-  color: var(--ed-text-sub);
+  border: 1px solid var(--ed-border);
+  color: var(--ed-primary);
   font-weight: 600;
   cursor: pointer;
   padding: 0.5rem 1rem;
   border-radius: 8px;
-  transition: background 0.2s;
+  transition: all 0.2s;
 }
 
 .ed-back-btn:hover {
-  background-color: #f1f5f9;
-  color: var(--ed-text-main);
+  background-color: var(--ed-accent);
+  border-color: var(--ed-primary);
+  color: var(--ed-primary-dark);
 }
 
 .ed-header-actions {
@@ -78,21 +82,24 @@
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.ed-btn:hover {
-  opacity: 0.9;
+  transition: all 0.2s;
 }
 
 .ed-edit-btn {
   background-color: var(--ed-success);
   color: white;
+  box-shadow: 0 4px 10px rgba(22, 163, 74, 0.2);
 }
 
 .ed-delete-btn {
   background-color: var(--ed-danger);
   color: white;
+  box-shadow: 0 4px 10px rgba(220, 38, 38, 0.2);
+}
+
+.ed-btn:hover {
+  transform: translateY(-1px);
+  opacity: 0.9;
 }
 
 /* Profile Section */
@@ -110,10 +117,10 @@
   height: 120px;
   border-radius: 50%;
   border: 4px solid white;
-  box-shadow: 0 0 0 4px var(--ed-border);
+  box-shadow: 0 0 0 4px var(--ed-accent);
   overflow: hidden;
-  flex-shrink: 0; /* Prevents shrinking on mobile */
-  background-color: #f1f5f9;
+  flex-shrink: 0;
+  background-color: var(--ed-accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -126,27 +133,28 @@
 }
 
 .ed-profile-info h1 {
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: 2.2rem;
+  font-weight: 800;
   color: var(--ed-text-main);
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 0.3rem 0;
 }
 
 .ed-designation {
   font-size: 1.1rem;
   color: var(--ed-text-sub);
   margin: 0 0 1rem 0;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .ed-role-badge {
   display: inline-block;
-  padding: 0.35rem 1rem;
+  padding: 0.4rem 1.2rem;
   border-radius: 50px;
   font-size: 0.85rem;
-  font-weight: 600;
-  background-color: #e0f2fe; /* Light blue */
-  color: #0284c7; /* Dark blue */
+  font-weight: 700;
+  background-color: #fff7ed; /* Light orange tint */
+  color: #c2410c;             /* Darker orange for contrast */
+  border: 1px solid #fdba74;
 }
 
 /* Grid Layout for Cards */
@@ -158,28 +166,29 @@
 
 /* Card Styling */
 .ed-card {
-  background: #f8fafc;
+  background: #ffffff;
   border: 1px solid var(--ed-border);
   border-radius: 12px;
   padding: 1.5rem;
-  transition: transform 0.2s;
+  transition: all 0.2s;
 }
 
 .ed-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(249, 115, 22, 0.08);
+  border-color: var(--ed-primary);
 }
 
 .ed-card-title {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: 1.15rem;
+  font-weight: 700;
   color: var(--ed-text-main);
   margin-bottom: 1.5rem;
   padding-bottom: 0.75rem;
-  border-bottom: 2px solid var(--ed-primary);
+  border-bottom: 3px solid var(--ed-primary);
 }
 
 .ed-icon-primary {
@@ -191,8 +200,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 0;
-  border-bottom: 1px solid #e2e8f0;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid #fff7ed;
 }
 
 .ed-row:last-child {
@@ -205,15 +214,15 @@
   gap: 0.5rem;
   color: var(--ed-text-sub);
   font-size: 0.9rem;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .ed-value {
-  font-weight: 600;
+  font-weight: 700;
   color: var(--ed-text-main);
   text-align: right;
   font-size: 0.95rem;
-  word-break: break-word; /* Prevents overflow */
+  word-break: break-word;
 }
 
 /* Loading & Error */
@@ -225,7 +234,8 @@
   align-items: center;
   justify-content: center;
   gap: 1rem;
-  color: var(--ed-text-sub);
+  color: var(--ed-primary);
+  font-weight: 600;
 }
 
 .ed-error {
@@ -234,20 +244,13 @@
 
 /* --- MOBILE RESPONSIVE --- */
 @media (max-width: 768px) {
-  .ed-container {
-    padding: 0.5rem;
-  }
+  .ed-container { padding: 0.5rem; }
+  .ed-wrapper { padding: 1.25rem; border-radius: 12px; }
 
-  .ed-wrapper {
-    padding: 1rem;
-    border-radius: 10px;
-  }
-
-  /* Stack Header */
   .ed-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 1rem;
+    gap: 1.25rem;
   }
 
   .ed-header-actions {
@@ -256,37 +259,27 @@
     justify-content: space-between;
   }
 
-  .ed-btn {
-    flex: 1;
-    justify-content: center;
-  }
+  .ed-btn { flex: 1; justify-content: center; }
 
-  /* Center Profile */
   .ed-profile-section {
     flex-direction: column;
     text-align: center;
     gap: 1rem;
   }
 
-  .ed-profile-info h1 {
-    font-size: 1.5rem;
-  }
+  .ed-profile-info h1 { font-size: 1.75rem; }
 
-  /* Grid to Single Column */
-  .ed-grid {
-    grid-template-columns: 1fr;
-  }
+  .ed-grid { grid-template-columns: 1fr; }
 
-  /* Stack Rows Vertically */
   .ed-row {
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.25rem;
+    gap: 0.3rem;
   }
 
   .ed-value {
     text-align: left;
     width: 100%;
-    padding-left: 1.5rem; /* Align with label text */
+    padding-left: 1.5rem;
   }
 }

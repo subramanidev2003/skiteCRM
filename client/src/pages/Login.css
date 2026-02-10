@@ -92,3 +92,129 @@
     cursor: pointer;
     font-weight: 600;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* பக்கம் முழுவதும் */
+.login-page {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #eef2f6; 
+    overflow: hidden;
+    perspective: 1000px;
+}
+
+/* பறக்கும் கண்டெய்னர் (ராக்கெட் + ஃபார்ம்) */
+.flying-container {
+    position: relative;
+    
+    /* ஆரம்ப இடம்: திரைக்கு வெளியே கீழ்-இடது மூலை */
+    transform: translate(-100vw, 100vh); 
+    
+    /* ✅ 4 வினாடி நேராக வரும் அனிமேஷன் */
+    animation: flyStraight 4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+/* லாகின் கார்டு */
+.login-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+    width: 350px;
+    position: relative;
+    /* வரும்போது லேசாக ஆடுவது */
+    animation: landShake 4s ease-out forwards;
+}
+
+/* ராக்கெட் கண்டெய்னர் (Top-Right Corner) */
+.rocket-wrapper {
+    position: absolute;
+    /* ஃபார்முக்கு மேலே, வலது மூலையில் */
+    top: -110px;    
+    right: -50px;  
+    z-index: 10;
+    
+    /* ராக்கெட் மெதுவாக மிதப்பது */
+    animation: rocketIdle 2s infinite alternate ease-in-out;
+}
+
+/* ராக்கெட் அளவு & நிலை */
+.rocket-lottie {
+    width: 160px;
+    height: 160px;
+    /* ✅ ராக்கெட் நேராக (Straight) இருக்கும் */
+    transform: rotate(0deg); 
+}
+
+/* -------------------------------------- */
+/* 🔥 STRAIGHT FLIGHT அனிமேஷன் 🔥 */
+/* -------------------------------------- */
+
+/* நேராக பறந்து வருதல் */
+@keyframes flyStraight {
+    0% {
+        /* Bottom-Left (சிறிதாக இருக்கும்) */
+        transform: translate(-100vw, 100vh) scale(0.5);
+        opacity: 0;
+    }
+    100% {
+        /* Center (முழு அளவில்) */
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+    }
+}
+
+/* ராக்கெட் மிதப்பது */
+@keyframes rocketIdle {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-10px); }
+}
+
+/* வந்து நின்றதும் கார்டு ஆடுவது */
+@keyframes landShake {
+    0% { transform: rotate(-10deg); }
+    60% { transform: rotate(5deg); }
+    80% { transform: rotate(-2deg); }
+    100% { transform: rotate(0deg); }
+}
+
+/* லோகோ மற்றும் ஃபார்ம் */
+.login-logo { display: block; margin: 0 auto 10px; width: 80px; }
+.login-title { text-align: center; margin-bottom: 20px; color: #333; }
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; margin-bottom: 5px; font-weight: 500; color: #555; }
+.form-input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
+.login-button { width: 100%; padding: 12px; background-color: #FF4500; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.3s; }
+.login-button:hover { background-color: #e03e00; }
+
+/* மொபைல் வியூ */
+@media (max-width: 600px) {
+    .flying-container {
+        animation: dropDown 1.5s ease-out forwards;
+        transform: translateY(-150%);
+    }
+    .rocket-wrapper { 
+        top: -90px; right: 0; left: 0; margin: auto; width: 140px;
+    }
+    @keyframes dropDown {
+        0% { transform: translateY(-150%); }
+        100% { transform: translateY(0); }
+    }
+}

@@ -117,33 +117,57 @@ const Attendance = () => {
   const goToNextPage = () => { if (currentPage < totalPages) setCurrentPage(prev => prev + 1); };
   const goToPrevPage = () => { if (currentPage > 1) setCurrentPage(prev => prev - 1); };
 
-  // --- HELPERS (Updated with Duration Logic) ---
+  // --- HELPERS ---
   const formatDate = (dateString) => dateString ? new Date(dateString).toLocaleDateString() : "N/A";
   const formatTime = (dateString) => dateString ? new Date(dateString).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "--:--";
 
-  // New Function: Calculate Duration
+  // ✅ UPDATED: Calculate Duration with 9 PM Limit & Date Check
   const calculateDuration = (checkIn, checkOut) => {
-    if (!checkIn) return { text: "0h 0m", hours: 0 };
+    if (!checkIn) return { text: "0h 0m", hours: 0, isAbsent: false, reason: "" };
     
     const start = new Date(checkIn);
-    const end = checkOut ? new Date(checkOut) : new Date(); // If no checkout, calculate till now
     
+    // If not checked out yet, assume current time for duration calculation only
+    const end = checkOut ? new Date(checkOut) : new Date(); 
+    
+    // 1. Check Date Mismatch (Next Day Checkout)
+    if (checkOut && start.toDateString() !== end.toDateString()) {
+        return { text: "Date Mismatch", hours: 0, isAbsent: true, reason: "Next Day Checkout" };
+    }
+
+    // 2. Check 9 PM Limit (Checkout after 21:00)
+    if (checkOut) {
+        const checkoutHour = end.getHours();
+        // If hour is 21 (9 PM) or greater
+        if (checkoutHour >= 21) { 
+             return { text: "Late Checkout", hours: 0, isAbsent: true, reason: "After 9 PM" };
+        }
+    }
+
     const diffMs = end - start;
-    const diffHrs = Math.floor(diffMs / 3600000); // hours
-    const diffMins = Math.floor((diffMs % 3600000) / 60000); // minutes
+    const diffHrs = Math.floor(diffMs / 3600000); 
+    const diffMins = Math.floor((diffMs % 3600000) / 60000); 
     
     const totalHoursDecimal = diffMs / (1000 * 60 * 60);
 
     return { 
         text: `${diffHrs}h ${diffMins}m`, 
-        hours: totalHoursDecimal 
+        hours: totalHoursDecimal,
+        isAbsent: false,
+        reason: ""
     };
   };
 
-  // New Function: Get Status Component
-  const renderStatusBadge = (hours) => {
+  // ✅ FIX: Render Status Badge
+  const renderStatusBadge = (hours, isAbsent, reason) => {
+      if (isAbsent) {
+          // You can optionally show the reason in tooltip or text
+          return <span style={{backgroundColor:'#fef2f2', color:'#991b1b', padding:'4px 8px', borderRadius:'12px', fontSize:'0.75rem', fontWeight:'600'}} title={reason}>Absent</span>;
+      }
+
       if (hours >= 6) return <span style={{backgroundColor:'#d1fae5', color:'#065f46', padding:'4px 8px', borderRadius:'12px', fontSize:'0.75rem', fontWeight:'600'}}>Present</span>;
       if (hours >= 3) return <span style={{backgroundColor:'#ffedd5', color:'#9a3412', padding:'4px 8px', borderRadius:'12px', fontSize:'0.75rem', fontWeight:'600'}}>Half Day</span>;
+      
       return <span style={{backgroundColor:'#fee2e2', color:'#991b1b', padding:'4px 8px', borderRadius:'12px', fontSize:'0.75rem', fontWeight:'600'}}>Short</span>;
   };
 
@@ -151,20 +175,21 @@ const Attendance = () => {
     const doc = new jsPDF();
     doc.text("Attendance Report", 14, 15);
     
-    // Updated PDF rows to include Duration and Status text
     const tableRows = filteredAttendance.map(row => {
-        const { text, hours } = calculateDuration(row.checkIn, row.checkOut);
+        const { text, hours, isAbsent, reason } = calculateDuration(row.checkIn, row.checkOut);
         let statusText = "Short";
-        if(hours >= 6) statusText = "Present";
-        else if(hours >= 3) statusText = "Half Day";
+        
+        if (isAbsent) statusText = `Absent (${reason})`; 
+        else if (hours >= 6) statusText = "Present";
+        else if (hours >= 3) statusText = "Half Day";
 
         return [
             row.employeeName, 
             formatDate(row.checkIn), 
             formatTime(row.checkIn),
             row.checkOut ? formatTime(row.checkOut) : "Active", 
-            text, // Duration
-            statusText // Status
+            isAbsent ? "—" : text, 
+            statusText 
         ];
     });
 
@@ -197,34 +222,34 @@ const Attendance = () => {
 
   return (
     <div className="attendance-page1">
-      <button className="modern-back-btn" // New Class Name
-                style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    background: 'white',
-                    border: '1px solid #e0e0e0',
-                    padding: '8px 16px',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    color: '#4b5563',
-                    transition: 'all 0.2s ease',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-                }}
-                onMouseOver={(e) => {
-                    e.currentTarget.style.borderColor = '#FF4500';
-                    e.currentTarget.style.color = '#FF4500';
-                    e.currentTarget.style.backgroundColor = '#fff5f5';
-                    e.currentTarget.style.transform = 'translateX(-3px)';
-                }}
-                onMouseOut={(e) => {
-                    e.currentTarget.style.borderColor = '#e0e0e0';
-                    e.currentTarget.style.color = '#4b5563';
-                    e.currentTarget.style.backgroundColor = 'white';
-                    e.currentTarget.style.transform = 'translateX(0)';
-                }} onClick={() => navigate(isManager ? "/manager-dashboard" : "/admin-dashboard")}>
+      <button className="modern-back-btn" 
+              style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: 'white',
+                  border: '1px solid #e0e0e0',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: '#4b5563',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+              }}
+              onMouseOver={(e) => {
+                  e.currentTarget.style.borderColor = '#FF4500';
+                  e.currentTarget.style.color = '#FF4500';
+                  e.currentTarget.style.backgroundColor = '#fff5f5';
+                  e.currentTarget.style.transform = 'translateX(-3px)';
+              }}
+              onMouseOut={(e) => {
+                  e.currentTarget.style.borderColor = '#e0e0e0';
+                  e.currentTarget.style.color = '#4b5563';
+                  e.currentTarget.style.backgroundColor = 'white';
+                  e.currentTarget.style.transform = 'translateX(0)';
+              }} onClick={() => navigate(isManager ? "/manager-dashboard" : "/admin-dashboard")}>
         <ArrowLeft size={20} /> Back
       </button>
 
@@ -246,7 +271,6 @@ const Attendance = () => {
       <div className="table-container">
         <table className="attendance-table">
           <thead>
-            {/* Added DURATION and STATUS columns */}
             <tr>
                 <th>EMPLOYEE</th>
                 <th>DATE</th>
@@ -262,8 +286,8 @@ const Attendance = () => {
               <tr><td colSpan="7" className="text-center">No records.</td></tr>
             ) : (
               currentItems.map((row) => {
-                // Calculate logic for each row
-                const { text, hours } = calculateDuration(row.checkIn, row.checkOut);
+                // ✅ Calculate logic for each row
+                const { text, hours, isAbsent, reason } = calculateDuration(row.checkIn, row.checkOut);
 
                 return (
                     <tr key={row._id} onClick={() => {setSelectedAttendance(row); setIsModalOpen(true);}} className="att-clickable-row">
@@ -272,9 +296,13 @@ const Attendance = () => {
                       <td className="text-green">{formatTime(row.checkIn)}</td>
                       <td className={row.checkOut ? "text-red" : "text-blue"}>{row.checkOut ? formatTime(row.checkOut) : "Active"}</td>
                       
-                      {/* New Columns Data */}
-                      <td style={{fontWeight:'bold', color: '#555'}}>{text}</td>
-                      <td>{renderStatusBadge(hours)}</td>
+                      {/* ✅ Duration Logic Display */}
+                      <td style={{fontWeight:'bold', color: isAbsent ? '#991b1b' : '#555'}}>
+                          {isAbsent ? "—" : text}
+                      </td>
+                      
+                      {/* ✅ Status Badge */}
+                      <td>{renderStatusBadge(hours, isAbsent, reason)}</td>
 
                       <td className="td-task">{row.taskDescription || "—"}</td>
                     </tr>
@@ -302,8 +330,18 @@ const Attendance = () => {
             <div className="att-modal-content">
                <h3>{selectedAttendance.employeeName}</h3>
                <p>Date: {formatDate(selectedAttendance.checkIn)}</p>
-               {/* Show duration in Modal too */}
-               <p>Work Duration: <strong>{calculateDuration(selectedAttendance.checkIn, selectedAttendance.checkOut).text}</strong></p>
+               
+               {/* ✅ Modal Logic */}
+               {(() => {
+                   const { text, isAbsent, reason } = calculateDuration(selectedAttendance.checkIn, selectedAttendance.checkOut);
+                   return (
+                       <>
+                         <p>Work Duration: <strong>{isAbsent ? "—" : text}</strong></p>
+                         <p>Status: <strong>{isAbsent ? `Absent (${reason})` : "Present / Half Day"}</strong></p>
+                       </>
+                   );
+               })()}
+               
                <p>Task: {selectedAttendance.taskDescription}</p>
             </div>
           </div>

@@ -24,6 +24,10 @@ const AdminServiceType = () => {
                         lead.serviceType === decodedService ||
                         lead.serviceType === serviceName
                     );
+                    
+                    // Sort by Date (Newest first)
+                    filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    
                     setLeads(filtered);
                 } else {
                     setLeads([]);
@@ -50,6 +54,12 @@ const AdminServiceType = () => {
                 toast.error("Failed to delete");
             }
         } catch(err) { toast.error("Server Error"); }
+    };
+
+    // Helper to format Date
+    const formatDate = (dateString) => {
+        if (!dateString) return '-';
+        return new Date(dateString).toLocaleDateString();
     };
 
     return (
@@ -79,6 +89,10 @@ const AdminServiceType = () => {
                                 <th>Phone</th>
                                 <th>Company</th>
                                 <th>Priority</th>
+                                
+                                {/* ✅ NEW COLUMNS ADDED */}
+                                <th>Follow Up</th>
+                                <th>Callback</th>
                                 <th>Closing</th>
                                 <th style={{textAlign: 'center'}}>Action</th>
                             </tr>
@@ -86,7 +100,7 @@ const AdminServiceType = () => {
                         <tbody>
                             {leads.length === 0 ? (
                                 <tr>
-                                    <td colSpan="7" className="ad-no-data">
+                                    <td colSpan="9" className="ad-no-data">
                                         No leads found for {decodeURIComponent(serviceName)}.
                                     </td>
                                 </tr>
@@ -97,18 +111,23 @@ const AdminServiceType = () => {
                                         className="ad-lead-row" 
                                         onClick={() => navigate(`/admin-dashboard/lead-detail/${lead._id}`, { state: { lead } })}
                                     >
-                                        {/* ✅ Added data-label for Mobile View */}
                                         <td data-label="Date">{lead.date}</td>
                                         <td data-label="Client Name" className="font-bold">{lead.name}</td>
                                         <td data-label="Phone">{lead.phoneNumber}</td>
                                         <td data-label="Company">{lead.companyName || '-'}</td>
+                                        
                                         <td data-label="Priority">
                                             <span className={`ad-priority-badge ${lead.priority?.toLowerCase()}`}>
                                                 {lead.priority}
                                             </span>
                                         </td>
-                                        <td data-label="Closing">{lead.closing}</td>
                                         
+                                        
+                                        
+                                        {/* ✅ NEW DATA FIELDS */}
+                                        <td data-label="Follow Up">{lead.followUpStatus || '-'}</td>
+                                        <td data-label="Callback">{formatDate(lead.callbackReminder)}</td>
+                                        <td data-label="Closing">{lead.closing}</td>
                                         <td data-label="Action" style={{textAlign: 'center'}}>
                                             <button 
                                                 className="ad-btn-delete"
