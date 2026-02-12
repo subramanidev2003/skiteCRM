@@ -40,33 +40,39 @@ const Quote = () => {
     date: new Date().toISOString().split('T')[0]
   });
 
-  // ✅ UPDATED: Combined Name logic + Added Address & GST
   const [clientDetails, setClientDetails] = useState({
-    name: '',       // Single field for Client or Business Name
-    address: '',    // Multi-line address
-    gst: ''         // Client GST
+    name: '',       
+    address: '',    
+    gst: ''         
   });
 
   const [items, setItems] = useState([
     { description: 'Social Media Poster', hsn: 'Monthly 10 Poster', price: 9000, qty: 1 }
   ]);
 
-  const [taxRate, setTaxRate] = useState(18); 
+  // ✅ FIXED TAX RATE: 9 (For CGST & SGST separately)
+  const [taxRate, setTaxRate] = useState(9); 
 
   const [terms, setTerms] = useState(`50% advance payment required to start the project.
 Final 50% on project completion before deployment.
 The complete website will be built on our subdomain for preview and approval before final deployment.
 Any additional page will be charged at Rs.1,500 per page.`);
 
-  // --- CALCULATIONS ---
+  // --- CALCULATIONS (CGST & SGST Split) ---
   const calculateTotal = () => {
     const subtotal = items.reduce((acc, item) => acc + (item.price * item.qty), 0);
-    const taxAmount = (subtotal * taxRate) / 100;
-    const grandTotal = subtotal + taxAmount;
-    return { subtotal, taxAmount, grandTotal };
+    
+    // ✅ CGST 9% + SGST 9%
+    const cgst = (subtotal * taxRate) / 100;
+    const sgst = (subtotal * taxRate) / 100;
+    
+    // ✅ Round off Grand Total
+    const grandTotal = Math.round(subtotal + cgst + sgst);
+    
+    return { subtotal, cgst, sgst, grandTotal };
   };
 
-  const { subtotal, taxAmount, grandTotal } = calculateTotal();
+  const { subtotal, cgst, sgst, grandTotal } = calculateTotal();
 
   // --- HANDLERS ---
   const handleItemChange = (index, field, value) => {
@@ -102,9 +108,10 @@ Any additional page will be charged at Rs.1,500 per page.`);
           total: item.price * item.qty
         })),
         subtotal,
-        taxRate,
-        taxAmount,
-        grandTotal,
+        taxRate, // 9
+        cgst,
+        sgst,
+        grandTotal, // Rounded
         terms
       };
 
@@ -144,7 +151,7 @@ Any additional page will be charged at Rs.1,500 per page.`);
     });
   };
 
-// 🖨️ UPDATED PDF GENERATION FUNCTION
+// 🖨️ PDF GENERATION (UPDATED FOR SPLIT TAX)
 const generatePDF = async () => {
   let fileName = prompt("Enter PDF File Name:", `Quote_${quoteMeta.quoteNo}`);
   
@@ -186,38 +193,35 @@ const generatePDF = async () => {
   doc.setFont("helvetica", "bold");
   doc.text("QUOTE", 196, 20, { align: 'right' });
 
-  // --- UPDATED CLIENT DETAILS SECTION ---
+  // Client Details
   const clientY = 72;
   doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(0);
   doc.text("QUOTE TO:", 14, clientY);
   
-  // Client Name
   doc.setFontSize(11);
   doc.text(clientDetails.name || 'N/A', 14, clientY + 6);
 
-  // Client Address (Wrap text to fit column)
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   
   let currentDetailY = clientY + 11;
   
   if (clientDetails.address) {
-      const splitAddress = doc.splitTextToSize(clientDetails.address, 90); // Wrap width 90
+      const splitAddress = doc.splitTextToSize(clientDetails.address, 90); 
       doc.text(splitAddress, 14, currentDetailY);
-      currentDetailY += (splitAddress.length * 4.5); // Increase Y based on lines
+      currentDetailY += (splitAddress.length * 4.5); 
   } else {
       currentDetailY += 5;
   }
 
-  // Client GST
   if (clientDetails.gst) {
     doc.text(`GSTIN: ${clientDetails.gst}`, 14, currentDetailY + 2);
     currentDetailY += 6;
   }
 
-  // Quote Meta (Right Side)
+  // Quote Meta
   doc.setFont("helvetica", "bold");
   doc.text("NO:", 155, clientY);
   doc.setFont("helvetica", "normal");
@@ -230,8 +234,6 @@ const generatePDF = async () => {
   const formattedDate = `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}/${dateObj.getFullYear()}`;
   doc.text(formattedDate, 170, clientY + 6);
 
-  // Calculate where the table should start
-  // It should be below the client details, but at least at Y=100
   const tableStartY = Math.max(currentDetailY + 10, 95);
 
   const validItems = items.filter(item => item.description.trim() !== "" || item.price > 0);
@@ -279,19 +281,18 @@ const generatePDF = async () => {
     }
   });
 
-  // Position Calculations
   let currentY = doc.lastAutoTable.finalY + 10;
-  if (currentY + 50 > 270) {
+  if (currentY + 60 > 270) { // Increased check space for split tax
     doc.addPage();
     currentY = 20;
   }
 
-  // TOTALS SECTION
+  // --- TOTALS SECTION (SPLIT TAX) ---
   const totalsX = 125;
   const totalsStartY = currentY;
   const rowHeight = 8;
 
-  // Subtotal
+  // 1. Subtotal
   doc.setFillColor(255, 239, 234);
   doc.rect(totalsX, totalsStartY, 72, rowHeight, 'F');
   doc.setFontSize(10);
@@ -301,21 +302,31 @@ const generatePDF = async () => {
   doc.setTextColor(0);
   doc.text(formatCurrency(subtotal), totalsX + 69, totalsStartY + 5.5, { align: 'right' });
 
-  // Tax
+  // 2. CGST
   doc.setFillColor(255, 239, 234);
   doc.rect(totalsX, totalsStartY + rowHeight + 1, 72, rowHeight, 'F');
   doc.setTextColor(255, 69, 0);
-  doc.text(`Tax ${taxRate}%`, totalsX + 3, totalsStartY + rowHeight + 6.5);
+  doc.text(`CGST ${taxRate}%`, totalsX + 3, totalsStartY + rowHeight + 6.5);
   doc.setTextColor(0);
-  doc.text(formatCurrency(taxAmount), totalsX + 69, totalsStartY + rowHeight + 6.5, { align: 'right' });
+  doc.text(formatCurrency(cgst), totalsX + 69, totalsStartY + rowHeight + 6.5, { align: 'right' });
 
-  // Total
-  doc.setFillColor(255, 69, 0);
+  // 3. SGST
+  doc.setFillColor(255, 239, 234);
   doc.rect(totalsX, totalsStartY + (rowHeight + 1) * 2, 72, rowHeight, 'F');
+  doc.setTextColor(255, 69, 0);
+  doc.text(`SGST ${taxRate}%`, totalsX + 3, totalsStartY + (rowHeight + 1) * 2 + 6.5);
+  doc.setTextColor(0);
+  doc.text(formatCurrency(sgst), totalsX + 69, totalsStartY + (rowHeight + 1) * 2 + 6.5, { align: 'right' });
+
+  // 4. Grand Total
+  doc.setFillColor(255, 69, 0);
+  doc.rect(totalsX, totalsStartY + (rowHeight + 1) * 3, 72, rowHeight, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
-  doc.text("TOTAL", totalsX + 3, totalsStartY + (rowHeight + 1) * 2 + 5.5);
-  doc.text(formatCurrency(grandTotal), totalsX + 69, totalsStartY + (rowHeight + 1) * 2 + 5.5, { align: 'right' });
+  doc.text("TOTAL", totalsX + 3, totalsStartY + (rowHeight + 1) * 3 + 5.5);
+  
+  // ✅ PDF TOTAL ROUNDED (No Decimals)
+  doc.text(grandTotal.toLocaleString('en-IN'), totalsX + 69, totalsStartY + (rowHeight + 1) * 3 + 5.5, { align: 'right' });
 
   // TERMS SECTION
   doc.setFontSize(11);
@@ -338,7 +349,7 @@ const generatePDF = async () => {
     });
   });
 
-  const totalsEndY = totalsStartY + (rowHeight + 1) * 3;
+  const totalsEndY = totalsStartY + (rowHeight + 1) * 4; // Adjusted for extra row
   currentY = Math.max(termY, totalsEndY) + 15;
 
   if (currentY + 70 > 280) {
@@ -346,7 +357,7 @@ const generatePDF = async () => {
     currentY = 20;
   }
 
-  // Bank Details
+  // Bank Details & Signature
   doc.setFontSize(10);
   doc.setTextColor(0);
   doc.setFont("helvetica", "bold");
@@ -359,7 +370,6 @@ const generatePDF = async () => {
   doc.text(`IFSC Code: ${bankDetails.ifsc}`, 14, currentY + 21);
   doc.text(`Branch: ${bankDetails.branch}`, 14, currentY + 26);
 
-  // Signature Section
   const signY = currentY;
   doc.setFont("helvetica", "normal");
   doc.text("for SKITE", 150, signY + 5);
@@ -367,22 +377,17 @@ const generatePDF = async () => {
   try {
     const signBase64 = await getImageBase64(skitesign);
     doc.addImage(signBase64, 'PNG', 140, signY + 5, 55, 25);
-  } catch (e) {
-    console.error("Sign Error:", e);
-  }
+  } catch (e) { console.error("Sign Error:", e); }
 
   try {
     const sealBase64 = await getImageBase64(skiteseal);
     doc.addImage(sealBase64, 'PNG', 75, currentY - 10, 50, 62);
-  } catch (e) {
-    console.error("Seal Error:", e);
-  }
+  } catch (e) { console.error("Seal Error:", e); }
   
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   doc.text("Authorised Signatory", 150, signY + 40);
 
-  // Footer
   const pageHeight = doc.internal.pageSize.height || 297;
   doc.setFontSize(9);
   doc.setTextColor(100);
@@ -402,8 +407,6 @@ const generatePDF = async () => {
                 style={{
                     display: 'flex', alignItems: 'center', gap: '8px', background: 'white', border: '1px solid #e0e0e0', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '600', color: '#4b5563', transition: 'all 0.2s ease', boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
                 }}
-                onMouseOver={(e) => { e.currentTarget.style.borderColor = '#FF4500'; e.currentTarget.style.color = '#FF4500'; e.currentTarget.style.backgroundColor = '#fff5f5'; e.currentTarget.style.transform = 'translateX(-3px)'; }}
-                onMouseOut={(e) => { e.currentTarget.style.borderColor = '#e0e0e0'; e.currentTarget.style.color = '#4b5563'; e.currentTarget.style.backgroundColor = 'white'; e.currentTarget.style.transform = 'translateX(0)'; }}
             >
                 <ArrowLeft size={20} />
                 <span>Back</span>
@@ -444,7 +447,6 @@ const generatePDF = async () => {
           <div className="form-section">
             <h3>Client Details</h3>
             
-            {/* ✅ UPDATED INPUTS */}
             <div className="input-group">
               <label>Client / Business Name</label>
               <input 
@@ -513,10 +515,28 @@ const generatePDF = async () => {
           <div className="tax-total-section">
             <div className="tax-total-wrapper">
               <div className="tax-input-group">
-                <label>Tax Rate (%)</label>
-                <input type="number" value={taxRate} onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)} />
+                {/* ✅ DISPLAY "Tax Rate (SGST+CGST)" OR JUST "Tax Rate" */}
+                <label>Tax Rate (SGST/CGST %)</label>
+                
+                {/* ✅ FIXED 9% INPUT (Read-Only) */}
+                <input 
+                    type="number" 
+                    value={taxRate} 
+                    readOnly
+                    disabled
+                    style={{ 
+                        width: '80px', 
+                        padding: '8px', 
+                        border: '1px solid #eee', 
+                        background: '#f9f9f9', 
+                        borderRadius: '4px', 
+                        color: '#555',
+                        cursor: 'not-allowed'
+                    }} 
+                />
               </div>
               <div className="total-display">
+                {/* ✅ ROUNDED TOTAL DISPLAY */}
                 <h3>Total: ₹{grandTotal.toLocaleString('en-IN')}</h3>
               </div>
             </div>
@@ -545,7 +565,6 @@ const generatePDF = async () => {
             </div>
           </div>
 
-          {/* ✅ UPDATED PREVIEW CLIENT */}
           <div className="preview-client">
             <h4>QUOTE TO:</h4>
             <p style={{fontWeight: 'bold', fontSize: '1.1em'}}>{clientDetails.name || 'Client / Business Name'}</p>
@@ -581,18 +600,23 @@ const generatePDF = async () => {
               <h4>TERMS & CONDITION</h4>
               <pre>{terms}</pre>
             </div>
+            {/* ✅ PREVIEW TOTALS UPDATED (Split Tax) */}
             <div className="preview-totals">
               <div className="preview-totals-row subtotal">
                 <span>Subtotal</span>
                 <span>₹ {subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
               </div>
               <div className="preview-totals-row tax">
-                <span>Tax {taxRate}%</span>
-                <span>₹ {taxAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                <span>CGST {taxRate}%</span>
+                <span>₹ {cgst.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+              </div>
+              <div className="preview-totals-row tax">
+                <span>SGST {taxRate}%</span>
+                <span>₹ {sgst.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
               </div>
               <div className="preview-totals-row total">
                 <span>TOTAL</span>
-                <span>₹ {grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                <span>₹ {grandTotal.toLocaleString('en-IN')}</span>
               </div>
             </div>
           </div>

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   LogOut, Target, Users, TrendingUp, Plus, X, 
-  Clock, ArrowDown, ArrowUp, CalendarDays, MapPin 
+  Clock, CalendarDays, ListTodo, CheckCircle2, AlertCircle 
 } from "lucide-react";
 import "./SalesDashboard.css"; 
 import { toast } from "react-toastify";
@@ -10,6 +10,7 @@ import { toast } from "react-toastify";
 // --- CONFIGURATION ---
 const API_BASE = 'https://skitecrm.onrender.com/api';
 const ATTENDANCE_URL = `${API_BASE}/attendance`;
+const TASKS_URL = `${API_BASE}/tasks`; // ✅ Task URL Added
 
 const SalesDashboard = () => {
   const navigate = useNavigate();
@@ -17,13 +18,18 @@ const SalesDashboard = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [leads, setLeads] = useState([]);
 
+  // --- TASK STATE (New) ---
+  const [tasks, setTasks] = useState([]);
+  const [taskLoading, setTaskLoading] = useState(true);
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+
   // --- ATTENDANCE STATE ---
   const [isCheckedIn, setIsCheckedIn] = useState(false);
   const [startTime, setStartTime] = useState(null);
   const [taskDescription, setTaskDescription] = useState('');
   const [attendanceLoading, setAttendanceLoading] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [lastSession, setLastSession] = useState({ checkInTime: null, checkOutTime: null });
 
   // --- STATS STATE ---
   const [conversionRate, setConversionRate] = useState(0);
@@ -34,16 +40,9 @@ const SalesDashboard = () => {
     "Web Development", "SEO", "Paid Campaigns", "Personal Branding", "Full Digital Marketing",
   ];
 
-  // ✅ ADDED: 'email' field to form data
   const [formData, setFormData] = useState({
-    date: "", 
-    name: "", 
-    email: "", // ✨ New Email Field
-    companyName: "", 
-    phoneNumber: "", 
-    serviceType: "Web Development", 
-    business: "", 
-    location: "",
+    date: "", name: "", email: "", companyName: "", phoneNumber: "", 
+    serviceType: "Web Development", business: "", location: "",
   });
 
   // 1. CLOCK & INIT
@@ -64,7 +63,7 @@ const SalesDashboard = () => {
 
       if (userId) {
         // Fetch Leads
-        fetch(`https://skitecrm.onrender.com/api/leads/common/all`)
+        fetch(`https://skitecrm.onrender.com/api/leads/all/${userId}`) 
           .then((res) => (res.ok ? res.json() : []))
           .then((data) => {
             const validLeads = Array.isArray(data) ? data : [];
@@ -75,11 +74,52 @@ const SalesDashboard = () => {
 
         // Check Attendance
         checkActiveSession(userId, token);
+
+        // ✅ Fetch Tasks
+        fetchTasks(userId, token);
       }
     } else {
       navigate("/");
     }
   }, [navigate]);
+
+  // --- TASK FUNCTIONS (New) ---
+  const fetchTasks = async (userId, token) => {
+    try {
+      const response = await fetch(`${TASKS_URL}/${userId}`, { 
+        headers: { 'Authorization': `Bearer ${token}` } 
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setTasks(Array.isArray(data) ? data : []);
+      }
+    } catch (error) { 
+      console.error("Error fetching tasks:", error); 
+    } finally { 
+      setTaskLoading(false); 
+    }
+  };
+
+  const handleToggleTask = async (taskId, currentStatus) => {
+    const token = localStorage.getItem("salesToken");
+    const newStatus = currentStatus === 'Completed' ? 'Pending' : 'Completed';
+    
+    // Optimistic Update
+    setTasks(prev => prev.map(t => t._id === taskId ? { ...t, status: newStatus } : t));
+    
+    try {
+      await fetch(`${TASKS_URL}/${taskId}/status`, {
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ status: newStatus })
+      });
+      toast.success(`Task marked as ${newStatus}`);
+    } catch (error) { 
+        // Revert on error
+        fetchTasks(user._id, token); 
+        toast.error("Failed to update status"); 
+    }
+  };
 
   // --- ATTENDANCE LOGIC ---
   const checkActiveSession = async (userId, token) => {
@@ -93,13 +133,7 @@ const SalesDashboard = () => {
           setIsCheckedIn(true);
           setStartTime(new Date(data.checkInTime));
         }
-      } else {
-        const saved = JSON.parse(localStorage.getItem('activeSalesSession'));
-        if (saved && saved.userId === userId) {
-          setIsCheckedIn(true);
-          setStartTime(new Date(saved.startTime));
-        }
-      }
+      } 
     } catch (error) { console.error("Session check error", error); }
   };
 
@@ -125,7 +159,6 @@ const SalesDashboard = () => {
 
       const start = new Date(data.checkInTime);
       setIsCheckedIn(true); setStartTime(start);
-      localStorage.setItem('activeSalesSession', JSON.stringify({ userId, startTime: start }));
       toast.success(`Checked In at ${start.toLocaleTimeString()}`);
     } catch (e) { toast.error("Network Error"); } 
     finally { setAttendanceLoading(false); }
@@ -145,10 +178,7 @@ const SalesDashboard = () => {
 
       if (!res.ok) return toast.error("Check-out failed");
 
-      const outTime = new Date();
-      setLastSession({ checkInTime: startTime, checkOutTime: outTime });
       setIsCheckedIn(false); setStartTime(null); setTaskDescription('');
-      localStorage.removeItem('activeSalesSession');
       toast.success("Checked Out Successfully");
     } catch (e) { toast.error("Network Error"); } 
     finally { setAttendanceLoading(false); }
@@ -163,9 +193,7 @@ const SalesDashboard = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("salesToken");
-    localStorage.removeItem("salesUser");
-    localStorage.removeItem("activeSalesSession");
+    localStorage.clear();
     navigate("/");
   };
 
@@ -182,10 +210,7 @@ const SalesDashboard = () => {
         setLeads([data.lead, ...leads]);
         calculateStats([data.lead, ...leads]);
         setIsModalOpen(false);
-        
-        // ✅ RESET FORM including Email
         setFormData({ date: "", name: "", email: "", companyName: "", phoneNumber: "", serviceType: "Web Development", business: "", location: "" });
-        
         toast.success("Lead Saved!");
       } else { toast.error(data.message); }
     } catch (error) { toast.error("Server Error"); }
@@ -198,17 +223,21 @@ const SalesDashboard = () => {
   };
 
   const getCount = (service) => leads.filter((l) => l.serviceType === service).length;
+  
+  // Sort tasks
+  const sortedTasks = [...tasks].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const completedTasksCount = tasks.filter(t => t.status === 'Completed').length;
 
   return (
     <div className="dashboard-layout">
 
       <main className="main-content">
         
-        {/* 2. ATTENDANCE & WELCOME SECTION */}
+        {/* HERO SECTION */}
         <section className="hero-section">
             <div className="welcome-card">
                 <h1>Hello, {user?.name}! 👋</h1>
-                <p>Here's what's happening with your leads today.</p>
+                <p>Track leads and manage your daily tasks.</p>
                 <div className="date-badge">
                     <CalendarDays size={16} /> {currentTime.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                 </div>
@@ -232,7 +261,7 @@ const SalesDashboard = () => {
                             <input 
                                 type="text" 
                                 className="checkout-input" 
-                                placeholder="Checkout Note (e.g. Done with calls)" 
+                                placeholder="Checkout Note..." 
                                 value={taskDescription}
                                 onChange={(e) => setTaskDescription(e.target.value)}
                             />
@@ -249,55 +278,184 @@ const SalesDashboard = () => {
             </div>
         </section>
 
-        {/* 3. STATS OVERVIEW */}
-        <section className="stats-container">
-            <div className="stat-box">
-                <div className="stat-icon-wrapper blue"><Target size={24}/></div>
-                <div className="stat-text">
-                    <span className="label">My Target</span>
-                    <span className="value">{closedCount} <span className="sub">/ {TARGET_GOAL}</span></span>
-                </div>
-            </div>
+        {/* SPLIT LAYOUT: LEFT (Leads) & RIGHT (Tasks) */}
+        <div className="dashboard-split-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: '20px', marginTop: '20px' }}>
             
-            <div className="stat-box clickable" onClick={() => navigate('/sales-dashboard/all-leads')}>
-                <div className="stat-icon-wrapper orange"><Users size={24}/></div>
-                <div className="stat-text">
-                    <span className="label">Total Leads</span>
-                    <span className="value">{leads.length}</span>
-                </div>
-            </div>
-
-            <div className="stat-box clickable" onClick={() => navigate('/sales-dashboard/conversion')}>
-                <div className="stat-icon-wrapper green"><TrendingUp size={24}/></div>
-                <div className="stat-text">
-                    <span className="label">Conversion Rate</span>
-                    <span className="value">{conversionRate}%</span>
-                </div>
-            </div>
-        </section>
-
-        {/* 4. LEADS & SERVICES */}
-        <section className="leads-area">
-            <div className="area-header">
-                <h3>Leads by Category</h3>
-                <button className="btn-add-lead" onClick={() => setIsModalOpen(true)}>
-                    <Plus size={18} /> New Lead
-                </button>
-            </div>
-
-            <div className="services-grid">
-                {serviceOptions.map(service => (
-                    <div key={service} className="service-tile" onClick={() => navigate(`/sales/service/${service}`)}>
-                        <span className="tile-name">{service}</span>
-                        {getCount(service) > 0 && <span className="tile-count">{getCount(service)}</span>}
+            {/* LEFT COLUMN: STATS & LEADS */}
+            <div className="left-column">
+                
+                {/* Stats */}
+                <section className="stats-container" style={{marginBottom: '20px'}}>
+                    <div className="stat-box">
+                        <div className="stat-icon-wrapper blue"><Target size={24}/></div>
+                        <div className="stat-text">
+                            <span className="label">My Target</span>
+                            <span className="value">{closedCount} <span className="sub">/ {TARGET_GOAL}</span></span>
+                        </div>
                     </div>
-                ))}
+                    <div className="stat-box clickable" onClick={() => navigate('/sales-dashboard/all-leads')}>
+                        <div className="stat-icon-wrapper orange"><Users size={24}/></div>
+                        <div className="stat-text">
+                            <span className="label">Total Leads</span>
+                            <span className="value">{leads.length}</span>
+                        </div>
+                    </div>
+                    <div className="stat-box clickable" onClick={() => navigate('/sales-dashboard/conversion')}>
+                        <div className="stat-icon-wrapper green"><TrendingUp size={24}/></div>
+                        <div className="stat-text">
+                            <span className="label">Conversion</span>
+                            <span className="value">{conversionRate}%</span>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Leads Categories */}
+                <section className="leads-area">
+                    <div className="area-header">
+                        <h3>Leads by Category</h3>
+                        <button className="btn-add-lead" onClick={() => setIsModalOpen(true)}>
+                            <Plus size={18} /> New Lead
+                        </button>
+                    </div>
+                    <div className="services-grid">
+                        {serviceOptions.map(service => (
+                            <div key={service} className="service-tile" onClick={() => navigate(`/sales/service/${service}`)}>
+                                <span className="tile-name">{service}</span>
+                                {getCount(service) > 0 && <span className="tile-count">{getCount(service)}</span>}
+                            </div>
+                        ))}
+                    </div>
+                </section>
             </div>
-        </section>
+
+            {/* RIGHT COLUMN: TASKS (Copied from Employee Dashboard) */}
+            <div className="right-column task-sidebar" style={{ background: 'white', borderRadius: '12px', padding: '20px', border: '1px solid #e0e0e0', height: 'fit-content' }}>
+                <div className="section-header" style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'15px'}}>
+                    <h3 style={{margin:0, display:'flex', alignItems:'center', gap:'8px', fontSize:'1.1rem'}}>
+                        <ListTodo className="icon-orange" size={20} color="#ff7f50"/> My Tasks ({tasks.length})
+                    </h3>
+                </div>
+
+                <div className="progress-container" style={{marginBottom:'15px'}}>
+                    <div className="progress-labels" style={{display:'flex', justifyContent:'space-between', fontSize:'0.8rem', color:'#666', marginBottom:'5px'}}>
+                        <span>Progress</span>
+                        <span>{completedTasksCount}/{tasks.length} Done</span>
+                    </div>
+                    <div className="progress-track" style={{width:'100%', height:'6px', background:'#eee', borderRadius:'10px', overflow:'hidden'}}>
+                        <div className="progress-fill" style={{width: `${tasks.length ? (completedTasksCount / tasks.length) * 100 : 0}%`, height:'100%', background:'#4caf50'}}></div>
+                    </div>
+                </div>
+
+                <div className="tasks-container" style={{display:'flex', flexDirection:'column', gap:'10px'}}>
+                    {taskLoading ? (
+                        <p style={{textAlign:'center', color:'#888'}}>Loading Tasks...</p>
+                    ) : sortedTasks.length === 0 ? (
+                        <div className="empty-state" style={{textAlign:'center', padding:'20px', color:'#999'}}>
+                            <AlertCircle size={30} style={{marginBottom:'10px', opacity:0.5}} />
+                            <p>No tasks assigned yet.</p>
+                        </div>
+                    ) : (
+                        sortedTasks.map((task) => {
+                            let priorityColor = task.priority === 'High' ? '#ff5252' : task.priority === 'Medium' ? '#ff9800' : '#4caf50';
+                            return (
+                                <div key={task._id} className="task-card" 
+                                    onClick={() => { setSelectedTask(task); setIsViewModalOpen(true); }}
+                                    style={{ borderLeft: `4px solid ${priorityColor}`, padding: '12px', background:'#f9f9f9', borderRadius:'6px', cursor:'pointer', border: '1px solid #eee', borderLeftWidth: '4px' }}
+                                >
+                                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'start'}}>
+                                        <h4 style={{margin:0, fontSize:'0.95rem', color: task.status === 'Completed' ? '#aaa' : '#333', textDecoration: task.status === 'Completed' ? 'line-through' : 'none'}}>{task.title}</h4>
+                                        <button onClick={(e) => { e.stopPropagation(); handleToggleTask(task._id, task.status); }} style={{background:'none', border:'none', cursor:'pointer'}}>
+                                            {task.status === "Completed" ? <CheckCircle2 size={20} color="green" /> : <div style={{width:'18px', height:'18px', border:'2px solid #ccc', borderRadius:'50%'}}></div>}
+                                        </button>
+                                    </div>
+                                    <p style={{fontSize:'0.8rem', color:'#666', margin:'5px 0', display:'-webkit-box', WebkitLineClamp:'2', WebkitBoxOrient:'vertical', overflow:'hidden'}}>{task.description}</p>
+                                    <div style={{display:'flex', justifyContent:'space-between', fontSize:'0.75rem', color:'#888', marginTop:'5px'}}>
+                                        <span>Due: {new Date(task.dueDate).toLocaleDateString()}</span>
+                                        <span style={{color: task.status === 'Completed' ? 'green' : '#ff9800', fontWeight:'600'}}>{task.status}</span>
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )}
+                </div>
+            </div>
+
+        </div>
 
       </main>
 
-      {/* MODAL FORM */}
+      {/* --- TASK VIEW MODAL --- */}
+      {/* --- TASK VIEW MODAL (Fixed Style) --- */}
+      {isViewModalOpen && selectedTask && (
+        <div 
+            className="modal-overlay" 
+            style={{
+                position:'fixed', top:0, left:0, width:'100%', height:'100%', 
+                background:'rgba(0,0,0,0.5)', display:'flex', justifyContent:'center', 
+                alignItems:'center', zIndex:1000
+            }} 
+            onClick={() => setIsViewModalOpen(false)}
+        >
+          <div 
+            className="modal-content" 
+            style={{
+                background:'white', padding:'25px', borderRadius:'12px', 
+                width:'90%', maxWidth:'500px', // Increased max-width
+                boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                position: 'relative'
+            }} 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{display:'flex', justifyContent:'space-between', marginBottom:'20px', borderBottom:'1px solid #eee', paddingBottom:'10px'}}>
+                <h3 style={{margin:0, color:'#333'}}>Task Details</h3>
+                <button onClick={() => setIsViewModalOpen(false)} style={{background:'none', border:'none', cursor:'pointer'}}><X size={22} color="#666"/></button>
+            </div>
+
+            <h2 style={{fontSize:'1.3rem', color:'#222', marginBottom:'10px', wordBreak: 'break-word'}}>{selectedTask.title}</h2>
+            
+            <div style={{display:'flex', gap:'10px', marginBottom:'15px', flexWrap:'wrap'}}>
+                <span style={{background:'#f3f4f6', padding:'5px 10px', borderRadius:'6px', fontSize:'0.85rem', color:'#555', border:'1px solid #e5e7eb'}}>
+                    Priority: <strong>{selectedTask.priority}</strong>
+                </span>
+                <span style={{background:'#f3f4f6', padding:'5px 10px', borderRadius:'6px', fontSize:'0.85rem', color:'#555', border:'1px solid #e5e7eb'}}>
+                    Due: <strong>{new Date(selectedTask.dueDate).toLocaleDateString()}</strong>
+                </span>
+            </div>
+
+            <label style={{display:'block', marginBottom:'5px', fontSize:'0.9rem', color:'#777', fontWeight:'600'}}>Description:</label>
+            <div style={{
+                color:'#444', 
+                lineHeight:'1.6', 
+                background:'#f9fafb', 
+                padding:'15px', 
+                borderRadius:'8px', 
+                border: '1px solid #e5e7eb',
+                maxHeight: '300px',       // Limit height if text is huge
+                overflowY: 'auto',        // Add scroll if needed
+                whiteSpace: 'pre-wrap',   // Preserves spaces and line breaks
+                wordBreak: 'break-word',  // ✅ BREAKS LONG WORDS
+                overflowWrap: 'anywhere'  // ✅ ENSURES WRAPPING
+            }}>
+                {selectedTask.description}
+            </div>
+
+            <button 
+                onClick={() => { handleToggleTask(selectedTask._id, selectedTask.status); setIsViewModalOpen(false); }}
+                style={{
+                    width:'100%', padding:'12px', marginTop:'20px', 
+                    background: selectedTask.status === 'Completed' ? '#ff9800' : '#10b981', 
+                    color:'white', border:'none', borderRadius:'8px', 
+                    cursor:'pointer', fontWeight:'bold', fontSize:'1rem',
+                    transition: 'background 0.2s ease'
+                }}
+            >
+                {selectedTask.status === 'Completed' ? 'Mark Incomplete' : 'Mark as Completed'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* LEAD MODAL */}
       {isModalOpen && (
         <div className="modal-backdrop">
           <div className="modal-window">
@@ -307,31 +465,14 @@ const SalesDashboard = () => {
             </div>
             <form onSubmit={handleSubmit}>
               <div className="input-grid">
-                
-                {/* 1. Date */}
                 <div className="inp-group"><label>Date</label><input type="date" required value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} /></div>
-                
-                {/* 2. Name */}
                 <div className="inp-group"><label>Client Name</label><input type="text" placeholder="Name" required value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} /></div>
-                
-                {/* 3. EMAIL (✅ NEW) */}
                 <div className="inp-group"><label>Email</label><input type="email" placeholder="Client Email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} /></div>
-
-                {/* 4. Company */}
                 <div className="inp-group"><label>Company</label><input type="text" placeholder="Company Name" value={formData.companyName} onChange={(e) => setFormData({...formData, companyName: e.target.value})} /></div>
-                
-                {/* 5. Phone */}
                 <div className="inp-group"><label>Phone</label><input type="tel" placeholder="Phone" required value={formData.phoneNumber} onChange={(e) => setFormData({...formData, phoneNumber: e.target.value})} /></div>
-                
-                {/* 6. Service */}
                 <div className="inp-group"><label>Service</label><select value={formData.serviceType} onChange={(e) => setFormData({...formData, serviceType: e.target.value})}>{serviceOptions.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
-                
-                {/* 7. Business */}
                 <div className="inp-group"><label>Business Type</label><input type="text" placeholder="Type" value={formData.business} onChange={(e) => setFormData({...formData, business: e.target.value})} /></div>
-                
-                {/* 8. Location */}
                 <div className="inp-group full"><label>Location</label><input type="text" placeholder="Location" value={formData.location} onChange={(e) => setFormData({...formData, location: e.target.value})} /></div>
-              
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn-text" onClick={() => setIsModalOpen(false)}>Cancel</button>

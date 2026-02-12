@@ -12,18 +12,25 @@ const AdminServiceType = () => {
     const [leads, setLeads] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
+   useEffect(() => {
         const fetchLeads = async () => {
             try {
-                const response = await fetch(`${API_BASE}/leads/common/all`);
+                // ✅ Fetching all leads (Admin access)
+                const response = await fetch(`${API_BASE}/leads/admin/all`); // admin/all அல்லது common/all எதுவேண்டுமானாலும் இருக்கலாம்
                 const data = await response.json();
                 
                 if (response.ok && Array.isArray(data)) {
-                    const decodedService = decodeURIComponent(serviceName);
-                    const filtered = data.filter(lead => 
-                        lead.serviceType === decodedService ||
-                        lead.serviceType === serviceName
-                    );
+                    
+                    // 1. URL-ல் வரும் பெயரை Small letters ஆகவும், Space-ஐ நீக்கியும் எடுக்கிறோம்
+                    const targetService = decodeURIComponent(serviceName).trim().toLowerCase();
+
+                    const filtered = data.filter(lead => {
+                        // 2. Database-ல் உள்ள Service Type-ஐயும் Small letters ஆக மாற்றுகிறோம்
+                        const dbService = lead.serviceType ? lead.serviceType.trim().toLowerCase() : '';
+                        
+                        // 3. இப்போது இரண்டையும் ஒப்பிடுகிறோம்
+                        return dbService === targetService;
+                    });
                     
                     // Sort by Date (Newest first)
                     filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -34,6 +41,7 @@ const AdminServiceType = () => {
                 }
             } catch (error) {
                 console.error("Error fetching leads:", error);
+                toast.error("Failed to load leads");
             } finally {
                 setLoading(false);
             }

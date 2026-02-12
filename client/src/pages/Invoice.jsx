@@ -67,6 +67,7 @@ const Invoice = () => {
     { description: '', hsn: '', price: '', qty: 1 }
   ]);
 
+  // ✅ FIXED TAX RATE: 9% (CGST 9 + SGST 9 = 18 Total)
   const [taxRate, setTaxRate] = useState(9); 
   
   const [activeDropdownIndex, setActiveDropdownIndex] = useState(null);
@@ -82,7 +83,7 @@ const Invoice = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // --- CALCULATIONS (MODIFIED) ---
+  // --- CALCULATIONS ---
   const calculateTotal = () => {
     const subtotal = items.reduce((acc, item) => {
         const itemPrice = parseFloat(item.price) || 0;
@@ -93,8 +94,7 @@ const Invoice = () => {
     const cgst = (subtotal * taxRate) / 100;
     const sgst = (subtotal * taxRate) / 100;
     
-    // ✅ MODIFICATION: Math.round() பயன்படுத்தப்பட்டுள்ளது
-    // இது .50க்கு மேல் இருந்தால் அடுத்த எண்ணிற்கும் (131), குறைவாக இருந்தால் முந்தைய எண்ணிற்கும் (130) மாற்றும்.
+    // Rounding Logic
     const grandTotal = Math.round(subtotal + cgst + sgst); 
     
     return { subtotal, cgst, sgst, grandTotal };
@@ -186,7 +186,7 @@ const Invoice = () => {
         taxRate,
         cgst,
         sgst,
-        grandTotal // This is already rounded
+        grandTotal
       };
 
       const response = await fetch('https://skitecrm.onrender.com/api/invoice/create', {
@@ -302,12 +302,11 @@ const Invoice = () => {
         ];
     });
 
-    // ✅ MODIFICATION: PDF-ல் Total-க்கு Decimals வேண்டாம் (.toFixed(2) நீக்கப்பட்டது)
     tableBody.push(
       ['', '', '', 'Subtotal', subtotal.toFixed(2)],
       ['', '', '', `CGST ${taxRate}%`, cgst.toFixed(2)],
       ['', '', '', `SGST ${taxRate}%`, sgst.toFixed(2)],
-      ['', '', '', 'TOTAL', grandTotal] // No decimals for Grand Total
+      ['', '', '', 'TOTAL', grandTotal] 
     );
 
     autoTable(doc, {
@@ -597,21 +596,32 @@ const Invoice = () => {
             </button>
           </div>
 
-          {/* Card 4: Tax Rate & Total */}
+          {/* Card 4: Tax Rate & Total (FIXED AT 9%) */}
           <div className="form-section">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ flex: 1 }}>
                 <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>Tax Rate (CGST + SGST %)</label>
+                
+                {/* ✅ FIXED: Input is now Read-Only and Disabled */}
                 <input 
                   type="number" 
                   value={taxRate} 
-                  onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
-                  style={{ width: '100px', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '16px' }}
+                  readOnly
+                  disabled
+                  style={{ 
+                      width: '100px', 
+                      padding: '8px', 
+                      border: '1px solid #eee', 
+                      background: '#f9f9f9', 
+                      borderRadius: '4px', 
+                      fontSize: '16px',
+                      color: '#555',
+                      cursor: 'not-allowed'
+                  }}
                 />
               </div>
               <div style={{ textAlign: 'right' }}>
                 <h3 style={{ color: '#FF4500', fontSize: '24px', margin: 0 }}>
-                  {/* ✅ MODIFICATION: Total-க்கு Decimals வேண்டாம் (toLocaleString() மூலம்) */}
                   Total: ₹{grandTotal.toLocaleString('en-IN')}
                 </h3>
               </div>
@@ -687,7 +697,6 @@ const Invoice = () => {
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: '#FF4500', color: '#fff', fontWeight: 'bold' }}>
               <span>TOTAL</span>
-              {/* ✅ MODIFICATION: Total-க்கு Decimals வேண்டாம் (.toFixed(2) நீக்கப்பட்டது) */}
               <span>₹ {grandTotal.toLocaleString('en-IN')}</span>
             </div>
             

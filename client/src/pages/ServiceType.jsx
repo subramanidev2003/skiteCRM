@@ -7,6 +7,7 @@ const ServiceType = () => {
   const { serviceName } = useParams();
   const navigate = useNavigate();
   const [leads, setLeads] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('salesUser');
@@ -15,23 +16,40 @@ const ServiceType = () => {
       return;
     }
 
-    // ✅ FIX: Use the same API as the Dashboard to ensure counts match
-    fetch(`https://skitecrm.onrender.com/api/leads/common/all`) 
-      .then(res => res.ok ? res.json() : [])
-      .then(data => {
-        if (Array.isArray(data)) {
-          // 1. Filter leads by the service name from the URL
-          // Decode URI component handles spaces (e.g. "Web%20Development" -> "Web Development")
-          const decodedService = decodeURIComponent(serviceName);
-          
-          const filtered = data.filter(lead => 
-            lead.serviceType === decodedService || 
-            lead.serviceType === serviceName
-          );
+    // ✅ Debugging: URL-ல் வரும் பெயரைச் சரிபார்க்க
+    console.log("1. URL Service Name:", serviceName);
 
-          // 2. Sort Logic: High -> Medium -> Low
-          const priorityOrder = { High: 3, Medium: 2, Low: 1 };
+    // ✅ Fetch ALL leads using common API
+    fetch(`https://skitecrm.onrender.com/api/leads/common/all`) 
+      .then(res => {
+          if (!res.ok) {
+              throw new Error(`API Error: ${res.status}`);
+          }
+          return res.json();
+      })
+      .then(data => {
+        console.log("2. Total Leads from API:", data.length); // API-ல் டேட்டா வருகிறதா?
+
+        if (Array.isArray(data)) {
           
+          // ✅ URL பெயரைச் சுத்தம் செய்தல் (Small letters + Trim)
+          const targetService = decodeURIComponent(serviceName).trim().toLowerCase();
+          console.log("3. Target Service (Cleaned):", targetService);
+
+          const filtered = data.filter(lead => {
+              // ✅ Database பெயரைச் சுத்தம் செய்தல்
+              const dbService = lead.serviceType ? lead.serviceType.trim().toLowerCase() : '';
+              
+              // Debugging: இது பொருந்தாத லீட்ஸை ஏன் நிராகரிக்கிறது எனப் பார்க்க
+              // if (dbService.includes('paid')) console.log(`Checking: ${dbService} === ${targetService}`);
+
+              return dbService === targetService;
+          });
+
+          console.log("4. Filtered Leads Count:", filtered.length); // ஃபில்டர் ஆன பிறகு எத்தனை?
+
+          // Sort by Priority
+          const priorityOrder = { High: 3, Medium: 2, Low: 1 };
           filtered.sort((a, b) => {
             const pA = priorityOrder[a.priority] || 0;
             const pB = priorityOrder[b.priority] || 0;
@@ -41,7 +59,10 @@ const ServiceType = () => {
           setLeads(filtered);
         }
       })
-      .catch(err => console.error("Error loading leads", err));
+      .catch(err => {
+          console.error("Error loading leads:", err);
+      })
+      .finally(() => setLoading(false));
       
   }, [navigate, serviceName]);
 
@@ -59,44 +80,54 @@ const ServiceType = () => {
 
         {/* TABLE */}
         <div className="st-table-wrapper">
-            <table className="st-leads-table">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Name</th>
-                        <th>Phone</th>
-                        <th>Company Name</th>
-                        <th>Priority</th>
-                        <th>Closing</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {leads.length === 0 ? (
+            {loading ? (
+                <div style={{padding:'20px', textAlign:'center', color:'#666'}}>Loading...</div>
+            ) : (
+                <table className="st-leads-table">
+                    <thead>
                         <tr>
-                            <td colSpan="6" className="st-no-data">No leads found for {decodeURIComponent(serviceName)}.</td>
+                            <th>Date</th>
+                            <th>Name</th>
+                            <th>Phone</th>
+                            <th>Company Name</th>
+                            <th>Priority</th>
+                            <th>Closing</th>
                         </tr>
-                    ) : (
-                        leads.map((lead) => (
-                            <tr 
-                                key={lead._id || lead.id} 
-                                className="st-lead-row"
-                                onClick={() => navigate(`/lead-detail/${lead._id}`, { state: { lead } })}
-                            >
-                                <td>{lead.date}</td>
-                                <td>{lead.name}</td>
-                                <td>{lead.phoneNumber}</td>
-                                <td>{lead.companyName || '-'}</td>
-                                <td>
-                                    <span className={`st-priority-badge ${lead.priority?.toLowerCase()}`}>
-                                        {lead.priority}
-                                    </span>
+                    </thead>
+                    <tbody>
+                        {leads.length === 0 ? (
+                            <tr>
+                                <td colSpan="6" className="st-no-data">
+                                    No leads found for "{decodeURIComponent(serviceName)}".
+                                    <br/>
+                                    <small style={{color:'#999'}}>(Check Console F12 for details)</small>
                                 </td>
-                                <td>{lead.closing}</td>
                             </tr>
-                        ))
-                    )}
-                </tbody>
-            </table>
+                        ) : (
+                            leads.map((lead) => (
+                                <tr 
+                                    key={lead._id || lead.id} 
+                                    className="st-lead-row"
+                                    onClick={() => navigate(`/lead-detail/${lead._id}`, { state: { lead } })}
+                                >
+                                    <td>{lead.date}</td>
+                                    <td>{lead.name}</td>
+                                    <td>{lead.phoneNumber}</td>
+                                    <td>{lead.companyName || '-'}</td>
+                                    <td>
+                                        <span className={`st-priority-badge ${lead.priority?.toLowerCase()}`}>
+                                            {lead.priority}
+                                        </span>
+                                    </td>
+                                    <td style={{fontWeight:'bold', color: lead.closing === 'Yes' ? 'green' : 'red'}}>
+                                        {lead.closing}
+                                    </td>
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
+            )}
         </div>
 
       </div>
