@@ -520,20 +520,20 @@ const generatePDF = async () => {
                 
                 {/* ✅ FIXED 9% INPUT (Read-Only) */}
                 <input 
-                    type="number" 
-                    value={taxRate} 
-                    readOnly
-                    disabled
-                    style={{ 
-                        width: '80px', 
-                        padding: '8px', 
-                        border: '1px solid #eee', 
-                        background: '#f9f9f9', 
-                        borderRadius: '4px', 
-                        color: '#555',
-                        cursor: 'not-allowed'
-                    }} 
-                />
+  type="number" 
+  value={taxRate} 
+  onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
+  placeholder="0"
+  onWheel={(e) => e.target.blur()}
+  style={{ 
+      width: '100px', 
+      padding: '8px', 
+      border: '1px solid #ddd', 
+      borderRadius: '4px', 
+      fontSize: '16px',
+      background: 'white' 
+  }}
+/>
               </div>
               <div className="total-display">
                 {/* ✅ ROUNDED TOTAL DISPLAY */}

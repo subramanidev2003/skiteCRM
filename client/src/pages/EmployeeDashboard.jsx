@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { 
   Clock, ListTodo, CalendarDays, CheckCircle2, 
   LogOut, User, AlertCircle, X, UserPlus, Users, History, 
-  ArrowRight, PlayCircle, StopCircle, BadgeCheck 
+  ArrowRight, PlayCircle, StopCircle, BadgeCheck, Briefcase // ✅ Added Briefcase Icon
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './EmployeeDashboard.css'; 
 import { toast } from 'react-toastify';
 
 // --- CONFIGURATION ---
-const API_BASE = 'https://skitecrm.onrender.com/api';
+const API_BASE = 'http://localhost:4000/api';
 const UPLOADS_URL = "https://skitecrm.onrender.com/api/uploads";
 
 const ATTENDANCE_URL = `${API_BASE}/attendance`;
@@ -63,6 +63,7 @@ const EmployeeDashboard = () => {
   const EMPLOYEE_NAME = currentUser?.name || "Employee";
   const EMPLOYEE_DESIGNATION = currentUser?.designation || "Team Member";
   
+  // ✅ Check if Content Writer
   const isContentWriter = (EMPLOYEE_DESIGNATION || "").toLowerCase().includes("content writ");
 
   // Dashboard State
@@ -117,8 +118,7 @@ const EmployeeDashboard = () => {
     fetchFreshProfile();
   }, [EMPLOYEE_ID, token]); 
 
-  // --- 2. CALCULATE PAYROLL STATUS (UPDATED LOGIC) ---
-// --- 2. CALCULATE PAYROLL STATUS (UPDATED LOGIC WITH STRICT RULES) ---
+  // --- 2. CALCULATE PAYROLL STATUS (UPDATED LOGIC WITH STRICT RULES) ---
   const calculateDailyStatus = async () => {
     if (!EMPLOYEE_ID) return;
     try {
@@ -142,12 +142,12 @@ const EmployeeDashboard = () => {
                     const inTime = new Date(r.checkInTime);
                     const outTime = new Date(r.checkOutTime);
                     
-                    // RULE 1: If Checkout is Next Day (மறுநாள் செக்-அவுட்)
+                    // RULE 1: If Checkout is Next Day
                     if (inTime.toDateString() !== outTime.toDateString()) {
                         ruleViolation = true;
                     }
 
-                    // RULE 2: If Checkout is after 9:00 PM (21:00) (9 மணிக்கு மேல்)
+                    // RULE 2: If Checkout is after 9:00 PM
                     if (outTime.getHours() >= 21) { 
                         ruleViolation = true;
                     }
@@ -175,10 +175,8 @@ const EmployeeDashboard = () => {
 
             // --- FINAL STATUS LOGIC ---
             if (ruleViolation) {
-                // விதிமுறை மீறப்பட்டால் Absent
                 setPayrollStatus("Absent ❌"); 
             } else {
-                // Normal Logic
                 if (hours >= 6) setPayrollStatus("Present");
                 else if (hours >= 3) setPayrollStatus("Half Day");
                 else setPayrollStatus("Absent / Short");
@@ -188,6 +186,7 @@ const EmployeeDashboard = () => {
         console.error("Payroll Calc Error:", err);
     }
   };
+
   // Run calculation every minute OR when check-in status changes
   useEffect(() => {
     calculateDailyStatus();
@@ -245,10 +244,7 @@ const EmployeeDashboard = () => {
               const sessionStart = new Date(data.checkInTime);
               // Check if session is stale (started on a previous day)
               if (sessionStart.toDateString() !== new Date().toDateString()) {
-                  // User forgot to checkout yesterday. 
-                  // We show them as checked in, BUT calculateDailyStatus will ignore the hours for TODAY.
-                  // When they checkout, the backend will record the checkout time.
-                  // Since the hours belong to yesterday, they won't count for today's "Present".
+                  // User forgot to checkout yesterday logic
               }
               setIsCheckedIn(true); 
               setStartTime(sessionStart); 
@@ -284,7 +280,7 @@ const EmployeeDashboard = () => {
     } catch (error) { toast.error("Network Error"); } finally { setLoading(false); }
   };
 
-const handleCheckOut = async () => {
+  const handleCheckOut = async () => {
     if (!taskDescription.trim()) { toast.warning("⚠️ Enter task description to checkout."); return; }
     
     const now = new Date();
@@ -314,6 +310,7 @@ const handleCheckOut = async () => {
       calculateDailyStatus(); // Update status immediately
     } catch (error) { toast.error("Network Error"); } finally { setLoading(false); }
   };
+
   const handleToggleTask = async (taskId, currentStatus) => {
     const newStatus = currentStatus === 'Completed' ? 'Pending' : 'Completed';
     setTasks(prev => prev.map(t => t._id === taskId ? { ...t, status: newStatus } : t));
@@ -370,13 +367,17 @@ const handleCheckOut = async () => {
     }
   };
 
+  // ✅ New Handler for Projects Navigation
+  const handleProjectsClick = () => {
+      navigate('/admin-dashboard/projects');
+  };
+
   const getImageUrl = (path) => {
     if (!path) return null;
     if (path.startsWith('http') || path.startsWith('data:')) return path;
     return `${UPLOADS_URL}/${path.replace(/^\//, "")}`;
   };
 
-  // --- HELPER: RENDER AVATAR ---
   const renderAvatar = (user) => {
     const rawImage = user.image || user.avatar || user.profilePic;
     const imgUrl = getImageUrl(rawImage);
@@ -398,7 +399,6 @@ const handleCheckOut = async () => {
     return initial;
   };
 
-  // --- UTILS ---
   const calculateDuration = (start) => {
     if (!start) return { h: 0, m: 0 };
     const diff = new Date() - new Date(start);
@@ -409,7 +409,6 @@ const handleCheckOut = async () => {
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter(t => t.status === 'Completed').length;
 
-  // --- SORT TASKS: NEWEST FIRST ---
   const sortedTasks = [...tasks].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
   return (
@@ -569,7 +568,6 @@ const handleCheckOut = async () => {
                 </div>
               ) : (
                 sortedTasks.map((task) => {
-                  // Determine border color based on priority
                   let priorityColor = '#ccc';
                   if (task.priority === 'High') priorityColor = '#ff5252';
                   else if (task.priority === 'Medium') priorityColor = '#ff9800';
@@ -583,7 +581,6 @@ const handleCheckOut = async () => {
                         setSelectedTask(task);
                         setIsViewModalOpen(true);
                       }}
-                      // Inline styling for the new card design request
                       style={{
                         borderLeft: `5px solid ${priorityColor}`,
                         padding: '15px',
@@ -592,7 +589,6 @@ const handleCheckOut = async () => {
                         gap: '10px'
                       }}
                     >
-                      {/* Top: Header */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <h4
                           className={task.status === "Completed" ? "completed-text" : ""}
@@ -601,7 +597,6 @@ const handleCheckOut = async () => {
                           {task.title}
                         </h4>
                         
-                          {/* Toggle Checkbox Button */}
                           <button
                             className={`btn-check ${
                               task.status === "Completed" ? "checked" : ""
@@ -620,7 +615,6 @@ const handleCheckOut = async () => {
                           </button>
                       </div>
                       
-                      {/* Description - Added Here! */}
                       <p style={{
                           margin: '0',
                           fontSize: '0.9rem',
@@ -634,7 +628,6 @@ const handleCheckOut = async () => {
                           {task.description}
                       </p>
 
-                      {/* Middle: Big Due Date Box */}
                       <div style={{
                         background: '#f8f9fa',
                         padding: '10px',
@@ -652,7 +645,6 @@ const handleCheckOut = async () => {
                           </span>
                       </div>
 
-                      {/* Bottom: Footer Info */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
                           <span style={{ color: '#888' }}>
                             Assigned: {new Date(task.createdAt).toLocaleDateString()}
@@ -675,7 +667,7 @@ const handleCheckOut = async () => {
           {/* RIGHT: TEAM / STATS */}
           <div className="sidebar-section">
             
-            {/* --- NEW STATUS CARD START --- */}
+            {/* --- STATUS CARD --- */}
             <div className="widget-card">
               <div className="widget-header">
                 <BadgeCheck size={18} className="icon-orange" />
@@ -701,7 +693,28 @@ const handleCheckOut = async () => {
                   </div>
               </div>
             </div>
-            {/* --- NEW STATUS CARD END --- */}
+
+            {/* ✅ NEW: PROJECTS CARD (Visible ONLY for Content Writers) */}
+            {isContentWriter && (
+                <div 
+                    className="widget-card" 
+                    onClick={handleProjectsClick}
+                    style={{ cursor: 'pointer', transition: 'transform 0.2s', border: '1px solid #ffe0b2', background:'#fffbf0' }}
+                    onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-3px)'}
+                    onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                >
+                    <div className="widget-header">
+                        <Briefcase size={20} color="#FF4500" />
+                        <span style={{color: '#FF4500', fontWeight: 'bold'}}>Projects</span>
+                    </div>
+                    <div style={{padding: '10px 0', fontSize: '0.9rem', color: '#666'}}>
+                        Manage Social Media, SEO & Web Projects.
+                    </div>
+                    <div style={{textAlign: 'right'}}>
+                        <ArrowRight size={16} color="#FF4500" />
+                    </div>
+                </div>
+            )}
 
             {isContentWriter && (
               <div className="widget-card">
@@ -906,7 +919,6 @@ const handleCheckOut = async () => {
                     }
                   />
                 </div>
-                {/* NEW CODE: Disables button if Title or Date is missing */}
                 <button
                   type="submit"
                   className="btn-primary-fill"
@@ -930,7 +942,6 @@ const handleCheckOut = async () => {
         </div>
       )}
 
-      {/* --- TEAMMATE DETAILS MODAL --- */}
       {isTeammateModalOpen && selectedTeammateData.details && (
         <div
           className="modal-backdrop"

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Plus, Trash2, Download, Save, History, ChevronDown } from 'lucide-react'; 
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom'; // ✅ useParams சேர்த்துள்ளேன்
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { toast } from 'react-toastify'; 
@@ -28,6 +28,7 @@ const SERVICES_LIST = [
 
 const Invoice = () => {
   const navigate = useNavigate();
+  const { id } = useParams(); // ✅ URL-ல் ID இருந்தால் அதை எடுக்கிறோம்
 
   // --- SENDER DETAILS ---
   const senderDetails = {
@@ -67,11 +68,38 @@ const Invoice = () => {
     { description: '', hsn: '', price: '', qty: 1 }
   ]);
 
-  // ✅ FIXED TAX RATE: 9% (CGST 9 + SGST 9 = 18 Total)
-  const [taxRate, setTaxRate] = useState(9); 
-  
+  const [taxRate, setTaxRate] = useState(9); // Fixed 9%
   const [activeDropdownIndex, setActiveDropdownIndex] = useState(null);
   const dropdownRef = useRef(null); 
+
+  // --- ✅ NEW: FETCH INVOICE DATA IF ID EXISTS ---
+  useEffect(() => {
+    if (id) {
+        const fetchInvoiceDetails = async () => {
+            try {
+                const response = await fetch(`https://skitecrm.onrender.com/api/invoice/${id}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Backend Data-வை State-ல் செட் செய்கிறோம்
+                    setInvoiceMeta({
+                        invoiceNo: data.invoiceNo,
+                        date: data.date.split('T')[0] // Date format fix
+                    });
+                    setClientDetails(data.clientDetails);
+                    setItems(data.items);
+                    setTaxRate(data.taxRate || 9);
+                } else {
+                    toast.error("Failed to load invoice details");
+                }
+            } catch (error) {
+                console.error("Error fetching invoice:", error);
+                toast.error("Error loading invoice");
+            }
+        };
+        fetchInvoiceDetails();
+    }
+  }, [id]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -93,8 +121,6 @@ const Invoice = () => {
 
     const cgst = (subtotal * taxRate) / 100;
     const sgst = (subtotal * taxRate) / 100;
-    
-    // Rounding Logic
     const grandTotal = Math.round(subtotal + cgst + sgst); 
     
     return { subtotal, cgst, sgst, grandTotal };
@@ -164,7 +190,7 @@ const Invoice = () => {
     setItems(newItems);
   };
 
-  // SAVE TO DB
+  // SAVE TO DB (Create)
   const saveInvoiceToDB = async () => {
     if (!clientDetails.name) {
         toast.error("Please enter Client Name!");
@@ -189,6 +215,10 @@ const Invoice = () => {
         grandTotal
       };
 
+      // ✅ EDIT MODE: If ID exists, we could use PUT (but backend only has create for now)
+      // For now, we will create NEW even if editing, unless you add UPDATE route.
+      // If you want to just View and Generate PDF, this is fine.
+      
       const response = await fetch('https://skitecrm.onrender.com/api/invoice/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -204,7 +234,7 @@ const Invoice = () => {
       }
     } catch (error) {
       console.error("Error:", error);
-      toast.error("Server Error: Check Backend Connection");
+      toast.error("Server Error");
     }
   };
 
@@ -399,7 +429,7 @@ const Invoice = () => {
                 <ArrowLeft size={20} />
                 <span>Back</span>
             </button>
-            <h2 style={{ margin: 0, color: '#333' }}>Create Invoice</h2>
+            <h2 style={{ margin: 0, color: '#333' }}>{id ? 'View / Edit Invoice' : 'Create Invoice'}</h2>
         </div>
         
         {/* ACTION BUTTONS */}
@@ -407,9 +437,12 @@ const Invoice = () => {
             <button className="action-btn" onClick={() => navigate('/admin-dashboard/invoice-history')} style={{ backgroundColor: '#6c757d' }}>
                 <History size={18} /> History
             </button>
+            
+            {/* Show Save button only if needed, usually we don't update invoices once created, but you can leave it */}
             <button className="action-btn" onClick={saveInvoiceToDB} style={{ backgroundColor: '#28a745' }}>
-                <Save size={18} /> Save
+                <Save size={18} /> Save New
             </button>
+            
             <button className="action-btn" onClick={generatePDF} style={{ backgroundColor: '#FF4500' }}>
                 <Download size={18} /> PDF
             </button>
@@ -487,9 +520,9 @@ const Invoice = () => {
                                 value={item.description}
                                 onChange={(e) => {
                                     handleItemChange(index, 'description', e.target.value);
-                                    setActiveDropdownIndex(index); // Open dropdown when typing
+                                    setActiveDropdownIndex(index); 
                                 }}
-                                onFocus={() => setActiveDropdownIndex(index)} // Open dropdown on click
+                                onFocus={() => setActiveDropdownIndex(index)} 
                                 style={{width: '100%', padding:'10px', paddingRight: '35px', border:'1px solid #ddd', borderRadius:'6px', outline:'none', fontSize:'14px'}}
                             />
                             {/* Chevron Icon */}
@@ -510,7 +543,7 @@ const Invoice = () => {
                                 {SERVICES_LIST.filter(s => s.name.toLowerCase().includes(item.description.toLowerCase())).map((service, i) => (
                                     <div 
                                         key={i}
-                                        onMouseDown={() => handleServiceSelect(index, service)} // ✅ Fixed: onMouseDown prevents blur
+                                        onMouseDown={() => handleServiceSelect(index, service)} 
                                         style={{
                                             padding: '10px', cursor: 'pointer', borderBottom: '1px solid #f0f0f0',
                                             fontSize: '13px', display: 'flex', justifyContent: 'space-between'
@@ -551,7 +584,7 @@ const Invoice = () => {
                         type="number" 
                         placeholder="0.00" 
                         value={item.price} 
-                        onChange={(e) => handleItemChange(index, 'price', e.target.value)} // Keep raw value to allow typing
+                        onChange={(e) => handleItemChange(index, 'price', e.target.value)} 
                         style={{width: '100%', padding:'10px', border:'1px solid #ddd', borderRadius:'6px', outline:'none', fontSize:'14px'}}
                         />
                     </div>
@@ -596,29 +629,27 @@ const Invoice = () => {
             </button>
           </div>
 
-          {/* Card 4: Tax Rate & Total (FIXED AT 9%) */}
+          {/* Card 4: Tax Rate & Total */}
           <div className="form-section">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ flex: 1 }}>
                 <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>Tax Rate (CGST + SGST %)</label>
                 
-                {/* ✅ FIXED: Input is now Read-Only and Disabled */}
                 <input 
-                  type="number" 
-                  value={taxRate} 
-                  readOnly
-                  disabled
-                  style={{ 
-                      width: '100px', 
-                      padding: '8px', 
-                      border: '1px solid #eee', 
-                      background: '#f9f9f9', 
-                      borderRadius: '4px', 
-                      fontSize: '16px',
-                      color: '#555',
-                      cursor: 'not-allowed'
-                  }}
-                />
+  type="number" 
+  value={taxRate} 
+  onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
+  placeholder="0"
+  onWheel={(e) => e.target.blur()}
+  style={{ 
+      width: '100px', 
+      padding: '8px', 
+      border: '1px solid #ddd', 
+      borderRadius: '4px', 
+      fontSize: '16px',
+      background: 'white' 
+  }}
+/>
               </div>
               <div style={{ textAlign: 'right' }}>
                 <h3 style={{ color: '#FF4500', fontSize: '24px', margin: 0 }}>
@@ -632,6 +663,7 @@ const Invoice = () => {
 
         {/* RIGHT COLUMN: PREVIEW */}
         <div className="invoice-preview paper-shadow">
+          {/* ... Preview Code same as before ... */}
           
           <div className="preview-header">
             <div>

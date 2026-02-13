@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom'; 
-import { CalendarCheck, Megaphone, Users, IndianRupee, FileText, ScrollText, Landmark } from 'lucide-react';
+import { CalendarCheck, Megaphone, Users, IndianRupee, FileText, ScrollText, Landmark, Briefcase } from 'lucide-react'; // ✅ Briefcase added
 import skitelogo from '../assets/skitelogo.png'; 
 import './AdminDashboard.css'; 
 
@@ -57,13 +57,16 @@ const DashboardCards = ({ handleCardClick, role }) => (
                     <div className="card-title1">Leads</div>
                     <div className="card-accent"></div>
                 </div>
-
-                {/* <div className="card" onClick={() => handleCardClick('quote')}>
-                    <div className="card-icon"><ScrollText size={40} color="#FF4500" /></div>
-                    <div className="card-title1">Quote</div>
-                    <div className="card-accent"></div>
-                </div> */}
             </>
+        )}
+
+        {/* ✅ PROJECTS CARD: Visible to ADMIN and EMPLOYEE (Content Writer) */}
+        {(role === 'admin' || role === 'employee') && (
+            <div className="card" onClick={() => handleCardClick('projects')}>
+                <div className="card-icon"><Briefcase size={40} color="#FF4500" /></div>
+                <div className="card-title1">Projects</div>
+                <div className="card-accent"></div>
+            </div>
         )}
 
         {/* --- GROUP 2: BOTH ADMIN AND ACCOUNTANT SEE THESE --- */}
@@ -102,51 +105,47 @@ const AdminDashboard = () => {
     const navigate = useNavigate();
     const location = useLocation();
     
-    // State to store the current user's role (admin or accountant)
+    // State to store the current user's role
     const [userRole, setUserRole] = useState('');
 
     useEffect(() => {
-        // 1. Check tokens
+        // 1. Check all tokens
         const adminToken = localStorage.getItem('adminToken');
         const accountantToken = localStorage.getItem('accountantToken');
+        const employeeToken = localStorage.getItem('employeeToken'); // ✅ Get Employee Token
         
-        // 2. Check stored role
         const storedRole = localStorage.getItem('userRole'); 
 
-        // 3. Logic: If no token at all, kick out
-        if (!adminToken && !accountantToken) {
+        // 3. Logic: If NO token at all, kick out
+        if (!adminToken && !accountantToken && !employeeToken) {
             navigate('/');
         } else {
             // 4. Set Role State
-            // If storedRole exists, use it. Else deduce from token existence.
             if (storedRole) {
                 setUserRole(storedRole);
             } else if (adminToken) {
                 setUserRole('admin');
             } else if (accountantToken) {
                 setUserRole('accountant');
+            } else if (employeeToken) {
+                setUserRole('employee'); // ✅ Set Employee Role
             }
         }
     }, [navigate]);
     
-    // Check if we are on the main dashboard page to show cards
     const isBaseDashboard = location.pathname === '/admin-dashboard' || location.pathname === '/admin-dashboard/';
 
     // --- Logout Handler ---
-    // --- Logout Handler ---
     const handleLogout = async () => {
         try {
-            // ✅ நீங்கள் கேட்ட குறிப்பிட்ட API அழைப்பு
             await fetch(`${API_BASE}/auth/admin-logout`, { 
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
             });
-            console.log("Admin logged out from server");
-
+            console.log("Logged out from server");
         } catch (error) {
             console.error("Logout API Error:", error);
         } finally {
-            // API வேலை செய்தாலும் செய்யாவிட்டாலும், இது கண்டிப்பாக நடக்கும்
             localStorage.clear(); 
             navigate('/');
             window.location.reload(); 
@@ -159,6 +158,7 @@ const AdminDashboard = () => {
             'add': '/add-employee',
             'teams': '/admin-dashboard/teams',
             'tasks': '/admin-dashboard/tasks',
+            'projects': '/admin-dashboard/projects', // ✅ Projects Route
             'attendance': '/admin-dashboard/attendance',
             'leads': '/admin-dashboard/leads',
             'payroll': '/admin-dashboard/payroll',
@@ -174,10 +174,16 @@ const AdminDashboard = () => {
              <header className="header">
                  <div className="header-left">
                      <div className="logo-container">
-                         <img src={skitelogo} alt="Skite Logo" className="logo" />
+                         <img 
+                          src={skitelogo} 
+                          alt="Skite Logo" 
+                          className="logo" 
+                          onClick={() => navigate('/admin-dashboard')}
+                          style={{ cursor: 'pointer' }}
+                        />
                      </div>
                      <div className="header-title">
-                        Welcome back {userRole === 'accountant' ? 'Accountant' : 'Admin'}!
+                        Welcome back {userRole.charAt(0).toUpperCase() + userRole.slice(1)}!
                      </div>
                  </div>
                  <button className="logout-button" onClick={handleLogout}>
@@ -187,10 +193,10 @@ const AdminDashboard = () => {
 
              <main className={isBaseDashboard ? "main-content1" : "main-content-child"}>
                 
-                {/* Show Cards only on base path */}
+                {/* Show Cards based on role */}
                 {isBaseDashboard && <DashboardCards handleCardClick={handleCardClick} role={userRole} />}
 
-                {/* Render nested routes (like invoice, accounts, etc.) */}
+                {/* Render nested routes (like invoice, accounts, PROJECTS, etc.) */}
                 <Outlet />
             </main>
         </div>

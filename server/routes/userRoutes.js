@@ -35,7 +35,7 @@ const upload = multer({ storage: storage });
 
 userRouter.get("/data", userAuth, getUserdata);
 userRouter.get('/all', userAuth, getAllEmployees);
-userRouter.get("/:id", userAuth, adminAuth, getEmployeeDetails);
+userRouter.get("/:id", userAuth, getEmployeeDetails);
 userRouter.delete("/delete/:id", userAuth, adminAuth, deleteUser); 
 
 // ✅ Update Route with Multer Middleware

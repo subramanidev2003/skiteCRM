@@ -31,6 +31,9 @@ import Accounts from "./pages/Accounts.jsx";
 import InvoicePayment from "./pages/InvoicePayment.jsx";
 import IncomeExpense from "./pages/IncomeExpense.jsx";
 import FinancialGraph from "./pages/FinancialGraph.jsx";
+import Projects from "./pages/Projects.jsx";
+import SocialMediaClients from "./components/SocialMediaClients.jsx";
+import SocialMediaTracker from "./components/SocialMediaTracker.jsx";
 
 function App() {
   return (
@@ -40,34 +43,19 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
 
-        {/* --- EMPLOYEE ROUTES --- */}
+        {/* --- EMPLOYEE DASHBOARD (Normal View) --- */}
         <Route element={<ProtectedRoute allowedRoles={["employee"]} />}>
           <Route path="/employee-dashboard" element={<EmployeeDashboard />} />
         </Route>
 
-        {/* --- SALES ROUTES (✅ FIXED) --- */}
-        {/* We wrap the route just like Admin and Manager below */}
         {/* --- SALES ROUTES --- */}
         <Route element={<ProtectedRoute allowedRoles={["sales", "Sales"]} />}>
-          {/* ✅ WRAP ROUTES IN SALES LAYOUT */}
           <Route element={<SalesLayout />}>
-            {/* Dashboard is the default view */}
             <Route path="/sales-dashboard" element={<SalesDashboard />} />
-
-            {/* These pages will now appear UNDER the Header */}
             <Route path="/lead-detail/:id" element={<LeadPage />} />
-            <Route
-              path="/sales/service/:serviceName"
-              element={<ServiceType />}
-            />
-            <Route
-              path="/sales-dashboard/conversion"
-              element={<Conversion />}
-            />
-            <Route
-              path="/sales-dashboard/all-leads"
-              element={<AllLeadPage />}
-            />
+            <Route path="/sales/service/:serviceName" element={<ServiceType />} />
+            <Route path="/sales-dashboard/conversion" element={<Conversion />} />
+            <Route path="/sales-dashboard/all-leads" element={<AllLeadPage />} />
           </Route>
         </Route>
 
@@ -75,14 +63,12 @@ function App() {
         <Route element={<ProtectedRoute allowedRoles={["manager"]} />}>
           <Route path="/manager-dashboard" element={<ManagerDashboard />} />
           <Route path="/manager-dashboard/tasks" element={<Task />} />
-          <Route
-            path="/manager-dashboard/attendance"
-            element={<Attendance />}
-          />
+          <Route path="/manager-dashboard/attendance" element={<Attendance />} />
         </Route>
 
-        {/* --- ADMIN ROUTES --- */}
-        <Route element={<ProtectedRoute allowedRoles={["Admin","accountant"]} />}>
+        {/* --- ADMIN DASHBOARD (Shared with Employee for Projects) --- */}
+        {/* ✅ FIX: Added 'employee' to allowedRoles here so they can access /admin-dashboard/projects */}
+        <Route element={<ProtectedRoute allowedRoles={["Admin", "accountant", "employee"]} />}>
           <Route path="/admin-dashboard" element={<AdminDashboard />}>
             <Route index element={null} />
             <Route path="teams" element={<Team />} />
@@ -93,35 +79,31 @@ function App() {
             <Route path="leads" element={<AdminSalesDashboard />} />
             <Route path="service/:serviceName" element={<AdminServiceType />} />
             <Route path="lead-detail/:id" element={<AdminLeadPage />} />
-            <Route
-              path="/admin-dashboard/all-leads"
-              element={<AllLeadPage />}
-            />
-            <Route
-              path="/admin-dashboard/conversion"
-              element={<Conversion />}
-            />
+            <Route path="/admin-dashboard/all-leads" element={<AllLeadPage />} />
+            <Route path="/admin-dashboard/conversion" element={<Conversion />} />
             <Route path="/admin-dashboard/payroll" element={<PayRoll />} />
             <Route path="/admin-dashboard/invoice" element={<Invoice />} />
             <Route path="invoice/:id" element={<Invoice />} />
             <Route path="invoice-history" element={<InvoiceHistory />} />
             <Route path="/admin-dashboard/quote" element={<Quote />} />
             <Route path="quote/:id" element={<Quote />} />
-            <Route
-              path="/admin-dashboard/quote-history"
-              element={<QuoteHistory />}
-            />
-            {/* ✅ Accounts Route Added */}
+            <Route path="/admin-dashboard/quote-history" element={<QuoteHistory />} />
             <Route path="/admin-dashboard/accounts" element={<Accounts />} />
-            <Route path="financial-graph" element={<FinancialGraph />}/>
-           
-
-<Route path="invoice-payment" element={<InvoicePayment />} />
-<Route path="income-expense" element={<IncomeExpense />} />
+            <Route path="financial-graph" element={<FinancialGraph />} />
+            <Route path="invoice-payment" element={<InvoicePayment />} />
+            <Route path="income-expense" element={<IncomeExpense />} />
+            
+            {/* ✅ Projects Route inside AdminDashboard Layout */}
+            <Route path="/admin-dashboard/projects" element={<Projects />} />
           </Route>
 
           <Route path="/add-employee" element={<AddEmployee />} />
         </Route>
+
+        {/* --- PROJECT SUB-PAGES --- */}
+        <Route path="/social-media-clients" element={<SocialMediaClients />} />
+        <Route path="/social-media/tracker/:id" element={<SocialMediaTracker />} />
+        <Route path="/projects/social-media" element={<SocialMediaClients />} />
 
         <Route path="*" element={<div>404 Not Found</div>} />
       </Routes>
@@ -130,26 +112,3 @@ function App() {
 }
 
 export default App;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

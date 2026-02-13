@@ -1,0 +1,265 @@
+/* --- LAYOUT & BACKGROUND --- */
+.sm-wrapper {
+  padding: 30px;
+  background-color: #f4f7fe; /* Light Blue-Grey Background */
+  min-height: 100vh;
+  font-family: 'Inter', sans-serif;
+}
+
+/* --- HEADER --- */
+.sm-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+.sm-title h1 {
+  margin: 0;
+  font-size: 24px;
+  color: #1b2559;
+}
+
+.sm-title span {
+  font-size: 14px;
+  color: #a3aed0;
+}
+
+/* --- BUTTONS --- */
+.btn-back {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid #e0e5f2;
+  padding: 8px 16px;
+  border-radius: 8px;
+  color: #707eae;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-back:hover {
+  background: #f4f7fe;
+  color: #1b2559;
+}
+
+.btn-primary {
+  background: #FF4500; /* Skite Orange */
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.2s;
+  box-shadow: 0 4px 10px rgba(255, 69, 0, 0.2);
+}
+
+.btn-primary:hover {
+  background: #e03e00;
+}
+
+.btn-success {
+  background: #05cd99; /* Modern Green */
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 10px rgba(5, 205, 153, 0.2);
+}
+
+/* --- CARDS GRID (Clients Page) --- */
+.sm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 25px;
+}
+
+.client-card {
+  background: white;
+  padding: 25px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+  border: 1px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.client-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  border-color: #FF4500;
+}
+
+.card-icon-bg {
+  width: 50px;
+  height: 50px;
+  background: #fff5f0;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
+.client-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1b2559;
+  margin-bottom: 5px;
+}
+
+.business-name {
+  font-size: 14px;
+  color: #a3aed0;
+  margin-bottom: 15px;
+}
+
+/* --- BADGES --- */
+.badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge.paid {
+  background: #e6fffa;
+  color: #05cd99;
+}
+
+.badge.pending {
+  background: #fff5f5;
+  color: #e53e3e;
+}
+
+/* --- TABLE STYLES (Tracker Page) --- */
+.tracker-container {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  padding: 20px;
+  overflow-x: auto;
+}
+
+.sm-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.sm-table th {
+  text-align: left;
+  padding: 15px;
+  color: #a3aed0;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  border-bottom: 1px solid #e0e5f2;
+}
+
+.sm-table td {
+  padding: 15px;
+  border-bottom: 1px solid #f4f7fe;
+  color: #1b2559;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.sm-table tr:hover td {
+  background-color: #fcfdfe;
+}
+
+/* --- DROPDOWN SELECTS --- */
+.status-select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #e0e5f2;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  width: 100%;
+  font-size: 13px;
+  appearance: none; /* Hide default arrow */
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px top 50%;
+  background-size: 10px;
+}
+
+/* Dynamic Colors for Select */
+.status-select.posted { background-color: #e6fffa; color: #05cd99; border-color: #05cd99; }
+.status-select.not-posted { background-color: #fff5f5; color: #e53e3e; border-color: #e53e3e; }
+.status-select.pending { background-color: #fff; color: #707eae; }
+
+/* --- PAYMENT FOOTER --- */
+.payment-footer {
+  margin-top: 30px;
+  background: #1b2559; /* Dark Blue */
+  padding: 20px 30px;
+  border-radius: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+  box-shadow: 0 10px 30px rgba(27, 37, 89, 0.2);
+}
+
+.payment-footer h3 { margin: 0; font-size: 16px; font-weight: 500; opacity: 0.9; }
+
+.payment-select {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 14px;
+}
+.payment-select.paid { background: #05cd99; color: white; }
+.payment-select.pending { background: #e53e3e; color: white; }
+
+/* --- MODAL --- */
+.sm-modal-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(27, 37, 89, 0.4); /* Dark Overlay */
+  backdrop-filter: blur(4px);
+  display: flex; justify-content: center; alignItems: center; z-index: 1000;
+}
+
+.sm-modal {
+  background: white;
+  padding: 30px;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 450px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.sm-input-group { margin-bottom: 20px; }
+.sm-input-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #1b2559; font-size: 14px; }
+.sm-input-group input {
+  width: 100%; padding: 12px; border: 1px solid #e0e5f2; border-radius: 10px;
+  font-size: 14px; outline: none; transition: border 0.2s; box-sizing: border-box; /* Fix for overflow */
+}
+.sm-input-group input:focus { border-color: #FF4500; }
