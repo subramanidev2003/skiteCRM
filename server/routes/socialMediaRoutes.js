@@ -28,9 +28,11 @@ router.get('/all', async (req, res) => {
 });
 
 // 3. GET SINGLE CLIENT
+// ✅ GET SINGLE CLIENT BY ID
 router.get('/:id', async (req, res) => {
   try {
-    const client = await SocialMediaClient.findById(req.params.id);
+    const client = await SocialMediaClient.findById(req.params.id); // ✅ findById முக்கியம்
+    if (!client) return res.status(404).json({ message: "Client not found" });
     res.status(200).json(client);
   } catch (err) {
     res.status(500).json({ error: err.message });

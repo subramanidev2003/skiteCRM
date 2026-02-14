@@ -33,7 +33,7 @@ import IncomeExpense from "./pages/IncomeExpense.jsx";
 import FinancialGraph from "./pages/FinancialGraph.jsx";
 import Projects from "./pages/Projects.jsx";
 import SocialMediaClients from "./components/SocialMediaClients.jsx";
-import SocialMediaTracker from "./components/SocialMediaTracker.jsx";
+import SocialMediaProject from "./components/SocialMediaProject.jsx";
 
 function App() {
   return (
@@ -101,9 +101,11 @@ function App() {
         </Route>
 
         {/* --- PROJECT SUB-PAGES --- */}
-        <Route path="/social-media-clients" element={<SocialMediaClients />} />
-        <Route path="/social-media/tracker/:id" element={<SocialMediaTracker />} />
-        <Route path="/projects/social-media" element={<SocialMediaClients />} />
+
+       <Route path="/social-media/clients" element={<SocialMediaClients />} />
+
+  {/* 2. Specific Project Page (Inga thaan ID venum, yentha client nu theriya) */}
+  <Route path="/projects/social-media/:id" element={<SocialMediaProject />} />
 
         <Route path="*" element={<div>404 Not Found</div>} />
       </Routes>

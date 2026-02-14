@@ -4,13 +4,19 @@ import { ArrowLeft, Plus, Users } from 'lucide-react';
 import { toast } from 'react-toastify';
 import './SocialMedia.css'; 
 
-const API_BASE = 'http://localhost:4000/api';
+const API_BASE = 'https://skitecrm.onrender.com/api';
 
 const SocialMediaClients = () => {
   const navigate = useNavigate();
   const [clients, setClients] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newClient, setNewClient] = useState({ clientName: '', businessName: '', month: 'March 2026' });
+  
+  // New Client Form
+  const [newClient, setNewClient] = useState({ 
+      clientName: '', 
+      businessName: '', 
+      month: 'March 2026' 
+  });
 
   useEffect(() => {
     fetchClients();
@@ -36,34 +42,17 @@ const SocialMediaClients = () => {
         toast.success("Client Added Successfully!");
         setIsModalOpen(false);
         fetchClients();
+        setNewClient({ clientName: '', businessName: '', month: 'March 2026' });
       }
     } catch (err) { toast.error("Error adding client"); }
   };
 
-  // ✅ HELPER: Convert "March 2026" -> "2026-03" for Filtering
-  const getMonthPrefix = (monthStr) => {
-    if (!monthStr) return "";
-    const date = new Date(Date.parse("1 " + monthStr)); 
-    if (isNaN(date)) return "";
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    return `${year}-${month}`;
-  };
-
-  // ✅ CORRECTED LOGIC: Count only CURRENT MONTH's posts
+  // Helper for Badge
   const getRemainingCount = (client) => {
     if (!client.days || !client.month) return 0;
     const target = client.videoTarget || 0;
-    
-    // 1. Get the prefix for the ACTIVE month (e.g., "2026-03")
-    const currentMonthPrefix = getMonthPrefix(client.month);
-
-    // 2. Filter days that belong ONLY to that month AND are 'Posted'
-    const postedCount = client.days.filter(d => 
-        d.date.startsWith(currentMonthPrefix) && 
-        d.postStatus === 'Posted'
-    ).length;
-    
+    // Simple logic for posted count (adjust based on your real data structure)
+    const postedCount = client.days.filter(d => d.postStatus === 'Posted').length;
     const remaining = target - postedCount;
     return remaining > 0 ? remaining : 0; 
   };
@@ -87,13 +76,19 @@ const SocialMediaClients = () => {
             </button>
         </div>
 
-        {/* Client Grid */}
+        {/* Clients Grid */}
         <div className="sm-grid">
             {clients.map(client => {
                 const remaining = getRemainingCount(client);
                 
                 return (
-                <div key={client._id} className="client-card" onClick={() => navigate(`/social-media/tracker/${client._id}`)}>
+                <div 
+                    key={client._id} 
+                    className="client-card" 
+                    // ✅ CHANGE: Passing Client ID in URL
+                    onClick={() => navigate(`/projects/social-media/${client._id}`)}
+                    style={{cursor: 'pointer'}}
+                >
                     <div className="card-icon-bg">
                         <Users size={24} color="#FF4500"/>
                     </div>
@@ -104,17 +99,16 @@ const SocialMediaClients = () => {
                         📅 {client.month}
                     </div>
 
-                    {/* STATUS BADGE */}
                     <div style={{marginBottom: '15px'}}>
-                         <span style={{
+                          <span style={{
                              fontSize: '11px', fontWeight: 'bold', 
                              color: remaining === 0 ? '#05cd99' : '#FF4500',
                              background: remaining === 0 ? '#e6fffa' : '#fff5f5',
                              padding: '5px 10px', borderRadius: '6px',
                              display: 'inline-block'
-                         }}>
-                             {remaining === 0 ? 'All Videos Done 🎉' : `🎥 Pending Videos: ${remaining}`}
-                         </span>
+                          }}>
+                              {remaining === 0 ? 'All Videos Done 🎉' : `🎥 Pending Videos: ${remaining}`}
+                          </span>
                     </div>
 
                     <div className={`badge ${client.paymentStatus === 'Paid' ? 'paid' : 'pending'}`}>
@@ -139,11 +133,11 @@ const SocialMediaClients = () => {
                     <form onSubmit={handleAddClient}>
                         <div className="sm-input-group">
                             <label>Client Name</label>
-                            <input type="text" required placeholder="e.g. John Doe" onChange={e => setNewClient({...newClient, clientName: e.target.value})} />
+                            <input type="text" required placeholder="e.g. John Doe" value={newClient.clientName} onChange={e => setNewClient({...newClient, clientName: e.target.value})} />
                         </div>
                         <div className="sm-input-group">
                             <label>Business Name</label>
-                            <input type="text" placeholder="e.g. Skite Digital" onChange={e => setNewClient({...newClient, businessName: e.target.value})} />
+                            <input type="text" placeholder="e.g. Skite Digital" value={newClient.businessName} onChange={e => setNewClient({...newClient, businessName: e.target.value})} />
                         </div>
                         <div className="sm-input-group">
                             <label>Month & Year</label>

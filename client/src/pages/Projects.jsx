@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Share2, Globe, Search, MousePointerClick } from 'lucide-react';
+import skitelogo from '../assets/skitelogo.png'; 
 import './AdminDashboard.css'; 
 
 // Logout Icon Component
@@ -10,12 +11,28 @@ const LogoutIcon = () => (
 
 const Projects = () => {
   const navigate = useNavigate();
-  const [userRole, setUserRole] = useState('Admin'); // Default Role
+  const [userRole, setUserRole] = useState('Admin'); 
 
   useEffect(() => {
       const role = localStorage.getItem('userRole');
-      if (role) setUserRole(role === 'accountant' ? 'Accountant' : 'Admin');
+      const employeeToken = localStorage.getItem('employeeToken');
+
+      if (role) {
+          setUserRole(role);
+      } else if (employeeToken) {
+          setUserRole('employee');
+      }
   }, []);
+
+  // --- DYNAMIC BACK HANDLER ---
+  const handleBack = () => {
+      const role = localStorage.getItem('userRole');
+      if (role === 'employee') {
+          navigate('/employee-dashboard');
+      } else {
+          navigate('/admin-dashboard');
+      }
+  };
 
   // --- Logout Handler ---
   const handleLogout = () => {
@@ -24,12 +41,13 @@ const Projects = () => {
       window.location.reload();
   };
 
-  // Project Data List
+  // ✅ Project Data List (Updated Path)
   const projectList = [
     { 
       title: 'Social Media Marketing', 
       icon: <Share2 size={40} color="#FF4500" />, 
-      path: '/projects/social-media' 
+      // 👇 மாற்றம்: இது நேரடியாக புதிய Workflow பக்கத்திற்குச் செல்லும்
+      path: '/social-media/clients' 
     },
     { 
       title: 'Website Development', 
@@ -49,10 +67,9 @@ const Projects = () => {
   ];
 
   return (
-    <div className="admin-dashboard"> {/* ✅ CSS Class for Background */}
+    <div className="admin-dashboard"> 
       
-      {/* --- HEADER SECTION (Same as Admin Dashboard) --- */}
-  
+      {/* --- HEADER SECTION --- */}
 
       {/* --- MAIN CONTENT --- */}
       <main className="main-content-child" style={{ padding: '30px' }}>
@@ -60,7 +77,7 @@ const Projects = () => {
         {/* BACK BUTTON & TITLE */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '30px' }}>
             <button 
-                onClick={() => navigate('/admin-dashboard')}
+                onClick={handleBack} 
                 style={{
                     display: 'flex', alignItems: 'center', gap: '8px', background: 'white',
                     border: '1px solid #e0e0e0', padding: '10px 20px', borderRadius: '8px',

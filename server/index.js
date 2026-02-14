@@ -51,6 +51,7 @@ import invoiceRoutes from './routes/invoiceRoutes.js';
 import quoteRoutes from './routes/quoteRoutes.js';
 import transactionRoutes from './routes/transactionRoutes.js';
 import socialMediaRoutes from './routes/socialMediaRoutes.js';
+import contentRoutes from './routes/contentRoutes.js';
 
 
 const app = express();
@@ -131,6 +132,7 @@ app.use('/api/invoice', invoiceRoutes);
 app.use('/api/quote', quoteRoutes); // Add this line
 app.use('/api/transaction', transactionRoutes);
 app.use('/api/social-media', socialMediaRoutes);
+app.use('/api/content', contentRoutes);
 
 // ✅ ERROR HANDLING MIDDLEWARE
 app.use((err, req, res, next) => {
