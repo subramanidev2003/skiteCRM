@@ -16,9 +16,6 @@ const ServiceType = () => {
       return;
     }
 
-    // ✅ Debugging: URL-ல் வரும் பெயரைச் சரிபார்க்க
-    console.log("1. URL Service Name:", serviceName);
-
     // ✅ Fetch ALL leads using common API
     fetch(`https://skitecrm.onrender.com/api/leads/common/all`) 
       .then(res => {
@@ -28,25 +25,16 @@ const ServiceType = () => {
           return res.json();
       })
       .then(data => {
-        console.log("2. Total Leads from API:", data.length); // API-ல் டேட்டா வருகிறதா?
-
         if (Array.isArray(data)) {
           
           // ✅ URL பெயரைச் சுத்தம் செய்தல் (Small letters + Trim)
           const targetService = decodeURIComponent(serviceName).trim().toLowerCase();
-          console.log("3. Target Service (Cleaned):", targetService);
 
           const filtered = data.filter(lead => {
               // ✅ Database பெயரைச் சுத்தம் செய்தல்
               const dbService = lead.serviceType ? lead.serviceType.trim().toLowerCase() : '';
-              
-              // Debugging: இது பொருந்தாத லீட்ஸை ஏன் நிராகரிக்கிறது எனப் பார்க்க
-              // if (dbService.includes('paid')) console.log(`Checking: ${dbService} === ${targetService}`);
-
               return dbService === targetService;
           });
-
-          console.log("4. Filtered Leads Count:", filtered.length); // ஃபில்டர் ஆன பிறகு எத்தனை?
 
           // Sort by Priority
           const priorityOrder = { High: 3, Medium: 2, Low: 1 };
@@ -90,6 +78,9 @@ const ServiceType = () => {
                             <th>Name</th>
                             <th>Phone</th>
                             <th>Company Name</th>
+                            <th>Call Status</th>
+                            <th>Follow Up</th>
+                            <th>Requirement</th>
                             <th>Priority</th>
                             <th>Closing</th>
                         </tr>
@@ -97,10 +88,8 @@ const ServiceType = () => {
                     <tbody>
                         {leads.length === 0 ? (
                             <tr>
-                                <td colSpan="6" className="st-no-data">
+                                <td colSpan="9" className="st-no-data">
                                     No leads found for "{decodeURIComponent(serviceName)}".
-                                    <br/>
-                                    <small style={{color:'#999'}}>(Check Console F12 for details)</small>
                                 </td>
                             </tr>
                         ) : (
@@ -114,6 +103,22 @@ const ServiceType = () => {
                                     <td>{lead.name}</td>
                                     <td>{lead.phoneNumber}</td>
                                     <td>{lead.companyName || '-'}</td>
+                                    
+                                    {/* New Columns */}
+                                    <td>
+                                        <span className={`st-status-badge ${lead.callStatus?.toLowerCase().replace(/\s/g, '-')}`}>
+                                            {lead.callStatus || '-'}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span className={`st-status-badge ${lead.followUpStatus?.toLowerCase()}`}>
+                                            {lead.followUpStatus || '-'}
+                                        </span>
+                                    </td>
+                                    <td className="st-truncate-cell" title={lead.requirement}>
+                                        {lead.requirement || '-'}
+                                    </td>
+
                                     <td>
                                         <span className={`st-priority-badge ${lead.priority?.toLowerCase()}`}>
                                             {lead.priority}

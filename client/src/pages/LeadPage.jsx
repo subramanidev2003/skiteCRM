@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Check, X, Phone, User, Briefcase, MapPin, Calendar, 
-  CreditCard, Activity, Tag, ClipboardCheck, MessageSquare, Lock, Mail 
-} from 'lucide-react';
+  CreditCard, Activity, Tag, ClipboardCheck, MessageSquare, Lock, Mail, Link 
+} from 'lucide-react'; // Link Icon Import Panniruken
 import { toast } from 'react-toastify';
 import './LeadPageModern.css'; 
 
@@ -163,7 +163,6 @@ const LeadPage = () => {
                 <User size={20} color="#ff7f50"/> Client Profile
             </div>
             
-            {/* ✅ ALL FIELDS EDITABLE via ActionRow */}
             <div className="action-list">
                 
                 <ActionRow 
@@ -171,7 +170,6 @@ const LeadPage = () => {
                     value={currentLead.name} type="text" onSave={updateField} 
                 />
 
-                {/* ✅ ADDED EMAIL FIELD */}
                 <ActionRow 
                     label="Email" icon={Mail} name="email" 
                     value={currentLead.email} type="email" onSave={updateField} 
@@ -180,6 +178,12 @@ const LeadPage = () => {
                 <ActionRow 
                     label="Company" icon={Briefcase} name="companyName" 
                     value={currentLead.companyName} type="text" onSave={updateField} 
+                />
+
+                {/* ✅ WEBSITE FIELD ADDED HERE */}
+                <ActionRow 
+                    label="Website" icon={Link} name="website" 
+                    value={currentLead.website} type="url" onSave={updateField} 
                 />
 
                 <ActionRow 
@@ -250,10 +254,7 @@ const LeadPage = () => {
                     colorClass={getStatusColor(currentLead.leadStatus)}
                 />
                 
-                <ActionRow 
-                    label="Callback Remainder" icon={Calendar} name="callbackDate" 
-                    value={currentLead.callbackDate} type="date" onSave={updateField} 
-                />
+                {/* ❌ Callback Reminder Removed Here */}
                 
                 <ActionRow 
                     label="Remainder" icon={MessageSquare} name="requirement" 

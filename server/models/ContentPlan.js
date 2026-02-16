@@ -1,35 +1,23 @@
 import mongoose from 'mongoose';
 
 const ContentPlanSchema = new mongoose.Schema({
-  clientId: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'Client', 
-    required: true 
-  },
+  clientId: { type: mongoose.Schema.Types.ObjectId, ref: 'Client', required: true },
   
-  type: { type: String, required: true }, // 'Shoot', 'Edit', 'Post'
-  
-  // Common Fields
-  scriptTitle: { type: String }, // Used as 'Title' or 'Caption Topic'
+  // Type: 'Shoot', 'Script', 'Edit', 'Post'
+  type: { type: String, required: true }, 
 
-  // --- SHOOT FIELDS ---
-  shootDate: { type: Date },
-  shootDetails: { type: String },
-  shootStatus: { type: String, default: 'Pending' }, 
+  // Common Details
+  date: { type: Date, required: true },
+  startTime: { type: String }, // e.g., "10:00"
+  endTime: { type: String },   // e.g., "12:00"
+  details: { type: String },   // Description
 
-  // --- EDIT FIELDS (New) ---
-  editDate: { type: Date }, // Deadline
-  editDetails: { type: String },
-  editStatus: { type: String, default: 'Pending' },
+  // Status (Manual Dropdown in Table)
+  status: { type: String, default: 'Pending' }, // Pending / Completed
 
-  // --- POST FIELDS (New) ---
-  postDate: { type: Date },
-  caption: { type: String },
-  postStatus: { type: String, default: 'Pending' },
-
-  // Link to Task (Automation)
-  assignedTaskId: { type: mongoose.Schema.Types.ObjectId, ref: 'Task' }, 
-  assignedToUser: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  // Task Automation Links
+  assignedToUser: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, 
+  assignedTaskId: { type: mongoose.Schema.Types.ObjectId, ref: 'Task' },
 
   createdAt: { type: Date, default: Date.now }
 });
