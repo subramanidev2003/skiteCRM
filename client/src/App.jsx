@@ -34,6 +34,8 @@ import FinancialGraph from "./pages/FinancialGraph.jsx";
 import Projects from "./pages/Projects.jsx";
 import SocialMediaClients from "./components/SocialMediaClients.jsx";
 import SocialMediaProject from "./components/SocialMediaProject.jsx";
+import WebDevClients from "./components/WebDevClients.jsx";
+import WebDevProject from "./components/WebDevProject.jsx";
 
 function App() {
   return (
@@ -106,7 +108,9 @@ function App() {
 
   {/* 2. Specific Project Page (Inga thaan ID venum, yentha client nu theriya) */}
   <Route path="/projects/social-media/:id" element={<SocialMediaProject />} />
-
+{/* --- Web Development Routes --- */}
+<Route path="/webdev/clients" element={<WebDevClients />} />
+<Route path="/webdev/project/:id" element={<WebDevProject />} />
         <Route path="*" element={<div>404 Not Found</div>} />
       </Routes>
     </>

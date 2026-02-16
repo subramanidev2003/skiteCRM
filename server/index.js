@@ -52,6 +52,7 @@ import quoteRoutes from './routes/quoteRoutes.js';
 import transactionRoutes from './routes/transactionRoutes.js';
 import socialMediaRoutes from './routes/socialMediaRoutes.js';
 import contentRoutes from './routes/contentRoutes.js';
+import webDevRoutes from './routes/webdevRoutes.js';
 
 
 const app = express();
@@ -133,6 +134,8 @@ app.use('/api/quote', quoteRoutes); // Add this line
 app.use('/api/transaction', transactionRoutes);
 app.use('/api/social-media', socialMediaRoutes);
 app.use('/api/content', contentRoutes);
+// Web Development Routes
+app.use('/api/webdev', webDevRoutes);
 
 // ✅ ERROR HANDLING MIDDLEWARE
 app.use((err, req, res, next) => {

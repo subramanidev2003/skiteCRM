@@ -49,11 +49,11 @@ const Projects = () => {
       // 👇 மாற்றம்: இது நேரடியாக புதிய Workflow பக்கத்திற்குச் செல்லும்
       path: '/social-media/clients' 
     },
-    { 
-      title: 'Website Development', 
-      icon: <Globe size={40} color="#FF4500" />, 
-      path: '/projects/website' 
-    },
+   { 
+  title: 'Website Development', 
+  icon: <Globe size={40} color="#FF4500" />, 
+  path: '/webdev/clients'  // ✅ Updated Path
+},
     { 
       title: 'SEO', 
       icon: <Search size={40} color="#FF4500" />, 
