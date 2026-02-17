@@ -1,13 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Filter } from 'lucide-react'; // Added Filter icon
 import './ServiceType.css';
 
 const ServiceType = () => {
   const { serviceName } = useParams();
   const navigate = useNavigate();
   const [leads, setLeads] = useState([]);
+  const [filteredLeads, setFilteredLeads] = useState([]); // State for filtered data
   const [loading, setLoading] = useState(true);
+  
+  // Filter State
+  const [orderStatusFilter, setOrderStatusFilter] = useState('All');
 
   useEffect(() => {
     const storedUser = localStorage.getItem('salesUser');
@@ -27,11 +31,9 @@ const ServiceType = () => {
       .then(data => {
         if (Array.isArray(data)) {
           
-          // ✅ URL பெயரைச் சுத்தம் செய்தல் (Small letters + Trim)
           const targetService = decodeURIComponent(serviceName).trim().toLowerCase();
 
           const filtered = data.filter(lead => {
-              // ✅ Database பெயரைச் சுத்தம் செய்தல்
               const dbService = lead.serviceType ? lead.serviceType.trim().toLowerCase() : '';
               return dbService === targetService;
           });
@@ -45,6 +47,7 @@ const ServiceType = () => {
           });
 
           setLeads(filtered);
+          setFilteredLeads(filtered); // Initialize filtered leads
         }
       })
       .catch(err => {
@@ -54,16 +57,48 @@ const ServiceType = () => {
       
   }, [navigate, serviceName]);
 
+  // ✅ Handle Filter Change
+  useEffect(() => {
+    if (orderStatusFilter === 'All') {
+        setFilteredLeads(leads);
+    } else {
+        const result = leads.filter(lead => 
+            (lead.orderStatus || 'Open').toLowerCase() === orderStatusFilter.toLowerCase()
+        );
+        setFilteredLeads(result);
+    }
+  }, [orderStatusFilter, leads]);
+
   return (
     <div className="st-page-container">
       <div className="st-page-content">
         
         {/* HEADER */}
         <div className="st-page-header">
-            <button className="st-btn-back" onClick={() => navigate('/sales-dashboard')}>
-                <ArrowLeft size={20} /> Back to Dashboard
-            </button>
+            <div style={{flex: 1}}>
+                <button className="st-btn-back" onClick={() => navigate('/sales-dashboard')}>
+                    <ArrowLeft size={20} /> Back to Dashboard
+                </button>
+            </div>
+            
             <h2 className="st-page-title">{decodeURIComponent(serviceName)} Leads</h2>
+
+            {/* ✅ FILTER DROPDOWN */}
+            <div style={{flex: 1, display: 'flex', justifyContent: 'flex-end'}}>
+                <div className="st-filter-container">
+                    <Filter size={18} color="#555" />
+                    <select 
+                        className="st-filter-select"
+                        value={orderStatusFilter}
+                        onChange={(e) => setOrderStatusFilter(e.target.value)}
+                    >
+                        <option value="All">All Orders</option>
+                        <option value="Open">Open</option>
+                        <option value="Closed">Closed</option>
+                        <option value="Rejected">Rejected</option>
+                    </select>
+                </div>
+            </div>
         </div>
 
         {/* TABLE */}
@@ -77,23 +112,23 @@ const ServiceType = () => {
                             <th>Date</th>
                             <th>Name</th>
                             <th>Phone</th>
-                            <th>Company Name</th>
+                            <th>Company</th>
                             <th>Call Status</th>
-                            <th>Follow Up</th>
+                            <th>Order Status</th> {/* ✅ New Column */}
                             <th>Requirement</th>
                             <th>Priority</th>
                             <th>Closing</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {leads.length === 0 ? (
+                        {filteredLeads.length === 0 ? (
                             <tr>
                                 <td colSpan="9" className="st-no-data">
-                                    No leads found for "{decodeURIComponent(serviceName)}".
+                                    No {orderStatusFilter !== 'All' ? orderStatusFilter : ''} leads found.
                                 </td>
                             </tr>
                         ) : (
-                            leads.map((lead) => (
+                            filteredLeads.map((lead) => (
                                 <tr 
                                     key={lead._id || lead.id} 
                                     className="st-lead-row"
@@ -104,17 +139,19 @@ const ServiceType = () => {
                                     <td>{lead.phoneNumber}</td>
                                     <td>{lead.companyName || '-'}</td>
                                     
-                                    {/* New Columns */}
                                     <td>
                                         <span className={`st-status-badge ${lead.callStatus?.toLowerCase().replace(/\s/g, '-')}`}>
                                             {lead.callStatus || '-'}
                                         </span>
                                     </td>
+
+                                    {/* ✅ Order Status Column */}
                                     <td>
-                                        <span className={`st-status-badge ${lead.followUpStatus?.toLowerCase()}`}>
-                                            {lead.followUpStatus || '-'}
+                                        <span className={`st-status-badge ${lead.orderStatus?.toLowerCase() || 'open'}`}>
+                                            {lead.orderStatus || 'Open'}
                                         </span>
                                     </td>
+
                                     <td className="st-truncate-cell" title={lead.requirement}>
                                         {lead.requirement || '-'}
                                     </td>

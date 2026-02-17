@@ -42,7 +42,7 @@ const leadSchema = new mongoose.Schema({
   },
   
   website: { type: String },
-
+orderStatus: { type: String, default: 'Open' },
   leadStatus: { 
     type: String, 
     default: 'Not', 

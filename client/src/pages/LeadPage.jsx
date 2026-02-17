@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Check, X, Phone, User, Briefcase, MapPin, Calendar, 
-  CreditCard, Activity, Tag, ClipboardCheck, MessageSquare, Lock, Mail, Link 
-} from 'lucide-react'; // Link Icon Import Panniruken
+  CreditCard, Activity, Tag, ClipboardCheck, MessageSquare, Lock, Mail, Link, ShoppingCart 
+} from 'lucide-react'; // Added ShoppingCart icon for Order Status
 import { toast } from 'react-toastify';
 import './LeadPageModern.css'; 
 
@@ -24,6 +24,30 @@ const ActionRow = ({ label, icon: Icon, name, value, type = "text", options = []
     } else {
       toast.info("This field is locked.");
     }
+  };
+
+  // Helper to render value (Handling URL clicks)
+  const renderValue = () => {
+    if (!value) return <span style={{opacity: 0.5, fontStyle: 'italic'}}>Set Value</span>;
+    
+    // If type is URL, make it clickable
+    if (type === 'url') {
+      // Ensure URL has protocol
+      const href = value.startsWith('http') ? value : `https://${value}`;
+      return (
+        <a 
+          href={href} 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          onClick={(e) => e.stopPropagation()} // Prevent triggering edit mode when clicking link
+          style={{ color: '#2563eb', textDecoration: 'underline', cursor: 'pointer' }}
+        >
+          {value}
+        </a>
+      );
+    }
+
+    return value;
   };
 
   return (
@@ -53,7 +77,7 @@ const ActionRow = ({ label, icon: Icon, name, value, type = "text", options = []
             title={disabled ? "Locked" : "Click to Edit"}
         >
           <div className={`value-pill ${colorClass}`}>
-            {value || <span style={{opacity: 0.5, fontStyle: 'italic'}}>Set Value</span>}
+            {renderValue()}
           </div>
           {disabled && <Lock size={14} className="lock-icon" />}
         </div>
@@ -80,9 +104,12 @@ const LeadPage = () => {
   const getStatusColor = (val) => {
     if (!val) return '';
     const v = val.toLowerCase();
-    if (v === 'attend' || v === 'yes' || v === 'okay') return 'green';
-    if (v === 'not attend' || v === 'no' || v === 'not') return 'red';
-    if (v === 'callback') return 'blue';
+    
+    // General Status Colors
+    if (v === 'attend' || v === 'yes' || v === 'okay' || v === 'open') return 'green';
+    if (v === 'not attend' || v === 'no' || v === 'not' || v === 'rejected') return 'red';
+    if (v === 'callback' || v === 'closed') return 'blue';
+    
     return '';
   };
 
@@ -180,7 +207,7 @@ const LeadPage = () => {
                     value={currentLead.companyName} type="text" onSave={updateField} 
                 />
 
-                {/* ✅ WEBSITE FIELD ADDED HERE */}
+                {/* ✅ CLICKABLE WEBSITE FIELD */}
                 <ActionRow 
                     label="Website" icon={Link} name="website" 
                     value={currentLead.website} type="url" onSave={updateField} 
@@ -253,8 +280,15 @@ const LeadPage = () => {
                     onSave={updateField} 
                     colorClass={getStatusColor(currentLead.leadStatus)}
                 />
-                
-                {/* ❌ Callback Reminder Removed Here */}
+
+                {/* ✅ ORDER STATUS ADDED HERE */}
+                <ActionRow 
+                    label="Order Status" icon={ShoppingCart} name="orderStatus" 
+                    value={currentLead.orderStatus} 
+                    type="select" options={['Open', 'Closed', 'Rejected']} 
+                    onSave={updateField} 
+                    colorClass={getStatusColor(currentLead.orderStatus)}
+                />
                 
                 <ActionRow 
                     label="Remainder" icon={MessageSquare} name="requirement" 
