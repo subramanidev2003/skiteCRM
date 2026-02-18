@@ -2,15 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { 
   Clock, ListTodo, CalendarDays, CheckCircle2, 
   LogOut, User, AlertCircle, X, UserPlus, Users, History, 
-  ArrowRight, PlayCircle, StopCircle, BadgeCheck, Briefcase // ✅ Added Briefcase Icon
+  ArrowRight, PlayCircle, StopCircle, BadgeCheck, Briefcase ,CalendarPlus// ✅ Added Briefcase Icon
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './EmployeeDashboard.css'; 
 import { toast } from 'react-toastify';
 
 // --- CONFIGURATION ---
-const API_BASE = 'https://skitecrm.onrender.com/api';
+const API_BASE = 'http://localhost:4000/api';
 const UPLOADS_URL = "https://skitecrm.onrender.com/api/uploads";
+const LEAVE_URL = `${API_BASE}/leaves`;
 
 const ATTENDANCE_URL = `${API_BASE}/attendance`;
 const TASKS_URL = `${API_BASE}/tasks`;
@@ -79,6 +80,12 @@ const EmployeeDashboard = () => {
   // --- NEW STATE for PAYROLL STATUS ---
   const [todayWorkHours, setTodayWorkHours] = useState(0);
   const [payrollStatus, setPayrollStatus] = useState("Absent"); // Absent, Half Day, Present
+
+  // ... பழைய stateகள் அப்படியே இருக்கட்டும் ...
+  
+  // ✅ Leave Modal State (இதைச் சேர்க்கவும்)
+  const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
+  const [leaveData, setLeaveData] = useState({ fromDate: '', toDate: '', reason: '' });
 
   // --- INIT ---
   useEffect(() => { if (!token || !storedUser) navigate('/'); }, [navigate, token]);
@@ -411,6 +418,36 @@ const EmployeeDashboard = () => {
 
   const sortedTasks = [...tasks].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
+
+  // ✅ HANDLE LEAVE SUBMISSION (இதைச் சேர்க்கவும்)
+  const handleLeaveSubmit = async (e) => {
+    e.preventDefault();
+    if (!leaveData.fromDate || !leaveData.toDate || !leaveData.reason) {
+        toast.error("Please fill all fields");
+        return;
+    }
+    setLoading(true);
+    try {
+        const res = await fetch(`${LEAVE_URL}/create`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ ...leaveData, userId: EMPLOYEE_ID, name: EMPLOYEE_NAME, designation: EMPLOYEE_DESIGNATION })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            toast.success("Leave Request Sent!");
+            setIsLeaveModalOpen(false);
+            setLeaveData({ fromDate: '', toDate: '', reason: '' });
+        } else {
+            toast.error(data.message || "Failed to send request");
+        }
+    } catch (error) {
+        toast.error("Network Error");
+    } finally {
+        setLoading(false);
+    }
+  };
+
   return (
     <div className={`dashboard-layout ${isMobile ? "mobile-view" : ""}`}>
       {/* 1. TOP NAV */}
@@ -520,7 +557,7 @@ const EmployeeDashboard = () => {
           </div>
         </section>
 
-        {/* 3. MAIN GRID (Tasks + Sidebar) */}
+        {/* 3. MAIN GRID (Tasks + Sidebar) */}  
         <div className="content-grid">
           {/* LEFT: TASK LIST */}
           <div className="task-section">
@@ -529,6 +566,10 @@ const EmployeeDashboard = () => {
                 <ListTodo className="icon-orange" size={22} /> My Tasks (
                 {totalTasks})
               </h3>
+              <div style={{display:'flex', gap:'10px'}}>
+                <button className="btn-small-primary" style={{backgroundColor: '#ef4444', borderColor:'#ef4444'}} onClick={() => setIsLeaveModalOpen(true)}>
+        <CalendarPlus size={16} /> Leave
+      </button> 
               {isContentWriter && (
                 <button
                   className="btn-small-primary"
@@ -537,6 +578,7 @@ const EmployeeDashboard = () => {
                   <UserPlus size={16} /> Assign
                 </button>
               )}
+              </div>
             </div>
 
             <div className="progress-container">
@@ -1239,6 +1281,25 @@ const EmployeeDashboard = () => {
           </div>
         </div>
       )}
+
+      {/* --- LEAVE MODAL (NEW) --- */}
+{isLeaveModalOpen && (
+  <div className="modal-backdrop" onClick={() => setIsLeaveModalOpen(false)}>
+      <div className="modal-window" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-top"><h3>Request Leave</h3><button onClick={() => setIsLeaveModalOpen(false)}><X size={20}/></button></div>
+          <form onSubmit={handleLeaveSubmit}>
+              <div className="modal-body">
+                  <div className="row-inputs">
+                      <div className="input-group"><label>From Date</label><input type="date" required value={leaveData.fromDate} onChange={(e) => setLeaveData({...leaveData, fromDate: e.target.value})} /></div>
+                      <div className="input-group"><label>To Date</label><input type="date" required value={leaveData.toDate} onChange={(e) => setLeaveData({...leaveData, toDate: e.target.value})} /></div>
+                  </div>
+                  <div className="input-group"><label>Reason</label><textarea rows="3" required placeholder="Reason for leave..." value={leaveData.reason} onChange={(e) => setLeaveData({...leaveData, reason: e.target.value})} /></div>
+                  <button type="submit" className="btn-primary-fill" style={{width:'100%', marginTop:'15px'}} disabled={loading}>{loading ? "Submitting..." : "Submit Request"}</button>
+              </div>
+          </form>
+      </div>
+  </div>
+)}
     </div>
   );
 };

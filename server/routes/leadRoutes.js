@@ -94,5 +94,29 @@ router.delete('/delete/:id', async (req, res) => {
     res.status(500).json({ message: "Error deleting lead" });
   }
 });
+// --- BULK IMPORT LEADS ---
+router.post('/import', async (req, res) => {
+  try {
+    const { leads, salesAgentId } = req.body; // Array of leads
 
+    if (!Array.isArray(leads) || leads.length === 0) {
+      return res.status(400).json({ message: "No leads data found" });
+    }
+
+    // Add salesAgentId to each lead
+    const leadsWithAgent = leads.map(lead => ({
+      ...lead,
+      salesAgentId: salesAgentId,
+      date: lead.date || new Date(), // Ensure date exists
+      createdAt: new Date()
+    }));
+
+    // Insert Many
+    const insertedLeads = await Lead.insertMany(leadsWithAgent);
+
+    res.status(201).json({ message: "Leads Imported Successfully", count: insertedLeads.length, leads: insertedLeads });
+  } catch (err) {
+    res.status(500).json({ message: "Error importing leads", error: err.message });
+  }
+});
 export default router;

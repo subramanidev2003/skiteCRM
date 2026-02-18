@@ -732,3 +732,350 @@ input:focus-visible {
   background-color: #d1d5db;
   cursor: not-allowed;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Attendance.css */
+
+/* --- GENERAL PAGE STYLES --- */
+.attendance-page1 {
+  padding: 30px;
+  font-family: 'Inter', sans-serif;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+.page-title {
+  margin: 20px 0;
+  color: #333;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+/* --- BUTTONS --- */
+.modern-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  border: 1px solid #e0e0e0;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #4b5563;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.modern-back-btn:hover {
+  border-color: #FF4500;
+  color: #FF4500;
+  background-color: #fff5f5;
+  transform: translateX(-3px);
+}
+
+/* --- TABS --- */
+.tabs-container {
+  display: flex;
+  gap: 20px;
+  border-bottom: 2px solid #eee;
+  margin-bottom: 25px;
+}
+
+.tab-btn {
+  padding: 12px 20px;
+  border: none;
+  background: none;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.tab-btn:hover {
+  color: #333;
+}
+
+.tab-btn.active {
+  color: #FF4500;
+}
+
+.tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: #FF4500;
+  border-radius: 3px 3px 0 0;
+}
+
+/* --- FILTERS --- */
+.filter-container1 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  padding: 15px 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.filter-inputs {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.search-input, .date-input {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+}
+
+.search-input:focus, .date-input:focus {
+  border-color: #FF4500;
+}
+
+.clear-btn, .download-btn, .delete-btn {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.clear-btn { background: #f3f4f6; color: #555; }
+.clear-btn:hover { background: #e5e7eb; }
+
+.download-btn { background: #FF4500; color: white; }
+.download-btn:hover { background: #e03e00; }
+
+.delete-btn { background: #fee2e2; color: #b91c1c; margin-right: 10px; }
+.delete-btn:hover { background: #fecaca; }
+
+/* --- TABLE --- */
+.table-container {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  overflow: hidden;
+  overflow-x: auto;
+}
+
+.attendance-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px;
+}
+
+.attendance-table th {
+  background-color: #f9fafb;
+  color: #6b7280;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  padding: 15px 20px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.attendance-table td {
+  padding: 15px 20px;
+  border-bottom: 1px solid #f3f4f6;
+  color: #374151;
+  font-size: 0.9rem;
+  vertical-align: middle;
+}
+
+.attendance-table tr:hover {
+  background-color: #ffffec; /* Slight highlight */
+}
+
+/* --- BADGES --- */
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  display: inline-block;
+}
+
+.status-badge.approved { background-color: #d1fae5; color: #065f46; }
+.status-badge.rejected { background-color: #fee2e2; color: #991b1b; }
+.status-badge.pending { background-color: #fff7ed; color: #9a3412; border: 1px solid #ffedd5; }
+
+/* --- ACTION BUTTONS (Approve/Reject) --- */
+.action-btn-group {
+  display: flex;
+  gap: 8px;
+}
+
+.action-icon-btn {
+  border: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.action-icon-btn:hover {
+  transform: scale(1.1);
+}
+
+.approve-btn { background-color: #dcfce7; color: #16a34a; }
+.reject-btn { background-color: #fee2e2; color: #dc2626; }
+
+/* --- PAGINATION --- */
+.pagination-container {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 20px;
+  gap: 10px;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.pagination-btn {
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-btn:not(:disabled):hover {
+  border-color: #FF4500;
+  color: #FF4500;
+}
+
+/* --- MODAL --- */
+.att-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.att-modal-box {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.att-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+.att-modal-header h3 {
+  margin: 0;
+  color: #333;
+}
+
+.att-modal-content p {
+  margin: 10px 0;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.att-modal-content strong {
+  color: #333;
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 768px) {
+  .attendance-page1 {
+    padding: 15px;
+  }
+  
+  .filter-container1 {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filter-inputs {
+    flex-direction: column;
+  }
+  
+  .table-container {
+    border-radius: 8px;
+  }
+}

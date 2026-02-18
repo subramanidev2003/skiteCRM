@@ -1,24 +1,27 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   LogOut, Target, Users, TrendingUp, Plus, X, 
-  Clock, CalendarDays, ListTodo, CheckCircle2, AlertCircle 
-} from "lucide-react";
+  Clock, CalendarDays, ListTodo, CheckCircle2, AlertCircle, ScrollText, Upload 
+} from "lucide-react"; // ✅ Added Upload Icon
 import "./SalesDashboard.css"; 
 import { toast } from "react-toastify";
+import * as XLSX from 'xlsx'; // ✅ Import XLSX Library
 
 // --- CONFIGURATION ---
 const API_BASE = 'https://skitecrm.onrender.com/api';
 const ATTENDANCE_URL = `${API_BASE}/attendance`;
-const TASKS_URL = `${API_BASE}/tasks`; // ✅ Task URL Added
+const TASKS_URL = `${API_BASE}/tasks`; 
 
 const SalesDashboard = () => {
   const navigate = useNavigate();
+  const fileInputRef = useRef(null); // ✅ Ref for File Input
+
   const [user, setUser] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [leads, setLeads] = useState([]);
 
-  // --- TASK STATE (New) ---
+  // --- TASK STATE ---
   const [tasks, setTasks] = useState([]);
   const [taskLoading, setTaskLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -75,7 +78,7 @@ const SalesDashboard = () => {
         // Check Attendance
         checkActiveSession(userId, token);
 
-        // ✅ Fetch Tasks
+        // Fetch Tasks
         fetchTasks(userId, token);
       }
     } else {
@@ -83,7 +86,7 @@ const SalesDashboard = () => {
     }
   }, [navigate]);
 
-  // --- TASK FUNCTIONS (New) ---
+  // --- TASK FUNCTIONS ---
   const fetchTasks = async (userId, token) => {
     try {
       const response = await fetch(`${TASKS_URL}/${userId}`, { 
@@ -104,7 +107,6 @@ const SalesDashboard = () => {
     const token = localStorage.getItem("salesToken");
     const newStatus = currentStatus === 'Completed' ? 'Pending' : 'Completed';
     
-    // Optimistic Update
     setTasks(prev => prev.map(t => t._id === taskId ? { ...t, status: newStatus } : t));
     
     try {
@@ -115,7 +117,6 @@ const SalesDashboard = () => {
       });
       toast.success(`Task marked as ${newStatus}`);
     } catch (error) { 
-        // Revert on error
         fetchTasks(user._id, token); 
         toast.error("Failed to update status"); 
     }
@@ -192,11 +193,6 @@ const SalesDashboard = () => {
     setConversionRate(((closed / currentLeads.length) * 100).toFixed(0));
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate("/");
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     const agentId = user?._id || user?.id;
@@ -216,6 +212,76 @@ const SalesDashboard = () => {
     } catch (error) { toast.error("Server Error"); }
   };
 
+  // ✅ EXCEL IMPORT LOGIC
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const bstr = evt.target.result;
+      const wb = XLSX.read(bstr, { type: 'binary' });
+      const wsname = wb.SheetNames[0];
+      const ws = wb.Sheets[wsname];
+      const data = XLSX.utils.sheet_to_json(ws);
+
+      if (data.length === 0) {
+        toast.warning("Excel sheet is empty!");
+        return;
+      }
+
+      // Map Excel columns to our Schema (Case insensitive)
+      const formattedLeads = data.map(row => {
+        // Convert keys to lowercase to match roughly
+        const keys = Object.keys(row).reduce((acc, key) => {
+            acc[key.toLowerCase().trim()] = row[key];
+            return acc;
+        }, {});
+
+        return {
+            date: keys['date'] || new Date(),
+            name: keys['name'] || keys['client name'] || 'Unknown',
+            email: keys['email'] || '',
+            companyName: keys['company'] || keys['company name'] || '',
+            phoneNumber: keys['phone'] || keys['phone number'] || keys['mobile'] || '',
+            serviceType: keys['service'] || keys['service type'] || 'Web Development',
+            business: keys['business'] || keys['business type'] || '',
+            location: keys['location'] || ''
+        };
+      });
+
+      sendLeadsToBackend(formattedLeads);
+    };
+    reader.readAsBinaryString(file);
+  };
+
+  const sendLeadsToBackend = async (importedLeads) => {
+    const agentId = user?._id || user?.id;
+    try {
+        const res = await fetch("https://skitecrm.onrender.com/api/leads/import", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ leads: importedLeads, salesAgentId: agentId }),
+        });
+        
+        const responseData = await res.json();
+
+        if (res.ok) {
+            toast.success(`Success! ${responseData.count} leads imported.`);
+            // Refresh leads
+            setLeads([...responseData.leads, ...leads]);
+            calculateStats([...responseData.leads, ...leads]);
+        } else {
+            toast.error(responseData.message || "Import failed");
+        }
+    } catch (error) {
+        toast.error("Error importing leads to server");
+    } finally {
+        // Reset file input
+        if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   const calculateDuration = (start) => {
     if (!start) return { h: 0, m: 0 };
     const diff = new Date() - new Date(start);
@@ -224,7 +290,6 @@ const SalesDashboard = () => {
 
   const getCount = (service) => leads.filter((l) => l.serviceType === service).length;
   
-  // Sort tasks
   const sortedTasks = [...tasks].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   const completedTasksCount = tasks.filter(t => t.status === 'Completed').length;
 
@@ -307,15 +372,46 @@ const SalesDashboard = () => {
                             <span className="value">{conversionRate}%</span>
                         </div>
                     </div>
+
+                    {/* ✅ QUOTE CARD */}
+                    <div className="stat-box clickable" onClick={() => navigate('/sales-dashboard/quote')}>
+                        <div className="stat-icon-wrapper" style={{background:'#f3e8ff', color:'#9333ea'}}>
+                            <ScrollText size={24}/>
+                        </div>
+                        <div className="stat-text">
+                            <span className="label">Quotes</span>
+                            <span className="value" style={{fontSize:'1rem'}}>Create</span>
+                        </div>
+                    </div>
+
                 </section>
 
                 {/* Leads Categories */}
                 <section className="leads-area">
                     <div className="area-header">
                         <h3>Leads by Category</h3>
-                        <button className="btn-add-lead" onClick={() => setIsModalOpen(true)}>
-                            <Plus size={18} /> New Lead
-                        </button>
+                        
+                        <div style={{display: 'flex', gap: '10px'}}>
+                            {/* ✅ IMPORT LEAD BUTTON */}
+                            <button 
+                                className="btn-add-lead" 
+                                style={{background: '#10b981', border: '1px solid #059669', display: 'flex', alignItems: 'center', gap: '5px'}}
+                                onClick={() => fileInputRef.current.click()}
+                            >
+                                <Upload size={18} /> Import Lead
+                            </button>
+                            <input 
+                                type="file" 
+                                accept=".xlsx, .xls" 
+                                ref={fileInputRef} 
+                                style={{display: 'none'}} 
+                                onChange={handleFileUpload} 
+                            />
+
+                            <button className="btn-add-lead" onClick={() => setIsModalOpen(true)}>
+                                <Plus size={18} /> New Lead
+                            </button>
+                        </div>
                     </div>
                     <div className="services-grid">
                         {serviceOptions.map(service => (
@@ -328,7 +424,7 @@ const SalesDashboard = () => {
                 </section>
             </div>
 
-            {/* RIGHT COLUMN: TASKS (Copied from Employee Dashboard) */}
+            {/* RIGHT COLUMN: TASKS */}
             <div className="right-column task-sidebar" style={{ background: 'white', borderRadius: '12px', padding: '20px', border: '1px solid #e0e0e0', height: 'fit-content' }}>
                 <div className="section-header" style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'15px'}}>
                     <h3 style={{margin:0, display:'flex', alignItems:'center', gap:'8px', fontSize:'1.1rem'}}>
@@ -384,78 +480,28 @@ const SalesDashboard = () => {
 
       </main>
 
-      {/* --- TASK VIEW MODAL --- */}
-      {/* --- TASK VIEW MODAL (Fixed Style) --- */}
+      {/* MODALS */}
       {isViewModalOpen && selectedTask && (
-        <div 
-            className="modal-overlay" 
-            style={{
-                position:'fixed', top:0, left:0, width:'100%', height:'100%', 
-                background:'rgba(0,0,0,0.5)', display:'flex', justifyContent:'center', 
-                alignItems:'center', zIndex:1000
-            }} 
-            onClick={() => setIsViewModalOpen(false)}
-        >
-          <div 
-            className="modal-content" 
-            style={{
-                background:'white', padding:'25px', borderRadius:'12px', 
-                width:'90%', maxWidth:'500px', // Increased max-width
-                boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-                position: 'relative'
-            }} 
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="modal-overlay" style={{position:'fixed', top:0, left:0, width:'100%', height:'100%', background:'rgba(0,0,0,0.5)', display:'flex', justifyContent:'center', alignItems:'center', zIndex:1000}} onClick={() => setIsViewModalOpen(false)}>
+          <div className="modal-content" style={{background:'white', padding:'25px', borderRadius:'12px', width:'90%', maxWidth:'500px', boxShadow: '0 4px 20px rgba(0,0,0,0.15)'}} onClick={(e) => e.stopPropagation()}>
             <div style={{display:'flex', justifyContent:'space-between', marginBottom:'20px', borderBottom:'1px solid #eee', paddingBottom:'10px'}}>
                 <h3 style={{margin:0, color:'#333'}}>Task Details</h3>
                 <button onClick={() => setIsViewModalOpen(false)} style={{background:'none', border:'none', cursor:'pointer'}}><X size={22} color="#666"/></button>
             </div>
-
             <h2 style={{fontSize:'1.3rem', color:'#222', marginBottom:'10px', wordBreak: 'break-word'}}>{selectedTask.title}</h2>
-            
             <div style={{display:'flex', gap:'10px', marginBottom:'15px', flexWrap:'wrap'}}>
-                <span style={{background:'#f3f4f6', padding:'5px 10px', borderRadius:'6px', fontSize:'0.85rem', color:'#555', border:'1px solid #e5e7eb'}}>
-                    Priority: <strong>{selectedTask.priority}</strong>
-                </span>
-                <span style={{background:'#f3f4f6', padding:'5px 10px', borderRadius:'6px', fontSize:'0.85rem', color:'#555', border:'1px solid #e5e7eb'}}>
-                    Due: <strong>{new Date(selectedTask.dueDate).toLocaleDateString()}</strong>
-                </span>
+                <span style={{background:'#f3f4f6', padding:'5px 10px', borderRadius:'6px', fontSize:'0.85rem', color:'#555', border:'1px solid #e5e7eb'}}>Priority: <strong>{selectedTask.priority}</strong></span>
+                <span style={{background:'#f3f4f6', padding:'5px 10px', borderRadius:'6px', fontSize:'0.85rem', color:'#555', border:'1px solid #e5e7eb'}}>Due: <strong>{new Date(selectedTask.dueDate).toLocaleDateString()}</strong></span>
             </div>
-
             <label style={{display:'block', marginBottom:'5px', fontSize:'0.9rem', color:'#777', fontWeight:'600'}}>Description:</label>
-            <div style={{
-                color:'#444', 
-                lineHeight:'1.6', 
-                background:'#f9fafb', 
-                padding:'15px', 
-                borderRadius:'8px', 
-                border: '1px solid #e5e7eb',
-                maxHeight: '300px',       // Limit height if text is huge
-                overflowY: 'auto',        // Add scroll if needed
-                whiteSpace: 'pre-wrap',   // Preserves spaces and line breaks
-                wordBreak: 'break-word',  // ✅ BREAKS LONG WORDS
-                overflowWrap: 'anywhere'  // ✅ ENSURES WRAPPING
-            }}>
-                {selectedTask.description}
-            </div>
-
-            <button 
-                onClick={() => { handleToggleTask(selectedTask._id, selectedTask.status); setIsViewModalOpen(false); }}
-                style={{
-                    width:'100%', padding:'12px', marginTop:'20px', 
-                    background: selectedTask.status === 'Completed' ? '#ff9800' : '#10b981', 
-                    color:'white', border:'none', borderRadius:'8px', 
-                    cursor:'pointer', fontWeight:'bold', fontSize:'1rem',
-                    transition: 'background 0.2s ease'
-                }}
-            >
+            <div style={{color:'#444', lineHeight:'1.6', background:'#f9fafb', padding:'15px', borderRadius:'8px', border: '1px solid #e5e7eb', maxHeight: '300px', overflowY: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-word'}}>{selectedTask.description}</div>
+            <button onClick={() => { handleToggleTask(selectedTask._id, selectedTask.status); setIsViewModalOpen(false); }} style={{width:'100%', padding:'12px', marginTop:'20px', background: selectedTask.status === 'Completed' ? '#ff9800' : '#10b981', color:'white', border:'none', borderRadius:'8px', cursor:'pointer', fontWeight:'bold', fontSize:'1rem'}}>
                 {selectedTask.status === 'Completed' ? 'Mark Incomplete' : 'Mark as Completed'}
             </button>
           </div>
         </div>
       )}
 
-      {/* LEAD MODAL */}
       {isModalOpen && (
         <div className="modal-backdrop">
           <div className="modal-window">

@@ -4,9 +4,10 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import './Attendance.css';
 import { toast } from 'react-toastify';
-import { ArrowLeft, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, X, ChevronLeft, ChevronRight, Calendar, ListChecks } from 'lucide-react';
+import Leaves from '../components/Leaves'; // ✅ Import Leaves Component
 
-const API_BASE = 'https://skitecrm.onrender.com/api';
+const API_BASE = 'http://localhost:4000/api';
 
 const Attendance = () => {
   const navigate = useNavigate();
@@ -18,6 +19,9 @@ const Attendance = () => {
   const managerUser = JSON.parse(localStorage.getItem('managerUser'));
   const isManager = !!managerUser;
   const allowedDesignations = ['Web Developer', 'Web Developer(intern)', 'SEO(intern)'];
+
+  // ✅ ACTIVE TAB STATE
+  const [activeTab, setActiveTab] = useState('attendance'); // 'attendance' or 'leaves'
 
   // STATE
   const [attendance, setAttendance] = useState([]);
@@ -49,22 +53,25 @@ const Attendance = () => {
           return;
         }
 
-        const response = await fetch(`${API_BASE}/attendance/all`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        // ✅ Only fetch attendance if tab is active (Optimization)
+        if (activeTab === 'attendance') {
+            const response = await fetch(`${API_BASE}/attendance/all`, {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            });
 
-        if (response.status === 401 || response.status === 403) {
-          localStorage.clear(); 
-          navigate('/');
-          return;
+            if (response.status === 401 || response.status === 403) {
+              localStorage.clear(); 
+              navigate('/');
+              return;
+            }
+
+            const data = await response.json();
+            setAttendance(data);
         }
-
-        const data = await response.json();
-        setAttendance(data);
         setLoading(false);
       } catch (err) {
         console.error('Fetch error:', err);
@@ -73,7 +80,7 @@ const Attendance = () => {
       }
     };
     fetchAttendance();
-  }, [navigate, token]);
+  }, [navigate, token, activeTab]); // ✅ Added activeTab dependency
 
   // FILTER LOGIC
   useEffect(() => {
@@ -218,8 +225,6 @@ const Attendance = () => {
     toast.success("Deleted records");
   };
 
-  if (loading) return <div className="attendance-page1">Loading...</div>;
-
   return (
     <div className="attendance-page1">
       <button className="modern-back-btn" 
@@ -253,76 +258,112 @@ const Attendance = () => {
         <ArrowLeft size={20} /> Back
       </button>
 
-      <h2 className="page-title">Attendance History</h2>
+      <h2 className="page-title">Attendance & Leave Management</h2>
 
-      <div className="filter-container1">
-        <div className="filter-inputs">
-          <input type="text" placeholder="Search Name..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="search-input" />
-          <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="date-input" />
-          <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="date-input" />
-          <button onClick={() => {setSearchTerm(""); setFromDate(""); setToDate("");}} className="clear-btn">Clear</button>
-        </div>
-        <div className="action-buttons">
-          {!isManager && <button className="delete-btn" onClick={deleteAllFilteredRecords} disabled={isDeleting}>{isDeleting ? "..." : "Delete All"}</button>}
-          <button onClick={downloadPDF} className="download-btn">Download PDF</button>
-        </div>
+      {/* ✅ TAB NAVIGATION */}
+      <div style={{display:'flex', gap:'20px', borderBottom:'2px solid #eee', marginBottom:'20px'}}>
+          <button 
+            onClick={() => setActiveTab('attendance')}
+            style={{
+                padding:'10px 20px', 
+                borderBottom: activeTab === 'attendance' ? '3px solid #FF4500' : 'none',
+                color: activeTab === 'attendance' ? '#FF4500' : '#666',
+                fontWeight: 'bold', cursor:'pointer', background:'none', borderTop:'none', borderLeft:'none', borderRight:'none',
+                display: 'flex', alignItems: 'center', gap: '8px'
+            }}>
+            <ListChecks size={18} /> Attendance Logs
+          </button>
+          <button 
+            onClick={() => setActiveTab('leaves')}
+            style={{
+                padding:'10px 20px', 
+                borderBottom: activeTab === 'leaves' ? '3px solid #FF4500' : 'none',
+                color: activeTab === 'leaves' ? '#FF4500' : '#666',
+                fontWeight: 'bold', cursor:'pointer', background:'none', borderTop:'none', borderLeft:'none', borderRight:'none',
+                display: 'flex', alignItems: 'center', gap: '8px'
+            }}>
+            <Calendar size={18} /> Leave Requests
+          </button>
       </div>
 
-      <div className="table-container">
-        <table className="attendance-table">
-          <thead>
-            <tr>
-                <th>EMPLOYEE</th>
-                <th>DATE</th>
-                <th>IN</th>
-                <th>OUT</th>
-                <th>DURATION</th>
-                <th>STATUS</th>
-                <th>TASK</th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentItems.length === 0 ? (
-              <tr><td colSpan="7" className="text-center">No records.</td></tr>
-            ) : (
-              currentItems.map((row) => {
-                // ✅ Calculate logic for each row
-                const { text, hours, isAbsent, reason } = calculateDuration(row.checkIn, row.checkOut);
+      {/* ✅ CONDITIONAL RENDERING BASED ON TAB */}
+      {activeTab === 'leaves' ? (
+          <Leaves />
+      ) : (
+          <>
+            {/* EXISTING ATTENDANCE CONTENT */}
+            <div className="filter-container1">
+                <div className="filter-inputs">
+                <input type="text" placeholder="Search Name..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="search-input" />
+                <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="date-input" />
+                <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="date-input" />
+                <button onClick={() => {setSearchTerm(""); setFromDate(""); setToDate("");}} className="clear-btn">Clear</button>
+                </div>
+                <div className="action-buttons">
+                {!isManager && <button className="delete-btn" onClick={deleteAllFilteredRecords} disabled={isDeleting}>{isDeleting ? "..." : "Delete All"}</button>}
+                <button onClick={downloadPDF} className="download-btn">Download PDF</button>
+                </div>
+            </div>
 
-                return (
-                    <tr key={row._id} onClick={() => {setSelectedAttendance(row); setIsModalOpen(true);}} className="att-clickable-row">
-                      <td><strong>{row.employeeName}</strong><br/><small>{row.designation}</small></td>
-                      <td>{formatDate(row.checkIn)}</td>
-                      <td className="text-green">{formatTime(row.checkIn)}</td>
-                      <td className={row.checkOut ? "text-red" : "text-blue"}>{row.checkOut ? formatTime(row.checkOut) : "Active"}</td>
-                      
-                      {/* ✅ Duration Logic Display */}
-                      <td style={{fontWeight:'bold', color: isAbsent ? '#991b1b' : '#555'}}>
-                          {isAbsent ? "—" : text}
-                      </td>
-                      
-                      {/* ✅ Status Badge */}
-                      <td>{renderStatusBadge(hours, isAbsent, reason)}</td>
+            {loading ? <div style={{padding:'20px', textAlign:'center'}}>Loading Attendance...</div> : (
+                <div className="table-container">
+                    <table className="attendance-table">
+                    <thead>
+                        <tr>
+                            <th>EMPLOYEE</th>
+                            <th>DATE</th>
+                            <th>IN</th>
+                            <th>OUT</th>
+                            <th>DURATION</th>
+                            <th>STATUS</th>
+                            <th>TASK</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {currentItems.length === 0 ? (
+                        <tr><td colSpan="7" className="text-center">No records.</td></tr>
+                        ) : (
+                        currentItems.map((row) => {
+                            // ✅ Calculate logic for each row
+                            const { text, hours, isAbsent, reason } = calculateDuration(row.checkIn, row.checkOut);
 
-                      <td className="td-task">{row.taskDescription || "—"}</td>
-                    </tr>
-                );
-              })
+                            return (
+                                <tr key={row._id} onClick={() => {setSelectedAttendance(row); setIsModalOpen(true);}} className="att-clickable-row">
+                                <td><strong>{row.employeeName}</strong><br/><small>{row.designation}</small></td>
+                                <td>{formatDate(row.checkIn)}</td>
+                                <td className="text-green">{formatTime(row.checkIn)}</td>
+                                <td className={row.checkOut ? "text-red" : "text-blue"}>{row.checkOut ? formatTime(row.checkOut) : "Active"}</td>
+                                
+                                {/* ✅ Duration Logic Display */}
+                                <td style={{fontWeight:'bold', color: isAbsent ? '#991b1b' : '#555'}}>
+                                    {isAbsent ? "—" : text}
+                                </td>
+                                
+                                {/* ✅ Status Badge */}
+                                <td>{renderStatusBadge(hours, isAbsent, reason)}</td>
+
+                                <td className="td-task">{row.taskDescription || "—"}</td>
+                                </tr>
+                            );
+                        })
+                        )}
+                    </tbody>
+                    </table>
+                </div>
             )}
-          </tbody>
-        </table>
-      </div>
 
-      {/* PAGINATION CONTROLS */}
-      {filteredAttendance.length > 0 && (
-        <div className="pagination-container" style={{display:'flex', justifyContent:'flex-end', marginTop:'15px', gap:'10px'}}>
-          <span>Page {currentPage} of {totalPages}</span>
-          <button onClick={goToPrevPage} disabled={currentPage===1} style={{padding:'5px 10px'}}><ChevronLeft/></button>
-          <button onClick={goToNextPage} disabled={currentPage===totalPages} style={{padding:'5px 10px'}}><ChevronRight/></button>
-        </div>
+            {/* PAGINATION CONTROLS */}
+            {filteredAttendance.length > 0 && (
+                <div className="pagination-container" style={{display:'flex', justifyContent:'flex-end', marginTop:'15px', gap:'10px'}}>
+                <span>Page {currentPage} of {totalPages}</span>
+                <button onClick={goToPrevPage} disabled={currentPage===1} style={{padding:'5px 10px'}}><ChevronLeft/></button>
+                <button onClick={goToNextPage} disabled={currentPage===totalPages} style={{padding:'5px 10px'}}><ChevronRight/></button>
+                </div>
+            )}
+          </>
       )}
 
-      {/* MODAL */}
+      {/* DETAIL MODAL */}
       {isModalOpen && selectedAttendance && (
         <div className="att-modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="att-modal-box" onClick={(e) => e.stopPropagation()}>

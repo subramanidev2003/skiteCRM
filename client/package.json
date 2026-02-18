@@ -13,6 +13,7 @@
     "@simplewebauthn/browser": "^13.2.2",
     "@tailwindcss/vite": "^4.1.17",
     "axios": "^1.13.2",
+    "framer-motion": "^12.34.0",
     "jspdf": "^3.0.4",
     "jspdf-autotable": "^5.0.7",
     "lottie-react": "^2.4.1",
@@ -23,7 +24,8 @@
     "react-router-dom": "^7.9.5",
     "react-toastify": "^11.0.5",
     "recharts": "^3.6.0",
-    "styled-components": "^6.1.19"
+    "styled-components": "^6.1.19",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

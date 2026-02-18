@@ -53,6 +53,7 @@ import transactionRoutes from './routes/transactionRoutes.js';
 import socialMediaRoutes from './routes/socialMediaRoutes.js';
 import contentRoutes from './routes/contentRoutes.js';
 import webDevRoutes from './routes/webdevRoutes.js';
+import leaveRoutes from './routes/leavesRoutes.js';
 
 
 const app = express();
@@ -136,6 +137,7 @@ app.use('/api/social-media', socialMediaRoutes);
 app.use('/api/content', contentRoutes);
 // Web Development Routes
 app.use('/api/webdev', webDevRoutes);
+app.use('/api/leaves', leaveRoutes);
 
 // ✅ ERROR HANDLING MIDDLEWARE
 app.use((err, req, res, next) => {

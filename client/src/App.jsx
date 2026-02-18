@@ -58,6 +58,8 @@ function App() {
             <Route path="/sales/service/:serviceName" element={<ServiceType />} />
             <Route path="/sales-dashboard/conversion" element={<Conversion />} />
             <Route path="/sales-dashboard/all-leads" element={<AllLeadPage />} />
+            <Route path="/sales-dashboard/quote" element={<Quote />} />
+            
           </Route>
         </Route>
 
