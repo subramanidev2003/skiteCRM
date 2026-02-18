@@ -54,6 +54,8 @@ import socialMediaRoutes from './routes/socialMediaRoutes.js';
 import contentRoutes from './routes/contentRoutes.js';
 import webDevRoutes from './routes/webdevRoutes.js';
 import leaveRoutes from './routes/leavesRoutes.js';
+import receiptRoutes from "./routes/receiptRoutes.js";
+
 
 
 const app = express();
@@ -138,6 +140,7 @@ app.use('/api/content', contentRoutes);
 // Web Development Routes
 app.use('/api/webdev', webDevRoutes);
 app.use('/api/leaves', leaveRoutes);
+app.use("/api/receipt", receiptRoutes);
 
 // ✅ ERROR HANDLING MIDDLEWARE
 app.use((err, req, res, next) => {
