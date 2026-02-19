@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom'; 
-import { CalendarCheck, Megaphone, Users, IndianRupee, FileText, ScrollText, Landmark, Briefcase } from 'lucide-react'; // ✅ Briefcase added
+import { CalendarCheck, Megaphone, IndianRupee, FileText, ScrollText, Landmark, Briefcase, ReceiptText } from 'lucide-react';
 import skitelogo from '../assets/skitelogo.png'; 
 import './AdminDashboard.css'; 
+    
+const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
 
-// ✅ Localhost API URL
-const API_BASE = 'https://skitecrm.onrender.com/api';
-
-// --- SVG Icons Components ---
 export const LogoutIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
 );
@@ -21,11 +19,10 @@ export const TaskIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#FF4500" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>
 );
 
-// --- Dashboard Cards Component ---
 const DashboardCards = ({ handleCardClick, role }) => (
     <div className="cards-container">
-        
-        {/* --- GROUP 1: ONLY ADMIN SEES THESE --- */}
+
+        {/* ADMIN ONLY */}
         {role === 'admin' && (
             <>
                 <div className="card" onClick={() => handleCardClick('add')}>
@@ -33,25 +30,21 @@ const DashboardCards = ({ handleCardClick, role }) => (
                     <div className="card-title1">Add employee</div>
                     <div className="card-accent"></div>
                 </div>
-
                 <div className="card" onClick={() => handleCardClick('teams')}>
                     <div className="card-icon"><TeamIcon /></div>
                     <div className="card-title1">Teams</div>
                     <div className="card-accent"></div>
                 </div>
-
                 <div className="card" onClick={() => handleCardClick('tasks')}>
                     <div className="card-icon"><TaskIcon /></div>
                     <div className="card-title1">Task</div>
                     <div className="card-accent"></div>
                 </div>
-
                 <div className="card" onClick={() => handleCardClick('attendance')}>
                     <div className="card-icon"><CalendarCheck size={40} color="#FF4500" /></div>
                     <div className="card-title1">Attendance</div>
                     <div className="card-accent"></div>
                 </div>
-
                 <div className="card" onClick={() => handleCardClick('leads')}>
                     <div className="card-icon"><Megaphone size={40} color="#FF4500" /></div>
                     <div className="card-title1">Leads</div>
@@ -60,7 +53,7 @@ const DashboardCards = ({ handleCardClick, role }) => (
             </>
         )}
 
-        {/* ✅ PROJECTS CARD: Visible to ADMIN and EMPLOYEE (Content Writer) */}
+        {/* PROJECTS: Admin + Employee */}
         {(role === 'admin' || role === 'employee') && (
             <div className="card" onClick={() => handleCardClick('projects')}>
                 <div className="card-icon"><Briefcase size={40} color="#FF4500" /></div>
@@ -69,7 +62,7 @@ const DashboardCards = ({ handleCardClick, role }) => (
             </div>
         )}
 
-        {/* --- GROUP 2: BOTH ADMIN AND ACCOUNTANT SEE THESE --- */}
+        {/* ADMIN + ACCOUNTANT */}
         {(role === 'admin' || role === 'accountant') && (
             <>
                 <div className="card" onClick={() => handleCardClick('payroll')}>
@@ -77,18 +70,22 @@ const DashboardCards = ({ handleCardClick, role }) => (
                     <div className="card-title1">Payroll</div>
                     <div className="card-accent"></div>
                 </div>
-
                 <div className="card" onClick={() => handleCardClick('invoice')}>
                     <div className="card-icon"><FileText size={40} color="#FF4500" /></div>
                     <div className="card-title1">Invoice</div>
                     <div className="card-accent"></div>
                 </div>
-                 <div className="card" onClick={() => handleCardClick('quote')}>
+                <div className="card" onClick={() => handleCardClick('quote')}>
                     <div className="card-icon"><ScrollText size={40} color="#FF4500" /></div>
                     <div className="card-title1">Quote</div>
                     <div className="card-accent"></div>
                 </div>
-
+                {/* ✅ Payment Receipt Card */}
+                <div className="card" onClick={() => handleCardClick('receipt')}>
+                    <div className="card-icon"><ReceiptText size={40} color="#FF4500" /></div>
+                    <div className="card-title1">Payment Receipt</div>
+                    <div className="card-accent"></div>
+                </div>
                 <div className="card" onClick={() => handleCardClick('accounts')}>
                     <div className="card-icon"><Landmark size={40} color="#FF4500" /></div>
                     <div className="card-title1">Accounts</div>
@@ -96,31 +93,23 @@ const DashboardCards = ({ handleCardClick, role }) => (
                 </div>
             </>
         )}
-
     </div>
 );
 
-// ---------------- AdminDashboard Main Component ----------------
 const AdminDashboard = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    
-    // State to store the current user's role
     const [userRole, setUserRole] = useState('');
 
     useEffect(() => {
-        // 1. Check all tokens
         const adminToken = localStorage.getItem('adminToken');
         const accountantToken = localStorage.getItem('accountantToken');
-        const employeeToken = localStorage.getItem('employeeToken'); // ✅ Get Employee Token
-        
-        const storedRole = localStorage.getItem('userRole'); 
+        const employeeToken = localStorage.getItem('employeeToken');
+        const storedRole = localStorage.getItem('userRole');
 
-        // 3. Logic: If NO token at all, kick out
         if (!adminToken && !accountantToken && !employeeToken) {
             navigate('/');
         } else {
-            // 4. Set Role State
             if (storedRole) {
                 setUserRole(storedRole);
             } else if (adminToken) {
@@ -128,79 +117,70 @@ const AdminDashboard = () => {
             } else if (accountantToken) {
                 setUserRole('accountant');
             } else if (employeeToken) {
-                setUserRole('employee'); // ✅ Set Employee Role
+                setUserRole('employee');
             }
         }
     }, [navigate]);
-    
+
     const isBaseDashboard = location.pathname === '/admin-dashboard' || location.pathname === '/admin-dashboard/';
 
-    // --- Logout Handler ---
     const handleLogout = async () => {
         try {
-            await fetch(`${API_BASE}/auth/admin-logout`, { 
+            await fetch(`${API_BASE}/auth/admin-logout`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
             });
-            console.log("Logged out from server");
         } catch (error) {
             console.error("Logout API Error:", error);
         } finally {
-            localStorage.clear(); 
+            localStorage.clear();
             navigate('/');
-            window.location.reload(); 
+            window.location.reload();
         }
     };
 
-    // --- Navigation Handler ---
     const handleCardClick = (type) => {
         const routes = {
             'add': '/add-employee',
             'teams': '/admin-dashboard/teams',
             'tasks': '/admin-dashboard/tasks',
-            'projects': '/admin-dashboard/projects', // ✅ Projects Route
+            'projects': '/admin-dashboard/projects',
             'attendance': '/admin-dashboard/attendance',
             'leads': '/admin-dashboard/leads',
             'payroll': '/admin-dashboard/payroll',
             'invoice': '/admin-dashboard/invoice',
             'quote': '/admin-dashboard/quote',
+            'receipt': '/admin-dashboard/receipt',          // ✅ இது இல்லாததால போகலை
+            'receipt-history': '/admin-dashboard/receipt-history',
             'accounts': '/admin-dashboard/accounts'
         };
-        if(routes[type]) navigate(routes[type]);
+        if (routes[type]) navigate(routes[type]);
     };
-    
+
     return (
         <div className="admin-dashboard">
-             <header className="header">
-                 <div className="header-left">
-                     <div className="logo-container">
-                         <img 
-                          src={skitelogo} 
-                          alt="Skite Logo" 
-                          className="logo" 
-                          onClick={() => navigate('/admin-dashboard')}
-                          style={{ cursor: 'pointer' }}
-                        />
-                     </div>
-                     <div className="header-title">
+            <header className="header">
+                <div className="header-left">
+                    <div className="logo-container">
+                        <img src={skitelogo} alt="Skite Logo" className="logo"
+                            onClick={() => navigate('/admin-dashboard')}
+                            style={{ cursor: 'pointer' }} />
+                    </div>
+                    <div className="header-title">
                         Welcome back {userRole.charAt(0).toUpperCase() + userRole.slice(1)}!
-                     </div>
-                 </div>
-                 <button className="logout-button" onClick={handleLogout}>
-                     Logout <LogoutIcon />
-                 </button>
-             </header>
+                    </div>
+                </div>
+                <button className="logout-button" onClick={handleLogout}>
+                    Logout <LogoutIcon />
+                </button>
+            </header>
 
-             <main className={isBaseDashboard ? "main-content1" : "main-content-child"}>
-                
-                {/* Show Cards based on role */}
+            <main className={isBaseDashboard ? "main-content1" : "main-content-child"}>
                 {isBaseDashboard && <DashboardCards handleCardClick={handleCardClick} role={userRole} />}
-
-                {/* Render nested routes (like invoice, accounts, PROJECTS, etc.) */}
                 <Outlet />
             </main>
         </div>
     );
-}
+};
 
 export default AdminDashboard;

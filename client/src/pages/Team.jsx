@@ -4,8 +4,8 @@ import { toast } from "react-toastify";
 import { ArrowLeft, Trash2, Mail, Calendar, User, Search } from "lucide-react";
 import "./Team.css"; // ✅ New CSS File
 
-const API_BASE = "https://skitecrm.onrender.com/api";
-const UPLOADS_URL = "https://skitecrm.onrender.com/api/uploads";
+const API_BASE = "https://skitecrm-1l7f.onrender.com/api";
+const UPLOADS_URL = "https://skitecrm-1l7f.onrender.com/api/uploads";
 
 const Team = () => {
   const navigate = useNavigate();

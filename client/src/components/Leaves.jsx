@@ -12,7 +12,7 @@ const Leaves = () => {
 
     const fetchLeaves = async () => {
         try {
-            const res = await fetch('http://localhost:4000/api/leaves/all', {
+            const res = await fetch('https://skitecrm-1l7f.onrender.com/api/leaves/all', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if(res.ok) {
@@ -24,7 +24,7 @@ const Leaves = () => {
 
     const updateStatus = async (id, status) => {
         try {
-            const res = await fetch(`http://localhost:4000/api/leaves/update/${id}`, {
+            const res = await fetch(`https://skitecrm-1l7f.onrender.com/api/leaves/update/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ status })

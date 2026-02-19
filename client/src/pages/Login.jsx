@@ -5,7 +5,7 @@ import skitelogo from '../assets/skitelogo.png';
 import rocketAnimation from '../assets/rocket.json'; 
 import './Login.css';
 
-const API_BASE = 'https://skitecrm.onrender.com/api';
+const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
 
 const Login = () => {
     const navigate = useNavigate();

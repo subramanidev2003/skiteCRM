@@ -9,8 +9,8 @@ import './EmployeeDashboard.css';
 import { toast } from 'react-toastify';
 
 // --- CONFIGURATION ---
-const API_BASE = 'http://localhost:4000/api';
-const UPLOADS_URL = "https://skitecrm.onrender.com/api/uploads";
+const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
+const UPLOADS_URL = "https://skitecrm-1l7f.onrender.com/api/uploads";
 const LEAVE_URL = `${API_BASE}/leaves`;
 
 const ATTENDANCE_URL = `${API_BASE}/attendance`;

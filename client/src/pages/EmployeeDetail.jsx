@@ -6,8 +6,8 @@ import {
 } from 'lucide-react';
 import './EmployeeDetail.css';
 
-const API_BASE = 'https://skitecrm.onrender.com/api';
-const API_UPLOAD = 'https://skitecrm.onrender.com/api/uploads';
+const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
+const API_UPLOAD = 'https://skitecrm-1l7f.onrender.com/api/uploads';
 
 const EmployeeDetails = () => {
   const { id } = useParams();

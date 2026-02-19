@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, User, Trash2 } from 'lucide-react'; // ✅ Trash2 Icon
+import { ArrowLeft, Plus, User, Trash2, Edit2, Check, Globe, Phone, Mail } from 'lucide-react';
 import { toast } from 'react-toastify';
 import './SocialMedia.css'; 
 
-const API_BASE = 'https://skitecrm.onrender.com/api';
+const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
+
 const WebDevProject = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -16,7 +17,10 @@ const WebDevProject = () => {
     // Inputs
     const [reqInput, setReqInput] = useState('');
     const [changeInput, setChangeInput] = useState('');
-    const [selectedDev, setSelectedDev] = useState('');
+
+    // ✅ EDIT STATE
+    const [isEditing, setIsEditing] = useState(false);
+    const [editData, setEditData] = useState({});
 
     useEffect(() => {
         if(id) {
@@ -29,7 +33,19 @@ const WebDevProject = () => {
     const fetchClientData = async () => {
         try {
             const res = await fetch(`${API_BASE}/webdev/client/${id}`);
-            if(res.ok) setClient(await res.json());
+            if(res.ok) {
+                const data = await res.json();
+                setClient(data);
+                // Initialize edit data
+                setEditData({
+                    clientName: data.clientName || '',
+                    businessName: data.businessName || '',
+                    phone: data.phone || '',
+                    email: data.email || '',
+                    website: data.website || '',
+                    assignedDev: data.assignedDev?._id || data.assignedDev || ''
+                });
+            }
         } catch(err) { console.error(err); }
     };
 
@@ -47,35 +63,63 @@ const WebDevProject = () => {
         } catch(err) { console.error(err); }
     };
 
+    // ✅ SAVE EDITED CLIENT DETAILS
+    const handleSaveClientDetails = async () => {
+        try {
+            const res = await fetch(`${API_BASE}/webdev/client/update/${id}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(editData)
+            });
+            if(res.ok) {
+                toast.success("Client details updated!");
+                setIsEditing(false);
+                fetchClientData(); // Refresh data
+            } else {
+                toast.error("Failed to update details");
+            }
+        } catch(err) { toast.error("Error updating details"); }
+    };
+
+    // ✅ ADD ITEM (Requirement / Change)
     const handleAddItem = async (type, description, setInput) => {
-        if(!description || !selectedDev) return toast.warning("Enter description and select a developer!");
+        if(!description) return toast.warning("Enter description!");
         
+        // Project-க்கு Developer assign ஆகியுள்ளாரா என்று செக் செய்கிறோம்
+        if(!editData.assignedDev) {
+            return toast.error("Please assign a developer to this project first!");
+        }
+        
+        // ✅ Task Name-ல் Project Name-ஐ சேர்க்கிறோம்
+        const fullDescription = `[${client.businessName}] - ${description}`;
+
         try {
             const res = await fetch(`${API_BASE}/webdev/requirements/add`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ clientId: id, type, description, assignedTo: selectedDev })
+                // assignedDev-ஐ project-ல் இருந்தே எடுக்கிறோம்
+                body: JSON.stringify({ 
+                    clientId: id, 
+                    type, 
+                    description: fullDescription, 
+                    assignedTo: editData.assignedDev 
+                })
             });
             if(res.ok) {
-                toast.success(`${type} Added & Task Assigned!`);
+                toast.success(`${type} Added & Assigned to Developer!`);
                 setInput('');
                 fetchItems();
             }
         } catch(err) { toast.error("Error adding item"); }
     };
 
-    // ✅ DELETE FUNCTION
     const handleDeleteItem = async (itemId) => {
         if(window.confirm("Are you sure you want to delete this item?")) {
             try {
-                const res = await fetch(`${API_BASE}/webdev/requirements/delete/${itemId}`, {
-                    method: 'DELETE'
-                });
+                const res = await fetch(`${API_BASE}/webdev/requirements/delete/${itemId}`, { method: 'DELETE' });
                 if(res.ok) {
                     toast.success("Item Deleted");
                     fetchItems(); 
-                } else {
-                    toast.error("Failed to delete");
                 }
             } catch(err) { toast.error("Error deleting item"); }
         }
@@ -95,7 +139,6 @@ const WebDevProject = () => {
         } catch(err) { toast.error("Update failed"); }
     };
 
-    // Filter Items
     const requirements = items.filter(i => i.type === 'Requirement');
     const changes = items.filter(i => i.type === 'Change');
 
@@ -105,32 +148,88 @@ const WebDevProject = () => {
         <div className="admin-dashboard">
             <main className="main-content-child" style={{padding:'30px'}}>
                 
-                {/* Header */}
-                <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'30px'}}>
-                    <div style={{display:'flex', alignItems:'center', gap:'15px'}}>
-                        <button onClick={()=>navigate('/webdev/clients')} className="modern-back-btn"><ArrowLeft size={20}/> Back</button>
+                {/* ✅ TOP HEADER & CLIENT DETAILS */}
+                <div style={{background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', marginBottom: '30px'}}>
+                    
+                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', borderBottom: '1px solid #eee', paddingBottom: '15px', marginBottom: '15px'}}>
+                        <div style={{display:'flex', alignItems:'center', gap:'15px'}}>
+                            <button onClick={()=>navigate('/webdev/clients')} className="modern-back-btn"><ArrowLeft size={20}/> Back</button>
+                            <div>
+                                {isEditing ? (
+                                    <input className="edit-input" value={editData.businessName} onChange={e=>setEditData({...editData, businessName: e.target.value})} style={{fontSize: '24px', fontWeight: 'bold', width: '100%', marginBottom:'5px'}} />
+                                ) : (
+                                    <h1 style={{margin:0, fontSize:'24px', color:'#FF4500'}}>{client.businessName}</h1>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Edit Button */}
                         <div>
-                            <h1 style={{margin:0, fontSize:'24px'}}>{client.clientName}</h1>
-                            <span style={{color:'#666', fontSize:'14px'}}>{client.businessName}</span>
+                            {isEditing ? (
+                                <button onClick={handleSaveClientDetails} className="btn-primary" style={{background: '#10b981', display:'flex', gap:'5px', alignItems:'center'}}>
+                                    <Check size={16}/> Save Details
+                                </button>
+                            ) : (
+                                <button onClick={() => setIsEditing(true)} className="btn-primary" style={{background: '#3b82f6', display:'flex', gap:'5px', alignItems:'center'}}>
+                                    <Edit2 size={16}/> Edit Details
+                                </button>
+                            )}
                         </div>
                     </div>
-                    
-                    <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
-                        <User size={18} color="#666"/>
-                        <select 
-                            className="modern-select" 
-                            value={selectedDev} 
-                            onChange={e=>setSelectedDev(e.target.value)}
-                            style={{padding:'8px', borderRadius:'6px', border:'1px solid #ddd'}}
-                        >
-                            <option value="">Select Developer to Assign</option>
-                            {developers.map(dev => <option key={dev._id} value={dev._id}>{dev.name}</option>)}
-                        </select>
+
+                    {/* Client Info Grid */}
+                    <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px'}}>
+                        
+                        <div>
+                            <label style={{fontSize: '12px', color: '#888', fontWeight: 'bold'}}>Client Name</label>
+                            {isEditing ? <input className="edit-input" value={editData.clientName} onChange={e=>setEditData({...editData, clientName: e.target.value})} /> 
+                            : <div style={{display:'flex', alignItems:'center', gap:'8px', marginTop:'5px'}}><User size={16} color="#555"/> {client.clientName}</div>}
+                        </div>
+
+                        <div>
+                            <label style={{fontSize: '12px', color: '#888', fontWeight: 'bold'}}>Phone</label>
+                            {isEditing ? <input className="edit-input" value={editData.phone} onChange={e=>setEditData({...editData, phone: e.target.value})} /> 
+                            : <div style={{display:'flex', alignItems:'center', gap:'8px', marginTop:'5px'}}><Phone size={16} color="#555"/> {client.phone || 'N/A'}</div>}
+                        </div>
+
+                        <div>
+                            <label style={{fontSize: '12px', color: '#888', fontWeight: 'bold'}}>Email</label>
+                            {isEditing ? <input className="edit-input" value={editData.email} onChange={e=>setEditData({...editData, email: e.target.value})} /> 
+                            : <div style={{display:'flex', alignItems:'center', gap:'8px', marginTop:'5px'}}><Mail size={16} color="#555"/> {client.email || 'N/A'}</div>}
+                        </div>
+
+                        <div>
+                            <label style={{fontSize: '12px', color: '#888', fontWeight: 'bold'}}>Website</label>
+                            {isEditing ? <input className="edit-input" value={editData.website} onChange={e=>setEditData({...editData, website: e.target.value})} /> 
+                            : <div style={{display:'flex', alignItems:'center', gap:'8px', marginTop:'5px'}}><Globe size={16} color="#3b82f6"/> 
+                                {client.website ? <a href={`https://${client.website.replace('https://', '')}`} target="_blank" rel="noreferrer" style={{color:'#3b82f6', textDecoration:'none'}}>{client.website}</a> : 'N/A'}
+                              </div>}
+                        </div>
+
+                        {/* ✅ ASSIGN DEVELOPER TO THE PROJECT HERE */}
+                        <div>
+                            <label style={{fontSize: '12px', color: '#FF4500', fontWeight: 'bold'}}>Assigned Developer</label>
+                            {isEditing ? (
+                                <select 
+                                    value={editData.assignedDev} 
+                                    onChange={e => setEditData({...editData, assignedDev: e.target.value})}
+                                    style={{width:'100%', padding:'8px', border:'1px solid #FF4500', borderRadius:'6px', marginTop:'5px'}}
+                                >
+                                    <option value="">-- Select Developer --</option>
+                                    {developers.map(dev => <option key={dev._id} value={dev._id}>{dev.name}</option>)}
+                                </select>
+                            ) : (
+                                <div style={{marginTop:'5px', fontWeight:'bold', color: client.assignedDev ? '#10b981' : '#dc2626'}}>
+                                    {developers.find(d => d._id === (client.assignedDev?._id || client.assignedDev))?.name || 'Not Assigned'}
+                                </div>
+                            )}
+                        </div>
+
                     </div>
                 </div>
 
                 {/* 2 Columns: Requirements & Changes */}
-                <div style={{display:'flex', gap:'20px', minHeight:'60vh', flexWrap:'wrap'}}>
+                <div style={{display:'flex', gap:'20px', minHeight:'40vh', flexWrap:'wrap'}}>
                     
                     {/* Left: Requirements */}
                     <div style={{flex:1, minWidth:'300px', background:'white', padding:'20px', borderRadius:'10px', boxShadow:'0 2px 10px rgba(0,0,0,0.05)'}}>
@@ -156,16 +255,11 @@ const WebDevProject = () => {
                                             <User size={12}/> {item.assignedTo?.name || 'Unassigned'}
                                         </div>
                                     </div>
-                                    
                                     <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
                                         <div className={`status-pill ${item.assignedTaskId?.status === 'Completed' ? 'completed' : 'pending'}`}>
                                             {item.assignedTaskId?.status === 'Completed' ? 'Completed' : 'Pending'}
                                         </div>
-                                        <button 
-                                            onClick={() => handleDeleteItem(item._id)} 
-                                            style={{background:'none', border:'none', cursor:'pointer', padding:'4px', color:'#dc2626'}}
-                                            title="Delete"
-                                        >
+                                        <button onClick={() => handleDeleteItem(item._id)} style={{background:'none', border:'none', cursor:'pointer', padding:'4px', color:'#dc2626'}}>
                                             <Trash2 size={16} />
                                         </button>
                                     </div>
@@ -199,17 +293,11 @@ const WebDevProject = () => {
                                             <User size={12}/> {item.assignedTo?.name || 'Unassigned'}
                                         </div>
                                     </div>
-                                    
-                                    {/* ✅ HERE IS THE DELETE ICON FOR CHANGES */}
                                     <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
                                         <div className={`status-pill ${item.assignedTaskId?.status === 'Completed' ? 'completed' : 'pending'}`}>
                                             {item.assignedTaskId?.status === 'Completed' ? 'Completed' : 'Pending'}
                                         </div>
-                                        <button 
-                                            onClick={() => handleDeleteItem(item._id)} 
-                                            style={{background:'none', border:'none', cursor:'pointer', padding:'4px', color:'#dc2626'}}
-                                            title="Delete"
-                                        >
+                                        <button onClick={() => handleDeleteItem(item._id)} style={{background:'none', border:'none', cursor:'pointer', padding:'4px', color:'#dc2626'}}>
                                             <Trash2 size={16} />
                                         </button>
                                     </div>
@@ -220,9 +308,9 @@ const WebDevProject = () => {
                     </div>
                 </div>
 
-                {/* Bottom: Client Overview */}
+                {/* Bottom: Client Status */}
                 <div style={{marginTop:'30px', background:'white', padding:'20px', borderRadius:'10px', boxShadow:'0 2px 10px rgba(0,0,0,0.05)'}}>
-                    <h3 style={{marginTop:0, color:'#333'}}>Client Overview</h3>
+                    <h3 style={{marginTop:0, color:'#333'}}>Project Status Control</h3>
                     <div style={{display:'flex', justifyContent:'space-around', gap:'20px', padding:'20px', background:'#f9fafb', borderRadius:'8px', flexWrap:'wrap'}}>
                         
                         <div style={{textAlign:'center', flex:1, minWidth:'200px'}}>

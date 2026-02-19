@@ -5,12 +5,11 @@ const WebDevClientSchema = new mongoose.Schema({
   businessName: { type: String },
   phone: { type: String },
   email: { type: String },
-  
+  website: { type: String },
   // Project Level Status
   clientStatus: { type: String, default: 'Pending' }, // e.g., Onboarding, Active
   projectStatus: { type: String, default: 'Pending' }, // e.g., In Progress, Completed
-  
-  assignedDevelopers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Array of assigned devs
+  assignedDev: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Single assigned dev
   
   createdAt: { type: Date, default: Date.now }
 });

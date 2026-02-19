@@ -7,7 +7,7 @@ import { toast } from 'react-toastify';
 import { ArrowLeft, X, ChevronLeft, ChevronRight, Calendar, ListChecks } from 'lucide-react';
 import Leaves from '../components/Leaves'; // ✅ Import Leaves Component
 
-const API_BASE = 'http://localhost:4000/api';
+const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
 
 const Attendance = () => {
   const navigate = useNavigate();

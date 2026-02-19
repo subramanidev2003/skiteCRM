@@ -28,12 +28,13 @@ router.post('/clients/add', async (req, res) => {
 // 3. Get Single Client Details
 router.get('/client/:id', async (req, res) => {
   try {
-    const client = await WebDevClient.findById(req.params.id).populate('assignedDevelopers', 'name');
+    const client = await WebDevClient.findById(req.params.id).populate('assignedDev', 'name'); // ✅ populate updated
     res.json(client);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// 4. Update Client Overview (Status)
+// 4. Update Client Overview & Edit Details
+// (இது Frontend-ல் Edit Details மற்றும் Status மாற்றுவது இரண்டிற்கும் வேலை செய்யும்)
 router.put('/client/update/:id', async (req, res) => {
   try {
     const updated = await WebDevClient.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -41,9 +42,41 @@ router.put('/client/update/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// ✅ 5. NEW: DELETE Client (Cascade Delete Requirements & Tasks)
+router.delete('/clients/delete/:id', async (req, res) => {
+  try {
+    const clientId = req.params.id;
+
+    const client = await WebDevClient.findById(clientId);
+    if (!client) return res.status(404).json({ error: "Client not found" });
+
+    // a. இந்த Client-க்கு உள்ள எல்லா Requirements-ஐயும் கண்டுபிடி
+    const requirements = await WebDevRequirement.find({ clientId: clientId });
+
+    // b. அந்த Requirements-ல் உள்ள Task ID-களை பிரித்தெடு
+    const taskIds = requirements.map(req => req.assignedTaskId).filter(id => id != null);
+
+    // c. சம்மந்தப்பட்ட Tasks-ஐ அழி (Delete Tasks)
+    if (taskIds.length > 0) {
+      await Task.deleteMany({ _id: { $in: taskIds } });
+    }
+
+    // d. சம்மந்தப்பட்ட Requirements-ஐ அழி (Delete Requirements)
+    await WebDevRequirement.deleteMany({ clientId: clientId });
+
+    // e. கடைசியாக Client-ஐ அழி (Delete Client)
+    await WebDevClient.findByIdAndDelete(clientId);
+
+    res.status(200).json({ message: "Client and all associated data deleted successfully" });
+  } catch (err) { 
+    res.status(500).json({ error: err.message }); 
+  }
+});
+
+
 // --- REQUIREMENTS & CHANGES ---
 
-// 5. Get Requirements by Client
+// 6. Get Requirements by Client
 router.get('/requirements/:clientId', async (req, res) => {
   try {
     const items = await WebDevRequirement.find({ clientId: req.params.clientId })
@@ -54,7 +87,7 @@ router.get('/requirements/:clientId', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// 6. Add Requirement/Change & Assign Task
+// 7. Add Requirement/Change & Assign Task
 router.post('/requirements/add', async (req, res) => {
   try {
     const { clientId, type, description, assignedTo } = req.body;
@@ -89,7 +122,7 @@ router.post('/requirements/add', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// 7. Update Requirement Status
+// 8. Update Requirement Status
 router.put('/requirements/update-status/:id', async (req, res) => {
   try {
     const { status } = req.body;
@@ -98,7 +131,7 @@ router.put('/requirements/update-status/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// DELETE Requirement/Change
+// 9. DELETE Single Requirement/Change
 router.delete('/requirements/delete/:id', async (req, res) => {
   try {
     const { id } = req.params;

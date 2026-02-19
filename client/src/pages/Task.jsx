@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, X, Trash2, ChevronLeft, ChevronRight, Plus } from "lucide-react"; 
 import { toast } from 'react-toastify'; 
 
-const API_BASE = 'https://skitecrm.onrender.com/api';
+const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
 
 const Task = () => {
   const navigate = useNavigate();

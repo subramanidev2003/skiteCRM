@@ -18,7 +18,7 @@ const Conversion = () => {
   ];
 
   useEffect(() => {
-    fetch("https://skitecrm.onrender.com/api/leads/common/all")
+    fetch("https://skitecrm-1l7f.onrender.com/api/leads/common/all")
       .then((res) => (res.ok ? res.json() : []))
       .then((data) => {
         setAllLeads(data);

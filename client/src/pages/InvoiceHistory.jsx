@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import './Invoice.css'; 
 
 // ✅ FIX 1: Correct API Base URL (Removed hyphen)
-const API_BASE = 'https://skitecrm.onrender.com/api';
+const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
 
 const InvoiceHistory = () => {
   const navigate = useNavigate();

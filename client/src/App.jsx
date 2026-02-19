@@ -36,6 +36,8 @@ import SocialMediaClients from "./components/SocialMediaClients.jsx";
 import SocialMediaProject from "./components/SocialMediaProject.jsx";
 import WebDevClients from "./components/WebDevClients.jsx";
 import WebDevProject from "./components/WebDevProject.jsx";
+import ReceiptHistory from "./pages/ReceiptHistory.jsx";
+import PaymentReceipt from "./pages/PaymentReceipt.jsx";
 
 function App() {
   return (
@@ -58,7 +60,14 @@ function App() {
             <Route path="/sales/service/:serviceName" element={<ServiceType />} />
             <Route path="/sales-dashboard/conversion" element={<Conversion />} />
             <Route path="/sales-dashboard/all-leads" element={<AllLeadPage />} />
+            
+            {/* ✅ QUOTE ROUTES FOR SALES - All Correctly Added */}
             <Route path="/sales-dashboard/quote" element={<Quote />} />
+            <Route path="/sales-dashboard/quote/:id" element={<Quote />} /> 
+            <Route path="/sales-dashboard/quote-history" element={<QuoteHistory />} />
+
+            <Route path="/sales-dashboard/receipt" element={<PaymentReceipt />} />
+<Route path="/sales-dashboard/receipt-history" element={<ReceiptHistory />} />
             
           </Route>
         </Route>
@@ -71,7 +80,6 @@ function App() {
         </Route>
 
         {/* --- ADMIN DASHBOARD (Shared with Employee for Projects) --- */}
-        {/* ✅ FIX: Added 'employee' to allowedRoles here so they can access /admin-dashboard/projects */}
         <Route element={<ProtectedRoute allowedRoles={["Admin", "accountant", "employee"]} />}>
           <Route path="/admin-dashboard" element={<AdminDashboard />}>
             <Route index element={null} />
@@ -89,15 +97,21 @@ function App() {
             <Route path="/admin-dashboard/invoice" element={<Invoice />} />
             <Route path="invoice/:id" element={<Invoice />} />
             <Route path="invoice-history" element={<InvoiceHistory />} />
+            
+            {/* ADMIN QUOTE ROUTES */}
             <Route path="/admin-dashboard/quote" element={<Quote />} />
             <Route path="quote/:id" element={<Quote />} />
             <Route path="/admin-dashboard/quote-history" element={<QuoteHistory />} />
+            
             <Route path="/admin-dashboard/accounts" element={<Accounts />} />
             <Route path="financial-graph" element={<FinancialGraph />} />
             <Route path="invoice-payment" element={<InvoicePayment />} />
             <Route path="income-expense" element={<IncomeExpense />} />
+
+            <Route path="/admin-dashboard/receipt" element={<PaymentReceipt />} />
+<Route path="/admin-dashboard/receipt-history" element={<ReceiptHistory />} />
             
-            {/* ✅ Projects Route inside AdminDashboard Layout */}
+            {/* Projects Route inside AdminDashboard Layout */}
             <Route path="/admin-dashboard/projects" element={<Projects />} />
           </Route>
 
@@ -105,14 +119,13 @@ function App() {
         </Route>
 
         {/* --- PROJECT SUB-PAGES --- */}
-
-       <Route path="/social-media/clients" element={<SocialMediaClients />} />
-
-  {/* 2. Specific Project Page (Inga thaan ID venum, yentha client nu theriya) */}
-  <Route path="/projects/social-media/:id" element={<SocialMediaProject />} />
-{/* --- Web Development Routes --- */}
-<Route path="/webdev/clients" element={<WebDevClients />} />
-<Route path="/webdev/project/:id" element={<WebDevProject />} />
+        <Route path="/social-media/clients" element={<SocialMediaClients />} />
+        <Route path="/projects/social-media/:id" element={<SocialMediaProject />} />
+        
+        {/* --- Web Development Routes --- */}
+        <Route path="/webdev/clients" element={<WebDevClients />} />
+        <Route path="/webdev/project/:id" element={<WebDevProject />} />
+        
         <Route path="*" element={<div>404 Not Found</div>} />
       </Routes>
     </>

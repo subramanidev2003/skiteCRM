@@ -1,22 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Trash2, Plus, Search, FileText, FileX } from 'lucide-react'; // Icons added
-import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, Trash2, Plus, Search, FileText, FileX } from 'lucide-react';
+import { useNavigate } from 'react-router-dom'; 
 import { toast } from 'react-toastify';
 import './Invoice.css'; 
 
 const QuoteHistory = () => {
   const navigate = useNavigate();
+
+  // ✅ FIX: URL-ஐ நம்பாமல் LocalStorage-ல் இருந்து உறுதியாக Role-ஐ எடுக்கிறோம்.
+  const isSalesUser = () => {
+    const salesUser = localStorage.getItem("salesUser");
+    return !!salesUser; // salesUser இருந்தால் true, இல்லையென்றால் false
+  };
+
+  const isSales = isSalesUser(); 
+
   const [quotes, setQuotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   
-  // ✅ புதிய State: GST அல்லது Non-GST டேப் மாறுவதற்கு
   const [activeTab, setActiveTab] = useState('gst'); // 'gst' or 'nongst'
 
   // 1. Fetch Data
   const fetchQuotes = async () => {
     try {
-      const response = await fetch('https://skitecrm.onrender.com/api/quote/all');
+      const response = await fetch('https://skitecrm-1l7f.onrender.com/api/quote/all');
       const data = await response.json();
       if (response.ok) {
         setQuotes(data);
@@ -40,7 +48,7 @@ const QuoteHistory = () => {
     if (!window.confirm("Are you sure you want to delete this quote?")) return;
 
     try {
-      const response = await fetch(`https://skitecrm.onrender.com/api/quote/delete/${id}`, {
+      const response = await fetch(`https://skitecrm-1l7f.onrender.com/api/quote/delete/${id}`, {
         method: 'DELETE',
       });
 
@@ -55,15 +63,12 @@ const QuoteHistory = () => {
     }
   };
 
-  // ✅ 3. FILTER LOGIC (Tab + Search)
+  // 3. FILTER LOGIC
   const filteredQuotes = quotes.filter(q => {
-    // 1. Search Filter
     const matchesSearch = 
-      q.clientDetails.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      q.quoteNo.toLowerCase().includes(searchTerm.toLowerCase());
+      (q.clientDetails?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (q.quoteNo || '').toLowerCase().includes(searchTerm.toLowerCase());
 
-    // 2. Tab Filter (GST vs Non-GST)
-    // taxRate 0-க்கு மேல் இருந்தால் அது GST, இல்லையென்றால் Non-GST
     const isGST = q.taxRate && q.taxRate > 0;
 
     if (activeTab === 'gst') {
@@ -73,26 +78,47 @@ const QuoteHistory = () => {
     }
   });
 
+  // ✅ Back Button Handler
+  const handleBack = () => {
+      navigate(isSales ? '/sales-dashboard' : '/admin-dashboard');
+  };
+
+  // ✅ Create New Button Handler
+  const handleCreateNew = () => {
+      navigate(isSales ? '/sales-dashboard/quote' : '/admin-dashboard/quote');
+  };
+
+  // ✅ Row Click Handler (இங்கே தான் மாற்றம்)
+  const handleRowClick = (id) => {
+      const path = isSales 
+        ? `/sales-dashboard/quote/${id}` 
+        : `/admin-dashboard/quote/${id}`;
+      navigate(path);
+  };
+
   return (
     <div style={{ padding: '30px', backgroundColor: '#f9fafb', minHeight: '100vh', fontFamily: 'sans-serif' }}>
       
       {/* --- HEADER SECTION --- */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        
+        {/* SMART BACK BUTTON */}
         <button 
-          onClick={() => navigate('/admin-dashboard')}
+          onClick={handleBack}
           style={{ 
             display: 'flex', alignItems: 'center', gap: '8px', 
             padding: '10px 15px', border: 'none', borderRadius: '6px', 
             backgroundColor: '#e5e7eb', color: '#374151', cursor: 'pointer', fontWeight: '500' 
           }}
         >
-          <ArrowLeft size={18} /> Dashboard
+          <ArrowLeft size={18} /> {isSales ? 'Sales Panel' : 'Admin Dashboard'}
         </button>
 
         <h1 style={{ fontSize: '24px', fontWeight: '600', color: '#111827', margin: 0 }}>Quote History</h1>
 
+        {/* SMART CREATE NEW BUTTON */}
         <button 
-          onClick={() => navigate('/admin-dashboard/quote')}
+          onClick={handleCreateNew}
           style={{ 
             display: 'flex', alignItems: 'center', gap: '8px', 
             padding: '10px 20px', border: 'none', borderRadius: '6px', 
@@ -104,22 +130,14 @@ const QuoteHistory = () => {
         </button>
       </div>
 
-      {/* --- ✅ TABS SECTION (GST / WITHOUT GST) --- */}
+      {/* --- TABS SECTION --- */}
       <div style={{ display: 'flex', gap: '15px', marginBottom: '20px' }}>
         <button
           onClick={() => setActiveTab('gst')}
           style={{
-            flex: 1,
-            padding: '12px',
-            borderRadius: '8px',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            fontSize: '16px',
-            fontWeight: '600',
+            flex: 1, padding: '12px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+            fontSize: '16px', fontWeight: '600',
             backgroundColor: activeTab === 'gst' ? '#FF4500' : 'white',
             color: activeTab === 'gst' ? 'white' : '#6b7280',
             boxShadow: activeTab === 'gst' ? '0 4px 6px rgba(255, 69, 0, 0.2)' : '0 1px 3px rgba(0,0,0,0.05)',
@@ -132,17 +150,9 @@ const QuoteHistory = () => {
         <button
           onClick={() => setActiveTab('nongst')}
           style={{
-            flex: 1,
-            padding: '12px',
-            borderRadius: '8px',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            fontSize: '16px',
-            fontWeight: '600',
+            flex: 1, padding: '12px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+            fontSize: '16px', fontWeight: '600',
             backgroundColor: activeTab === 'nongst' ? '#FF4500' : 'white',
             color: activeTab === 'nongst' ? 'white' : '#6b7280',
             boxShadow: activeTab === 'nongst' ? '0 4px 6px rgba(255, 69, 0, 0.2)' : '0 1px 3px rgba(0,0,0,0.05)',
@@ -180,7 +190,6 @@ const QuoteHistory = () => {
                 <th style={{ padding: '15px 20px', fontSize: '13px', fontWeight: '600', color: '#6b7280' }}>QUOTE NO</th>
                 <th style={{ padding: '15px 20px', fontSize: '13px', fontWeight: '600', color: '#6b7280' }}>DATE</th>
                 <th style={{ padding: '15px 20px', fontSize: '13px', fontWeight: '600', color: '#6b7280' }}>CLIENT NAME</th>
-                {/* GST இருந்தால் மட்டும் Tax Rate காட்டு */}
                 {activeTab === 'gst' && (
                   <th style={{ padding: '15px 20px', fontSize: '13px', fontWeight: '600', color: '#6b7280' }}>TAX %</th>
                 )}
@@ -195,7 +204,7 @@ const QuoteHistory = () => {
                 filteredQuotes.map((q) => (
                   <tr 
                     key={q._id}
-                    onClick={() => navigate(`/admin-dashboard/quote/${q._id}`)} 
+                    onClick={() => handleRowClick(q._id)} // ✅ Corrected Navigation Here
                     style={{ borderBottom: '1px solid #f3f4f6', cursor: 'pointer', transition: 'background 0.2s' }}
                     onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
                     onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'white'}
@@ -204,9 +213,8 @@ const QuoteHistory = () => {
                     <td style={{ padding: '15px 20px', color: '#374151' }}>{new Date(q.date).toLocaleDateString('en-GB')}</td>
                     <td style={{ padding: '15px 20px', color: '#374151', fontWeight: '500' }}>{q.clientDetails.name}</td>
                     
-                    {/* GST Tab ஆக இருந்தால் Tax Rate-ஐ காட்டு */}
                     {activeTab === 'gst' && (
-                       <td style={{ padding: '15px 20px', color: '#6b7280' }}>{q.taxRate}%</td>
+                        <td style={{ padding: '15px 20px', color: '#6b7280' }}>{q.taxRate}%</td>
                     )}
 
                     <td style={{ padding: '15px 20px', color: '#111827', fontWeight: '600' }}>₹ {q.grandTotal.toLocaleString('en-IN')}</td>

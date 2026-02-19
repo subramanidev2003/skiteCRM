@@ -23,7 +23,7 @@ const AllLeadPage = () => {
   const isAdmin = location.pathname.includes('admin');
 
   useEffect(() => {
-    fetch("https://skitecrm.onrender.com/api/leads/common/all")
+    fetch("https://skitecrm-1l7f.onrender.com/api/leads/common/all")
       .then((res) => (res.ok ? res.json() : []))
       .then((data) => {
         if (Array.isArray(data)) {
@@ -40,7 +40,7 @@ const AllLeadPage = () => {
     if (!window.confirm("Delete this lead permanently?")) return;
 
     try {
-        const response = await fetch(`https://skitecrm.onrender.com/api/leads/delete/${leadId}`, {
+        const response = await fetch(`https://skitecrm-1l7f.onrender.com/api/leads/delete/${leadId}`, {
             method: 'DELETE',
         });
 

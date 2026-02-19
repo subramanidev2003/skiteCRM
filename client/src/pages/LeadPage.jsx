@@ -124,7 +124,7 @@ const LeadPage = () => {
         const id = currentLead._id || currentLead.id;
         const updatedData = { ...currentLead, [fieldName]: newValue };
 
-        const response = await fetch(`https://skitecrm.onrender.com/api/leads/update/${id}`, {
+        const response = await fetch(`https://skitecrm-1l7f.onrender.com/api/leads/update/${id}`, {
              method: 'PUT',
              headers: { 'Content-Type': 'application/json' },
              body: JSON.stringify(updatedData)

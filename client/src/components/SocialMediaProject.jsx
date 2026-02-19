@@ -4,7 +4,7 @@ import { ArrowLeft, Video, FileText, Edit, Send, Calendar, Clock, CheckCircle2, 
 import { toast } from 'react-toastify';
 import './SocialMedia.css';
 
-const API_BASE = 'https://skitecrm.onrender.com/api';
+const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
 
 const SocialMediaProject = () => {
     const navigate = useNavigate();

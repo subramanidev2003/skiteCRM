@@ -3,19 +3,19 @@ import { useNavigate } from "react-router-dom";
 import { 
   LogOut, Target, Users, TrendingUp, Plus, X, 
   Clock, CalendarDays, ListTodo, CheckCircle2, AlertCircle, ScrollText, Upload 
-} from "lucide-react"; // ✅ Added Upload Icon
+} from "lucide-react"; 
 import "./SalesDashboard.css"; 
 import { toast } from "react-toastify";
-import * as XLSX from 'xlsx'; // ✅ Import XLSX Library
+import * as XLSX from 'xlsx'; 
 
 // --- CONFIGURATION ---
-const API_BASE = 'https://skitecrm.onrender.com/api';
+const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
 const ATTENDANCE_URL = `${API_BASE}/attendance`;
 const TASKS_URL = `${API_BASE}/tasks`; 
 
 const SalesDashboard = () => {
   const navigate = useNavigate();
-  const fileInputRef = useRef(null); // ✅ Ref for File Input
+  const fileInputRef = useRef(null);
 
   const [user, setUser] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -65,8 +65,8 @@ const SalesDashboard = () => {
       const userId = parsedUser._id || parsedUser.id;
 
       if (userId) {
-        // Fetch Leads
-        fetch(`https://skitecrm.onrender.com/api/leads/all/${userId}`) 
+        // ✅ CHANGED TO COMMON API to fetch ALL leads for correct counts
+        fetch(`https://skitecrm-1l7f.onrender.com/api/leads/common/all`) 
           .then((res) => (res.ok ? res.json() : []))
           .then((data) => {
             const validLeads = Array.isArray(data) ? data : [];
@@ -197,7 +197,7 @@ const SalesDashboard = () => {
     e.preventDefault();
     const agentId = user?._id || user?.id;
     try {
-      const res = await fetch("https://skitecrm.onrender.com/api/leads/add", {
+      const res = await fetch("https://skitecrm-1l7f.onrender.com/api/leads/add", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...formData, salesAgentId: agentId }),
       });
@@ -258,7 +258,7 @@ const SalesDashboard = () => {
   const sendLeadsToBackend = async (importedLeads) => {
     const agentId = user?._id || user?.id;
     try {
-        const res = await fetch("https://skitecrm.onrender.com/api/leads/import", {
+        const res = await fetch("https://skitecrm-1l7f.onrender.com/api/leads/import", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ leads: importedLeads, salesAgentId: agentId }),
@@ -288,7 +288,24 @@ const SalesDashboard = () => {
     return { h: Math.floor(diff / 3600000), m: Math.floor((diff % 3600000) / 60000) };
   };
 
-  const getCount = (service) => leads.filter((l) => l.serviceType === service).length;
+  // ✅ ROBUST GET COUNT FUNCTION (Updated to handle case sensitivity & variations)
+  const getCount = (service) => {
+    const target = service.toLowerCase().trim();
+    return leads.filter((l) => {
+      const dbService = (l.serviceType || "").toLowerCase().trim();
+      
+      // Strict Match
+      if (dbService === target) return true;
+      
+      // Partial Match (e.g. "Paid Campaign" vs "Paid Campaigns")
+      if (dbService.includes(target) || target.includes(dbService)) return true;
+      
+      // Specific handling for "Paid Campaigns"
+      if (target.includes("paid") && dbService.includes("paid")) return true;
+      
+      return false;
+    }).length;
+  };
   
   const sortedTasks = [...tasks].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   const completedTasksCount = tasks.filter(t => t.status === 'Completed').length;
@@ -383,6 +400,16 @@ const SalesDashboard = () => {
                             <span className="value" style={{fontSize:'1rem'}}>Create</span>
                         </div>
                     </div>
+
+                    <div className="stat-box clickable" onClick={() => navigate('/sales-dashboard/receipt')}>
+  <div className="stat-icon-wrapper" style={{background:'#fff0e6', color:'#FF4500'}}>
+    <ScrollText size={24}/>
+  </div>
+  <div className="stat-text">
+    <span className="label">Receipt</span>
+    <span className="value" style={{fontSize:'1rem'}}>Create</span>
+  </div>
+</div>
 
                 </section>
 

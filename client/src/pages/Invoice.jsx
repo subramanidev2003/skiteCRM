@@ -77,7 +77,7 @@ const Invoice = () => {
     if (id) {
         const fetchInvoiceDetails = async () => {
             try {
-                const response = await fetch(`https://skitecrm.onrender.com/api/invoice/${id}`);
+                const response = await fetch(`https://skitecrm-1l7f.onrender.com/api/invoice/${id}`);
                 const data = await response.json();
 
                 if (response.ok) {
@@ -219,7 +219,7 @@ const Invoice = () => {
       // For now, we will create NEW even if editing, unless you add UPDATE route.
       // If you want to just View and Generate PDF, this is fine.
       
-      const response = await fetch('https://skitecrm.onrender.com/api/invoice/create', {
+      const response = await fetch('https://skitecrm-1l7f.onrender.com/api/invoice/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(invoiceData)

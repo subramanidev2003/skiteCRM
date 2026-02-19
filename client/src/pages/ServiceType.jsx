@@ -21,7 +21,7 @@ const ServiceType = () => {
     }
 
     // ✅ Fetch ALL leads using common API
-    fetch(`https://skitecrm.onrender.com/api/leads/common/all`) 
+    fetch(`https://skitecrm-1l7f.onrender.com/api/leads/common/all`) 
       .then(res => {
           if (!res.ok) {
               throw new Error(`API Error: ${res.status}`);
