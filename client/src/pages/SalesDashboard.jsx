@@ -195,7 +195,26 @@ const SalesDashboard = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const agentId = user?._id || user?.id;
+    // LocalStorage-ல் இருந்து நேரடியாக User-ஐ எடுத்து ID-ஐ கண்டுபிடிக்கிறோம்
+const storedUser = JSON.parse(localStorage.getItem("salesUser") || localStorage.getItem("user") || "{}");
+// 🚀 SUPER ROBUST AGENT ID EXTRACTION
+        let agentId = user?._id || user?.id || user?.data?._id || user?.data?.id;
+        
+        if (!agentId) {
+            try {
+                const lsUser = JSON.parse(localStorage.getItem("salesUser") || localStorage.getItem("user") || "{}");
+                agentId = lsUser._id || lsUser.id || lsUser.data?._id || lsUser.data?.id;
+            } catch (e) {
+                console.error("Localstorage parse error", e);
+            }
+        }
+
+        if (!agentId) {
+            toast.error("User ID not found! Please check console.");
+            console.error("❌ USER OBJECT:", user);
+            console.error("❌ LOCALSTORAGE:", localStorage.getItem("salesUser"));
+            return;
+        }
     try {
       const res = await fetch("https://skitecrm-1l7f.onrender.com/api/leads/add", {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -212,51 +231,147 @@ const SalesDashboard = () => {
     } catch (error) { toast.error("Server Error"); }
   };
 
-  // ✅ EXCEL IMPORT LOGIC
+// ✅ EXCEL IMPORT LOGIC (SMART DETECT HEADERS & ROBUST AGENT ID)
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = (evt) => {
-      const bstr = evt.target.result;
-      const wb = XLSX.read(bstr, { type: 'binary' });
-      const wsname = wb.SheetNames[0];
-      const ws = wb.Sheets[wsname];
-      const data = XLSX.utils.sheet_to_json(ws);
+      try {
+        const bstr = evt.target.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        
+        const rawData = XLSX.utils.sheet_to_json(ws, { header: 1, blankrows: false });
 
-      if (data.length === 0) {
-        toast.warning("Excel sheet is empty!");
-        return;
-      }
+        if (rawData.length < 2) {
+          toast.warning("Excel sheet is empty or invalid!");
+          return;
+        }
 
-      // Map Excel columns to our Schema (Case insensitive)
-      const formattedLeads = data.map(row => {
-        // Convert keys to lowercase to match roughly
-        const keys = Object.keys(row).reduce((acc, key) => {
-            acc[key.toLowerCase().trim()] = row[key];
-            return acc;
-        }, {});
+        let headerRowIndex = -1;
+        for (let i = 0; i < rawData.length; i++) {
+          const rowStr = rawData[i].map(String).join("").toLowerCase();
+          if (rowStr.includes("name") || rowStr.includes("phone")) {
+            headerRowIndex = i;
+            break;
+          }
+        }
 
-        return {
-            date: keys['date'] || new Date(),
-            name: keys['name'] || keys['client name'] || 'Unknown',
-            email: keys['email'] || '',
-            companyName: keys['company'] || keys['company name'] || '',
-            phoneNumber: keys['phone'] || keys['phone number'] || keys['mobile'] || '',
-            serviceType: keys['service'] || keys['service type'] || 'Web Development',
-            business: keys['business'] || keys['business type'] || '',
-            location: keys['location'] || ''
+        if (headerRowIndex === -1) {
+          toast.error("Excel-ல் 'NAME' அல்லது 'PHONE' என்ற தலைப்பு இல்லை!");
+          return;
+        }
+
+        const headers = rawData[headerRowIndex].map(h => 
+          String(h || "").toLowerCase().replace(/[^a-z0-9]/g, '').trim() 
+        );
+
+        // 🚀 ULTIMATE AGENT ID EXTRACTION (ALL ROLES)
+        const getAgentId = () => {
+            if (user?._id) return user._id;
+            if (user?.id) return user.id;
+
+            const keys = ["salesUser", "adminUser", "userData", "employeeUser", "managerUser", "user"];
+            for (let key of keys) {
+                let item = localStorage.getItem(key);
+                if (item) {
+                    try {
+                        let parsed = JSON.parse(item);
+                        let id = parsed._id || parsed.id || parsed.data?._id || parsed.data?.id || parsed.user?._id;
+                        if (id) return id;
+                    } catch (e) { }
+                }
+            }
+            return null;
         };
-      });
 
-      sendLeadsToBackend(formattedLeads);
+        const agentId = getAgentId();
+
+        if (!agentId) {
+            toast.error("User ID not found! Please login again.");
+            console.error("❌ ALL LOCAL STORAGE DATA:", localStorage);
+            return;
+        }
+
+        const formattedLeads = [];
+        for (let i = headerRowIndex + 1; i < rawData.length; i++) {
+          const row = rawData[i];
+          if (!row || row.length === 0 || row.every(cell => cell === null || cell === "")) continue;
+
+          const rowData = {};
+          headers.forEach((header, index) => {
+            rowData[header] = row[index];
+          });
+
+          const parseExcelDate = (excelDate) => {
+            let parsedDate = new Date();
+            if (excelDate && !isNaN(excelDate)) {
+                parsedDate = new Date((excelDate - (25567 + 2)) * 86400 * 1000);
+            } else if (typeof excelDate === 'string' && excelDate.includes('/')) {
+                const parts = excelDate.split('/');
+                if (parts.length === 3) parsedDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+            }
+            if (isNaN(parsedDate.getTime())) parsedDate = new Date(); 
+            const year = parsedDate.getFullYear();
+            const month = String(parsedDate.getMonth() + 1).padStart(2, '0');
+            const day = String(parsedDate.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`; 
+          };
+
+         const name = rowData['name'] || rowData['clientname'] || 'Unknown';
+          const phoneStr = String(rowData['phone'] || rowData['phonenumber'] || rowData['mobile'] || '').trim();
+
+          if (name === 'Unknown' && phoneStr === '') continue; 
+
+          // ✅ FIX: "Website" என்று Excel-ல் இருந்தால் அதை "Web Development" என மாற்றுகிறோம்
+          let rawService = String(rowData['service'] || rowData['servicetype'] || '').trim();
+          let finalService = 'Web Development'; // Default
+
+          if (rawService.toLowerCase().includes('website') || rawService.toLowerCase().includes('web')) {
+              finalService = 'Web Development';
+          } else if (rawService.toLowerCase().includes('ads') || rawService.toLowerCase().includes('paid')) {
+              finalService = 'Paid Campaigns';
+          } else if (rawService.toLowerCase().includes('seo')) {
+              finalService = 'SEO';
+          } else if (rawService.toLowerCase().includes('branding')) {
+              finalService = 'Personal Branding';
+          } else if (rawService) {
+              finalService = rawService; // மற்றவை அப்படியே இருக்கட்டும்
+          }
+
+          formattedLeads.push({
+            date: parseExcelDate(rowData['date']), 
+            name: name,
+            email: rowData['email'] || rowData['emailid'] || '',
+            companyName: rowData['company'] || rowData['companyname'] || '',
+            phoneNumber: phoneStr,
+            serviceType: finalService, // ✅ சரிசெய்யப்பட்ட Service Type
+            business: rowData['business'] || rowData['businesstype'] || '',
+            location: rowData['location'] || '',
+            salesAgentId: agentId 
+          });
+        }
+
+        if (formattedLeads.length === 0) {
+             toast.error("No valid data found in the rows.");
+             return;
+        }
+
+        sendLeadsToBackend(formattedLeads, agentId);
+      } catch (err) {
+          console.error("Excel parse error:", err);
+          toast.error("Error reading Excel file. Check format.");
+      }
     };
     reader.readAsBinaryString(file);
   };
 
-  const sendLeadsToBackend = async (importedLeads) => {
-    const agentId = user?._id || user?.id;
+const sendLeadsToBackend = async (importedLeads, agentId) => {
+    toast.info("Importing leads, please wait..."); 
+
     try {
         const res = await fetch("https://skitecrm-1l7f.onrender.com/api/leads/import", {
             method: "POST",
@@ -268,20 +383,22 @@ const SalesDashboard = () => {
 
         if (res.ok) {
             toast.success(`Success! ${responseData.count} leads imported.`);
-            // Refresh leads
-            setLeads([...responseData.leads, ...leads]);
-            calculateStats([...responseData.leads, ...leads]);
+            // டேட்டாவை உடனே Refresh செய்கிறோம்
+            const refreshRes = await fetch(`https://skitecrm-1l7f.onrender.com/api/leads/common/all`);
+            if(refreshRes.ok) {
+                const refreshedLeads = await refreshRes.json();
+                setLeads(refreshedLeads);
+                calculateStats(refreshedLeads);
+            }
         } else {
-            toast.error(responseData.message || "Import failed");
+            toast.error(responseData.message || "Import failed on server");
         }
     } catch (error) {
         toast.error("Error importing leads to server");
     } finally {
-        // Reset file input
         if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
-
   const calculateDuration = (start) => {
     if (!start) return { h: 0, m: 0 };
     const diff = new Date() - new Date(start);

@@ -88,6 +88,7 @@ router.get('/requirements/:clientId', async (req, res) => {
 });
 
 // 7. Add Requirement/Change & Assign Task
+// 7. Add Requirement/Change & Assign Task
 router.post('/requirements/add', async (req, res) => {
   try {
     const { clientId, type, description, assignedTo } = req.body;
@@ -97,11 +98,15 @@ router.post('/requirements/add', async (req, res) => {
     // Create Task for Employee
     if (assignedTo) {
       const task = new Task({
-        title: `WebDev ${type}: ${description.substring(0, 20)}...`,
-        description: `Project: Web Development\nType: ${type}\nDetails: ${description}`,
+        // ✅ FIX 1: Title-ல் இருந்த 'WebDev Change:' நீக்கப்பட்டது
+        title: description.substring(0, 40), 
+        
+        // ✅ FIX 2: தேவையற்ற "Project: Web Development..." நீக்கப்பட்டு, வெறும் description மட்டும் சேர்க்கப்பட்டுள்ளது
+        description: description, 
+        
         assignedTo: assignedTo,
         priority: 'High',
-        dueDate: new Date(), // Set to today or handle date input
+        dueDate: new Date(), 
         status: 'Pending'
       });
       const savedTask = await task.save();
@@ -121,7 +126,6 @@ router.post('/requirements/add', async (req, res) => {
 
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
-
 // 8. Update Requirement Status
 router.put('/requirements/update-status/:id', async (req, res) => {
   try {
