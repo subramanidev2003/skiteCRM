@@ -34,11 +34,15 @@ const leadSchema = new mongoose.Schema({
     default: 'Not Attend',
     enum: ['Attend', 'Not Attend', 'Callback']
   },
-  
-  followUpStatus: { 
+  remainder2: { 
     type: String, 
-    default: 'No',
-    enum: ['Yes', 'No']
+    default: "" 
+  },
+  followUpResponsibility: { 
+    type: String, 
+    // Neenga dropdown la kudutha exact values
+    enum: ['teleSales', 'sasi prakash', ''], 
+    default: "" 
   },
   
   website: { type: String },

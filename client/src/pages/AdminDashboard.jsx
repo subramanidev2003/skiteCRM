@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom'; 
-import { CalendarCheck, Megaphone, IndianRupee, FileText, ScrollText, Landmark, Briefcase, ReceiptText } from 'lucide-react';
+// ✅ NEW: Added FileCheck for Fixed Invoice
+import { CalendarCheck, Megaphone, IndianRupee, FileText, ScrollText, Landmark, Briefcase, ReceiptText, FileCheck } from 'lucide-react';
 import skitelogo from '../assets/skitelogo.png'; 
 import './AdminDashboard.css'; 
     
@@ -70,11 +71,20 @@ const DashboardCards = ({ handleCardClick, role }) => (
                     <div className="card-title1">Payroll</div>
                     <div className="card-accent"></div>
                 </div>
+                
                 <div className="card" onClick={() => handleCardClick('invoice')}>
                     <div className="card-icon"><FileText size={40} color="#FF4500" /></div>
                     <div className="card-title1">Invoice</div>
                     <div className="card-accent"></div>
                 </div>
+
+                {/* ✅ NEW: Fixed Invoice Card Added Here */}
+                <div className="card" onClick={() => handleCardClick('fixed-invoice')}>
+                    <div className="card-icon"><FileCheck size={40} color="#FF4500" /></div>
+                    <div className="card-title1">Fixed Invoice</div>
+                    <div className="card-accent"></div>
+                </div>
+
                 <div className="card" onClick={() => handleCardClick('quote')}>
                     <div className="card-icon"><ScrollText size={40} color="#FF4500" /></div>
                     <div className="card-title1">Quote</div>
@@ -149,8 +159,9 @@ const AdminDashboard = () => {
             'leads': '/admin-dashboard/leads',
             'payroll': '/admin-dashboard/payroll',
             'invoice': '/admin-dashboard/invoice',
+            'fixed-invoice': '/admin-dashboard/fixed-invoice', // ✅ NEW: Routing for Fixed Invoice
             'quote': '/admin-dashboard/quote',
-            'receipt': '/admin-dashboard/receipt',          // ✅ இது இல்லாததால போகலை
+            'receipt': '/admin-dashboard/receipt',          
             'receipt-history': '/admin-dashboard/receipt-history',
             'accounts': '/admin-dashboard/accounts'
         };

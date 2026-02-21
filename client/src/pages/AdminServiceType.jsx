@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Trash2 } from 'lucide-react';
+import { ArrowLeft, Trash2, Filter } from 'lucide-react'; // ✅ Added Filter icon
 import { toast } from 'react-toastify';
 import './AdminServiceType.css'; 
 
@@ -10,34 +10,34 @@ const AdminServiceType = () => {
     const { serviceName } = useParams();
     const navigate = useNavigate();
     const [leads, setLeads] = useState([]);
+    const [filteredLeads, setFilteredLeads] = useState([]); // ✅ State for filtered data
     const [loading, setLoading] = useState(true);
+
+    // ✅ Filter State
+    const [orderStatusFilter, setOrderStatusFilter] = useState('All');
 
    useEffect(() => {
         const fetchLeads = async () => {
             try {
-                // ✅ Fetching all leads (Admin access)
-                const response = await fetch(`${API_BASE}/leads/admin/all`); // admin/all அல்லது common/all எதுவேண்டுமானாலும் இருக்கலாம்
+                const response = await fetch(`${API_BASE}/leads/admin/all`); 
                 const data = await response.json();
                 
                 if (response.ok && Array.isArray(data)) {
                     
-                    // 1. URL-ல் வரும் பெயரை Small letters ஆகவும், Space-ஐ நீக்கியும் எடுக்கிறோம்
                     const targetService = decodeURIComponent(serviceName).trim().toLowerCase();
 
                     const filtered = data.filter(lead => {
-                        // 2. Database-ல் உள்ள Service Type-ஐயும் Small letters ஆக மாற்றுகிறோம்
                         const dbService = lead.serviceType ? lead.serviceType.trim().toLowerCase() : '';
-                        
-                        // 3. இப்போது இரண்டையும் ஒப்பிடுகிறோம்
                         return dbService === targetService;
                     });
                     
-                    // Sort by Date (Newest first)
                     filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
                     
                     setLeads(filtered);
+                    setFilteredLeads(filtered); // ✅ Initialize filtered leads
                 } else {
                     setLeads([]);
+                    setFilteredLeads([]);
                 }
             } catch (error) {
                 console.error("Error fetching leads:", error);
@@ -48,6 +48,18 @@ const AdminServiceType = () => {
         };
         fetchLeads();
     }, [serviceName]);
+
+    // ✅ Handle Filter Change
+    useEffect(() => {
+        if (orderStatusFilter === 'All') {
+            setFilteredLeads(leads);
+        } else {
+            const result = leads.filter(lead => 
+                (lead.orderStatus || 'Open').toLowerCase() === orderStatusFilter.toLowerCase()
+            );
+            setFilteredLeads(result);
+        }
+    }, [orderStatusFilter, leads]);
 
     const handleDelete = async (e, id) => {
         e.stopPropagation();
@@ -64,7 +76,6 @@ const AdminServiceType = () => {
         } catch(err) { toast.error("Server Error"); }
     };
 
-    // Helper to format Date
     const formatDate = (dateString) => {
         if (!dateString) return '-';
         return new Date(dateString).toLocaleDateString();
@@ -78,9 +89,26 @@ const AdminServiceType = () => {
                 <button className="ad-btn-back" onClick={() => navigate('/admin-dashboard')}>
                     <ArrowLeft size={18} /> Back to Dashboard
                 </button>
-                <div className="header-text">
+                <div className="header-text" style={{ flex: 1, marginLeft: '20px' }}>
                     <h1 className="ad-page-title">{decodeURIComponent(serviceName)}</h1>
-                    <p className="ad-page-subtitle">{leads.length} Leads Found</p>
+                    <p className="ad-page-subtitle">{filteredLeads.length} Leads Found</p>
+                </div>
+
+                {/* ✅ FILTER DROPDOWN */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'white', padding: '8px 12px', borderRadius: '8px', border: '1px solid #ddd' }}>
+                        <Filter size={18} color="#555" />
+                        <select 
+                            value={orderStatusFilter}
+                            onChange={(e) => setOrderStatusFilter(e.target.value)}
+                            style={{ border: 'none', outline: 'none', background: 'transparent', cursor: 'pointer', fontWeight: '500', color: '#333' }}
+                        >
+                            <option value="All">All Orders</option>
+                            <option value="Open">Open</option>
+                            <option value="Closed">Closed</option>
+                            <option value="Rejected">Rejected</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -96,24 +124,24 @@ const AdminServiceType = () => {
                                 <th>Client Name</th>
                                 <th>Phone</th>
                                 <th>Company</th>
+                                <th>Call Status</th>
+                                <th>Order Status</th> 
+                                <th>Follow Up 1</th>
+                                <th>Follow Up 2</th>
                                 <th>Priority</th>
-                                
-                                {/* ✅ NEW COLUMNS ADDED */}
-                                <th>Follow Up</th>
-                                <th>Callback</th>
                                 <th>Closing</th>
                                 <th style={{textAlign: 'center'}}>Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {leads.length === 0 ? (
+                            {filteredLeads.length === 0 ? (
                                 <tr>
-                                    <td colSpan="9" className="ad-no-data">
-                                        No leads found for {decodeURIComponent(serviceName)}.
+                                    <td colSpan="11" className="ad-no-data">
+                                        No {orderStatusFilter !== 'All' ? orderStatusFilter : ''} leads found.
                                     </td>
                                 </tr>
                             ) : (
-                                leads.map((lead) => (
+                                filteredLeads.map((lead) => (
                                     <tr 
                                         key={lead._id || lead.id} 
                                         className="ad-lead-row" 
@@ -124,18 +152,36 @@ const AdminServiceType = () => {
                                         <td data-label="Phone">{lead.phoneNumber}</td>
                                         <td data-label="Company">{lead.companyName || '-'}</td>
                                         
+                                        <td data-label="Call Status">
+                                            <span className={`st-status-badge ${lead.callStatus?.toLowerCase().replace(/\s/g, '-')}`}>
+                                                {lead.callStatus || '-'}
+                                            </span>
+                                        </td>
+
+                                        <td data-label="Order Status">
+                                            <span className={`st-status-badge ${lead.orderStatus?.toLowerCase() || 'open'}`}>
+                                                {lead.orderStatus || 'Open'}
+                                            </span>
+                                        </td>
+
+                                        <td data-label="Follow Up 1" style={{maxWidth: '150px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}} title={lead.requirement}>
+                                            {lead.requirement || '-'}
+                                        </td>
+
+                                        <td data-label="Follow Up 2" style={{maxWidth: '150px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}} title={lead.remainder2}>
+                                            {lead.remainder2 || '-'}
+                                        </td>
+
                                         <td data-label="Priority">
                                             <span className={`ad-priority-badge ${lead.priority?.toLowerCase()}`}>
                                                 {lead.priority}
                                             </span>
                                         </td>
                                         
+                                        <td data-label="Closing" style={{fontWeight:'bold', color: lead.closing === 'Yes' ? 'green' : 'red'}}>
+                                            {lead.closing}
+                                        </td>
                                         
-                                        
-                                        {/* ✅ NEW DATA FIELDS */}
-                                        <td data-label="Follow Up">{lead.followUpStatus || '-'}</td>
-                                        <td data-label="Callback">{formatDate(lead.callbackReminder)}</td>
-                                        <td data-label="Closing">{lead.closing}</td>
                                         <td data-label="Action" style={{textAlign: 'center'}}>
                                             <button 
                                                 className="ad-btn-delete"

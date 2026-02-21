@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Check, X, Phone, User, Briefcase, MapPin, Calendar, 
   CreditCard, Activity, Tag, ClipboardCheck, MessageSquare, Lock, Mail, Link, ShoppingCart 
-} from 'lucide-react'; // Added ShoppingCart icon for Order Status
+} from 'lucide-react'; 
 import { toast } from 'react-toastify';
 import './LeadPageModern.css'; 
 
@@ -19,27 +19,24 @@ const ActionRow = ({ label, icon: Icon, name, value, type = "text", options = []
 
   const handleEditClick = () => {
     if (!disabled) {
-      setTempValue(value); // Reset temp value before edit
+      setTempValue(value); 
       setIsEditing(true);
     } else {
       toast.info("This field is locked.");
     }
   };
 
-  // Helper to render value (Handling URL clicks)
   const renderValue = () => {
     if (!value) return <span style={{opacity: 0.5, fontStyle: 'italic'}}>Set Value</span>;
     
-    // If type is URL, make it clickable
     if (type === 'url') {
-      // Ensure URL has protocol
       const href = value.startsWith('http') ? value : `https://${value}`;
       return (
         <a 
           href={href} 
           target="_blank" 
           rel="noopener noreferrer" 
-          onClick={(e) => e.stopPropagation()} // Prevent triggering edit mode when clicking link
+          onClick={(e) => e.stopPropagation()} 
           style={{ color: '#2563eb', textDecoration: 'underline', cursor: 'pointer' }}
         >
           {value}
@@ -100,12 +97,10 @@ const LeadPage = () => {
 
   if (!currentLead) return null;
 
-  // --- HELPER: DETERMINE COLOR ---
   const getStatusColor = (val) => {
     if (!val) return '';
     const v = val.toLowerCase();
     
-    // General Status Colors
     if (v === 'attend' || v === 'yes' || v === 'okay' || v === 'open') return 'green';
     if (v === 'not attend' || v === 'no' || v === 'not' || v === 'rejected') return 'red';
     if (v === 'callback' || v === 'closed') return 'blue';
@@ -113,11 +108,10 @@ const LeadPage = () => {
     return '';
   };
 
-  // --- LOGIC GATE ---
+  // ✅ LOGIC UPDATED: Removed leadStatus check since it was replaced by Follow Up Responsibility
   const isPaymentUnlocked = 
     currentLead.callStatus === 'Attend' && 
-    currentLead.followUpStatus === 'Yes' && 
-    currentLead.leadStatus === 'Okay';
+    currentLead.followUpStatus === 'Yes';
 
   const updateField = async (fieldName, newValue) => {
     try {
@@ -207,7 +201,6 @@ const LeadPage = () => {
                     value={currentLead.companyName} type="text" onSave={updateField} 
                 />
 
-                {/* ✅ CLICKABLE WEBSITE FIELD */}
                 <ActionRow 
                     label="Website" icon={Link} name="website" 
                     value={currentLead.website} type="url" onSave={updateField} 
@@ -228,7 +221,6 @@ const LeadPage = () => {
                     value={currentLead.location} type="text" onSave={updateField} 
                 />
 
-                {/* Date Added (Read Only) */}
                 <div style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
                     padding: '12px 0', borderBottom: '1px solid #f3f4f6', fontSize: '14px'
@@ -273,15 +265,14 @@ const LeadPage = () => {
                     colorClass={getStatusColor(currentLead.followUpStatus)}
                 />
 
+                {/* ✅ REPLACED Lead Status WITH Follow Up Responsibility */}
                 <ActionRow 
-                    label="Lead Status" icon={Tag} name="leadStatus" 
-                    value={currentLead.leadStatus} 
-                    type="select" options={['Okay', 'Not']} 
+                    label="Follow Up Responsibility" icon={User} name="followUpResponsibility" 
+                    value={currentLead.followUpResponsibility} 
+                    type="select" options={['teleSales', 'sasi prakash']} 
                     onSave={updateField} 
-                    colorClass={getStatusColor(currentLead.leadStatus)}
                 />
 
-                {/* ✅ ORDER STATUS ADDED HERE */}
                 <ActionRow 
                     label="Order Status" icon={ShoppingCart} name="orderStatus" 
                     value={currentLead.orderStatus} 
@@ -294,6 +285,13 @@ const LeadPage = () => {
                     label="Remainder" icon={MessageSquare} name="requirement" 
                     value={currentLead.requirement} type="text" onSave={updateField} 
                 />
+
+                {/* ✅ NEW: Remainder 2 Field added here */}
+                <ActionRow 
+                    label="Remainder 2" icon={MessageSquare} name="remainder2" 
+                    value={currentLead.remainder2} type="text" onSave={updateField} 
+                />
+
                  <ActionRow 
                     label="Advance Payment" icon={CreditCard} name="payment" 
                     value={currentLead.payment} type="number" onSave={updateField}

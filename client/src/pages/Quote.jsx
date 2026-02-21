@@ -31,7 +31,7 @@ const Quote = () => {
   };
 
   const [quoteMeta, setQuoteMeta] = useState({
-    quoteNo: 'SKT34',
+    quoteNo: 'Loading...', // ✅ Initial state
     refNo: '',
     date: new Date().toISOString().split('T')[0]
   });
@@ -55,8 +55,51 @@ Any additional page will be charged at Rs.1,500 per page.`);
 
   const [pageLoading, setPageLoading] = useState(false);
 
+  // --- ✅ NEW LOGIC: GET HIGHEST QUOTE NO ---
+  const generateNextQuoteNo = async () => {
+    try {
+      const response = await fetch('https://skitecrm-1l7f.onrender.com/api/quote/all');
+      const data = await response.json();
+
+      if (response.ok && Array.isArray(data) && data.length > 0) {
+        let maxNum = 0;
+        let prefix = 'SKT'; 
+        
+        data.forEach(q => {
+          if (q.quoteNo) {
+            // Extracts prefix and trailing numbers (e.g., "SKT44" -> "SKT" and "44")
+            const match = q.quoteNo.match(/^(.*?)(\d+)$/);
+            if (match) {
+              const num = parseInt(match[2], 10);
+              if (num > maxNum) {
+                maxNum = num;
+                prefix = match[1] || 'SKT';
+              }
+            }
+          }
+        });
+        
+        const nextNum = maxNum > 0 ? maxNum + 1 : 45; // Defaults to 45 if nothing found
+        return `${prefix}${nextNum}`;
+      }
+      return 'SKT45'; 
+    } catch (error) {
+      console.error("Error generating quote no:", error);
+      return 'SKT45';
+    }
+  };
+
   useEffect(() => {
-    if (id) fetchQuoteById(id);
+    const initializeData = async () => {
+      if (id) {
+        fetchQuoteById(id);
+      } else {
+        // Fetch next quote number for new quote
+        const nextQuoteNo = await generateNextQuoteNo();
+        setQuoteMeta(prev => ({ ...prev, quoteNo: nextQuoteNo }));
+      }
+    };
+    initializeData();
   }, [id]);
 
   const fetchQuoteById = async (quoteId) => {
@@ -74,19 +117,18 @@ Any additional page will be charged at Rs.1,500 per page.`);
             : new Date().toISOString().split('T')[0]
         });
 
-        // ✅ FIX: பழைய schema (addressLine1/addressLine2) + புதுசா schema (address) — இரண்டையும் handle பண்றோம்
         const cd = data.clientDetails || {};
         const resolvedAddress =
-          cd.address ||                          // புதுசா field
+          cd.address ||                          
           [cd.addressLine1, cd.addressLine2, cd.location]
             .filter(Boolean)
-            .join(', ') ||                       // பழைய fields combine பண்றோம்
+            .join(', ') ||                       
           '';
 
         setClientDetails({
           name: cd.name || '',
           address: resolvedAddress,
-          gst: cd.gst || cd.gstin || ''         // ✅ FIX: gst or gstin எதுவா இருந்தாலும் எடு
+          gst: cd.gst || cd.gstin || ''         
         });
 
         setItems(
@@ -161,6 +203,11 @@ Any additional page will be charged at Rs.1,500 per page.`);
       const data = await response.json();
       if (response.ok) {
         toast.success(id ? "Quote Updated Successfully!" : "Quote Saved Successfully!");
+        // ✅ Auto-refresh to next Quote No if it was a new Quote Create
+        if (!id) {
+            const nextNo = await generateNextQuoteNo();
+            setQuoteMeta(prev => ({ ...prev, quoteNo: nextNo }));
+        }
       } else {
         toast.error(data.message || "Failed to save quote");
       }

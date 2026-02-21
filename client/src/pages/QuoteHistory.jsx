@@ -7,10 +7,9 @@ import './Invoice.css';
 const QuoteHistory = () => {
   const navigate = useNavigate();
 
-  // ✅ FIX: URL-ஐ நம்பாமல் LocalStorage-ல் இருந்து உறுதியாக Role-ஐ எடுக்கிறோம்.
   const isSalesUser = () => {
     const salesUser = localStorage.getItem("salesUser");
-    return !!salesUser; // salesUser இருந்தால் true, இல்லையென்றால் false
+    return !!salesUser; 
   };
 
   const isSales = isSalesUser(); 
@@ -63,20 +62,23 @@ const QuoteHistory = () => {
     }
   };
 
-  // 3. FILTER LOGIC
-  const filteredQuotes = quotes.filter(q => {
-    const matchesSearch = 
-      (q.clientDetails?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (q.quoteNo || '').toLowerCase().includes(searchTerm.toLowerCase());
+  // 3. FILTER & SORT LOGIC (✅ Sort added here by date)
+  const filteredQuotes = quotes
+    .filter(q => {
+      const matchesSearch = 
+        (q.clientDetails?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (q.quoteNo || '').toLowerCase().includes(searchTerm.toLowerCase());
 
-    const isGST = q.taxRate && q.taxRate > 0;
+      const isGST = q.taxRate && q.taxRate > 0;
 
-    if (activeTab === 'gst') {
-      return matchesSearch && isGST;
-    } else {
-      return matchesSearch && !isGST;
-    }
-  });
+      if (activeTab === 'gst') {
+        return matchesSearch && isGST;
+      } else {
+        return matchesSearch && !isGST;
+      }
+    })
+    // ✅ NEW: Sort by Date (Descending - Newest first)
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
 
   // ✅ Back Button Handler
   const handleBack = () => {
@@ -88,7 +90,7 @@ const QuoteHistory = () => {
       navigate(isSales ? '/sales-dashboard/quote' : '/admin-dashboard/quote');
   };
 
-  // ✅ Row Click Handler (இங்கே தான் மாற்றம்)
+  // ✅ Row Click Handler
   const handleRowClick = (id) => {
       const path = isSales 
         ? `/sales-dashboard/quote/${id}` 
@@ -204,7 +206,7 @@ const QuoteHistory = () => {
                 filteredQuotes.map((q) => (
                   <tr 
                     key={q._id}
-                    onClick={() => handleRowClick(q._id)} // ✅ Corrected Navigation Here
+                    onClick={() => handleRowClick(q._id)} 
                     style={{ borderBottom: '1px solid #f3f4f6', cursor: 'pointer', transition: 'background 0.2s' }}
                     onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
                     onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'white'}

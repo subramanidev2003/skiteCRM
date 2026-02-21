@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Check, X, Phone, User, Briefcase, MapPin, Calendar, 
-  CreditCard, Activity, Tag, ClipboardCheck, MessageSquare, Lock, Mail 
-} from 'lucide-react';
+  CreditCard, Activity, Tag, ClipboardCheck, MessageSquare, Lock, Mail, Link, ShoppingCart 
+} from 'lucide-react'; // ✅ Added ShoppingCart & Link
 import { toast } from 'react-toastify';
 import './LeadPageModern.css'; 
 
@@ -19,11 +19,32 @@ const ActionRow = ({ label, icon: Icon, name, value, type = "text", options = []
 
   const handleEditClick = () => {
     if (!disabled) {
-      setTempValue(value); // Reset temp value to current value before editing
+      setTempValue(value); 
       setIsEditing(true);
     } else {
       toast.info("This field is locked.");
     }
+  };
+
+  const renderValue = () => {
+    if (!value) return <span style={{opacity: 0.5, fontStyle: 'italic'}}>Set Value</span>;
+    
+    if (type === 'url') {
+      const href = value.startsWith('http') ? value : `https://${value}`;
+      return (
+        <a 
+          href={href} 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          onClick={(e) => e.stopPropagation()} 
+          style={{ color: '#2563eb', textDecoration: 'underline', cursor: 'pointer' }}
+        >
+          {value}
+        </a>
+      );
+    }
+
+    return value;
   };
 
   return (
@@ -53,7 +74,7 @@ const ActionRow = ({ label, icon: Icon, name, value, type = "text", options = []
             title={disabled ? "Locked" : "Click to Edit"}
         >
           <div className={`value-pill ${colorClass}`}>
-            {value || <span style={{opacity: 0.5, fontStyle: 'italic'}}>Set Value</span>}
+            {renderValue()}
           </div>
           {disabled && <Lock size={14} className="lock-icon" />}
         </div>
@@ -80,16 +101,16 @@ const AdminLeadPage = () => {
   const getStatusColor = (val) => {
     if (!val) return '';
     const v = val.toLowerCase();
-    if (v === 'attend' || v === 'yes' || v === 'okay') return 'green';
-    if (v === 'not attend' || v === 'no' || v === 'not') return 'red';
-    if (v === 'callback') return 'blue';
+    if (v === 'attend' || v === 'yes' || v === 'okay' || v === 'open') return 'green';
+    if (v === 'not attend' || v === 'no' || v === 'not' || v === 'rejected') return 'red';
+    if (v === 'callback' || v === 'closed') return 'blue';
     return '';
   };
 
+  // ✅ LOGIC UPDATED EXACTLY LIKE LeadPage.js
   const isPaymentUnlocked = 
     currentLead.callStatus === 'Attend' && 
-    currentLead.followUpStatus === 'Yes' && 
-    currentLead.leadStatus === 'Okay';
+    currentLead.followUpStatus === 'Yes';
 
   const updateField = async (fieldName, newValue) => {
     try {
@@ -156,13 +177,12 @@ const AdminLeadPage = () => {
       {/* 2. GRID LAYOUT */}
       <div className="details-grid-layout">
         
-        {/* LEFT COL: CLIENT PROFILE (NOW EDITABLE) */}
+        {/* LEFT COL: CLIENT PROFILE */}
         <div className="info-card">
             <div className="card-heading">
                 <User size={20} color="#ff7f50"/> Client Profile
             </div>
             
-            {/* ✅ அனைத்து ஃபீல்டுகளும் இப்போது EDIT செய்யக்கூடிய ActionRow ஆக மாற்றப்பட்டுள்ளன */}
             <div className="action-list">
                 
                 <ActionRow 
@@ -181,6 +201,11 @@ const AdminLeadPage = () => {
                 />
 
                 <ActionRow 
+                    label="Website" icon={Link} name="website" 
+                    value={currentLead.website} type="url" onSave={updateField} 
+                />
+
+                <ActionRow 
                     label="Phone" icon={Phone} name="phoneNumber" 
                     value={currentLead.phoneNumber} type="tel" onSave={updateField} 
                 />
@@ -195,7 +220,6 @@ const AdminLeadPage = () => {
                     value={currentLead.location} type="text" onSave={updateField} 
                 />
 
-                {/* Date Added (Read Only) */}
                 <div style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
                     padding: '12px 0', borderBottom: '1px solid #f3f4f6', fontSize: '14px'
@@ -212,7 +236,7 @@ const AdminLeadPage = () => {
             </div>
         </div>
 
-        {/* RIGHT COL: LEAD CONSOLE (ALREADY EDITABLE) */}
+        {/* RIGHT COL: LEAD CONSOLE */}
         <div className="info-card">
               <div className="card-heading">
                 <Activity size={20} color="#ff7f50"/> Lead Console
@@ -241,23 +265,34 @@ const AdminLeadPage = () => {
                     colorClass={getStatusColor(currentLead.followUpStatus)}
                 />
 
+                {/* ✅ Follow Up Responsibility instead of Lead Status */}
                 <ActionRow 
-                    label="Lead Status" icon={Tag} name="leadStatus" 
-                    value={currentLead.leadStatus} 
-                    type="select" options={['Okay', 'Not']} 
+                    label="Follow Up Responsibility" icon={User} name="followUpResponsibility" 
+                    value={currentLead.followUpResponsibility} 
+                    type="select" options={['teleSales', 'sasi prakash']} 
                     onSave={updateField} 
-                    colorClass={getStatusColor(currentLead.leadStatus)}
                 />
-                
+
+                {/* ✅ Order Status */}
                 <ActionRow 
-                    label="Callback Remainder" icon={Calendar} name="callbackDate" 
-                    value={currentLead.callbackDate} type="date" onSave={updateField} 
+                    label="Order Status" icon={ShoppingCart} name="orderStatus" 
+                    value={currentLead.orderStatus} 
+                    type="select" options={['Open', 'Closed', 'Rejected']} 
+                    onSave={updateField} 
+                    colorClass={getStatusColor(currentLead.orderStatus)}
                 />
                 
                 <ActionRow 
                     label="Remainder" icon={MessageSquare} name="requirement" 
                     value={currentLead.requirement} type="text" onSave={updateField} 
                 />
+
+                {/* ✅ Remainder 2 Field added */}
+                <ActionRow 
+                    label="Remainder 2" icon={MessageSquare} name="remainder2" 
+                    value={currentLead.remainder2} type="text" onSave={updateField} 
+                />
+
                  <ActionRow 
                     label="Advance Payment" icon={CreditCard} name="payment" 
                     value={currentLead.payment} type="number" onSave={updateField}
@@ -267,7 +302,7 @@ const AdminLeadPage = () => {
                 <div style={{margin: '15px 0', borderTop: '1px dashed #e5e7eb'}}></div>
                 
                 <ActionRow 
-                    label="Deal Closed?" icon={CreditCard} name="closing" 
+                    label="Deal Closed?" icon={Check} name="closing" 
                     value={currentLead.closing} type="select" options={['Yes', 'No']} onSave={updateField} 
                     colorClass={getStatusColor(currentLead.closing)}
                     disabled={!isPaymentUnlocked}

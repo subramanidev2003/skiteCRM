@@ -74,25 +74,28 @@ const InvoiceHistory = () => {
     }
   };
 
-  // ✅ FILTER LOGIC
-  const filteredInvoices = invoices.filter(inv => {
-    // Search Filter (Safe check for null values)
-    const clientName = inv.clientDetails?.name?.toLowerCase() || '';
-    const invoiceNo = inv.invoiceNo?.toLowerCase() || '';
-    const searchLower = searchTerm.toLowerCase();
+  // ✅ FILTER & SORT LOGIC
+  const filteredInvoices = invoices
+    .filter(inv => {
+      // Search Filter (Safe check for null values)
+      const clientName = inv.clientDetails?.name?.toLowerCase() || '';
+      const invoiceNo = inv.invoiceNo?.toLowerCase() || '';
+      const searchLower = searchTerm.toLowerCase();
 
-    const matchesSearch = clientName.includes(searchLower) || invoiceNo.includes(searchLower);
+      const matchesSearch = clientName.includes(searchLower) || invoiceNo.includes(searchLower);
 
-    // Tab Filter (GST check)
-    // taxRate > 0 means GST Invoice
-    const isGST = inv.taxRate && Number(inv.taxRate) > 0;
+      // Tab Filter (GST check)
+      // taxRate > 0 means GST Invoice
+      const isGST = inv.taxRate && Number(inv.taxRate) > 0;
 
-    if (activeTab === 'gst') {
-      return matchesSearch && isGST;
-    } else {
-      return matchesSearch && !isGST;
-    }
-  });
+      if (activeTab === 'gst') {
+        return matchesSearch && isGST;
+      } else {
+        return matchesSearch && !isGST;
+      }
+    })
+    // ✅ NEW: Sort by Date (Descending - Newest first) added here
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
 
   return (
     <div style={{ padding: '30px', backgroundColor: '#f9fafb', minHeight: '100vh', fontFamily: 'sans-serif' }}>

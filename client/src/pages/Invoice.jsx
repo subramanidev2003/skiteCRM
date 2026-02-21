@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom'; 
 import { ArrowLeft, Plus, Trash2, Download, Save, History, ChevronDown } from 'lucide-react'; 
-import { useNavigate, useParams } from 'react-router-dom'; // ✅ useParams சேர்த்துள்ளேன்
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { toast } from 'react-toastify'; 
@@ -28,7 +28,8 @@ const SERVICES_LIST = [
 
 const Invoice = () => {
   const navigate = useNavigate();
-  const { id } = useParams(); // ✅ URL-ல் ID இருந்தால் அதை எடுக்கிறோம்
+  const { id } = useParams(); 
+  const location = useLocation(); 
 
   // --- SENDER DETAILS ---
   const senderDetails = {
@@ -52,7 +53,7 @@ const Invoice = () => {
 
   // --- STATE ---
   const [invoiceMeta, setInvoiceMeta] = useState({
-    invoiceNo: 'SKT/25-26/025',
+    invoiceNo: 'Loading...', // Initital a loading nu kaatum
     date: new Date().toISOString().split('T')[0]
   });
 
@@ -72,19 +73,61 @@ const Invoice = () => {
   const [activeDropdownIndex, setActiveDropdownIndex] = useState(null);
   const dropdownRef = useRef(null); 
 
-  // --- ✅ NEW: FETCH INVOICE DATA IF ID EXISTS ---
+  // --- ✅ NEW LOGIC: GET HIGHEST INVOICE NO ---
+  const generateNextInvoiceNo = async () => {
+    try {
+        const token = localStorage.getItem('adminToken') || localStorage.getItem('accountantToken'); 
+        const response = await fetch('https://skitecrm-1l7f.onrender.com/api/invoice/all', {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        const data = await response.json();
+
+        if (response.ok && Array.isArray(data) && data.length > 0) {
+            let maxNum = 0;
+            let prefix = 'SKT/25-26/'; // Default
+            
+            // Loop through all invoices to find the highest number (ignoring date)
+            data.forEach(inv => {
+                if (inv.invoiceNo) {
+                    const parts = inv.invoiceNo.split('/');
+                    if (parts.length >= 3) {
+                        const numStr = parts[parts.length - 1]; // gets '033'
+                        const num = parseInt(numStr, 10); // converts to 33
+                        if (!isNaN(num) && num > maxNum) {
+                            maxNum = num;
+                            // dynamically capture the prefix e.g., 'SKT/25-26/'
+                            prefix = parts.slice(0, parts.length - 1).join('/') + '/'; 
+                        }
+                    }
+                }
+            });
+            
+            const nextNum = maxNum + 1; // 33 + 1 = 34
+            const paddedNum = nextNum.toString().padStart(3, '0'); // '034'
+            return `${prefix}${paddedNum}`;
+        }
+        return 'SKT/25-26/034'; // Fallback if no invoices exist
+    } catch (error) {
+        console.error("Error generating invoice no:", error);
+        return 'SKT/25-26/034';
+    }
+  };
+
+  // --- FETCH INVOICE DATA OR AUTO-FILL ---
   useEffect(() => {
-    if (id) {
-        const fetchInvoiceDetails = async () => {
+    const initializeData = async () => {
+        // 1. History-la irunthu Edit/View panna
+        if (id) {
             try {
                 const response = await fetch(`https://skitecrm-1l7f.onrender.com/api/invoice/${id}`);
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Backend Data-வை State-ல் செட் செய்கிறோம்
                     setInvoiceMeta({
                         invoiceNo: data.invoiceNo,
-                        date: data.date.split('T')[0] // Date format fix
+                        date: data.date.split('T')[0] 
                     });
                     setClientDetails(data.clientDetails);
                     setItems(data.items);
@@ -96,10 +139,25 @@ const Invoice = () => {
                 console.error("Error fetching invoice:", error);
                 toast.error("Error loading invoice");
             }
-        };
-        fetchInvoiceDetails();
-    }
-  }, [id]);
+        } 
+        // 2. New Invoice (Create New or Fixed Invoice)
+        else {
+            // Fetch next invoice number
+            const nextInvoiceNo = await generateNextInvoiceNo();
+            setInvoiceMeta(prev => ({ ...prev, invoiceNo: nextInvoiceNo }));
+
+            // If coming from Fixed Invoice, auto-fill client details
+            if (location.state && location.state.predefinedData) {
+                const data = location.state.predefinedData;
+                setClientDetails(data.clientDetails);
+                setItems(data.items);
+                setTaxRate(data.taxRate);
+            }
+        }
+    };
+
+    initializeData();
+  }, [id, location.state]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -215,10 +273,6 @@ const Invoice = () => {
         grandTotal
       };
 
-      // ✅ EDIT MODE: If ID exists, we could use PUT (but backend only has create for now)
-      // For now, we will create NEW even if editing, unless you add UPDATE route.
-      // If you want to just View and Generate PDF, this is fine.
-      
       const response = await fetch('https://skitecrm-1l7f.onrender.com/api/invoice/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -229,6 +283,9 @@ const Invoice = () => {
 
       if (response.ok) {
         toast.success("Invoice Saved Successfully!");
+        // ✅ Onamum save aanathum next number kaata
+        const nextNo = await generateNextInvoiceNo();
+        setInvoiceMeta(prev => ({...prev, invoiceNo: nextNo})); 
       } else {
         toast.error(data.message || "Failed to save invoice");
       }
@@ -438,7 +495,6 @@ const Invoice = () => {
                 <History size={18} /> History
             </button>
             
-            {/* Show Save button only if needed, usually we don't update invoices once created, but you can leave it */}
             <button className="action-btn" onClick={saveInvoiceToDB} style={{ backgroundColor: '#28a745' }}>
                 <Save size={18} /> Save New
             </button>
@@ -663,8 +719,6 @@ const Invoice = () => {
 
         {/* RIGHT COLUMN: PREVIEW */}
         <div className="invoice-preview paper-shadow">
-          {/* ... Preview Code same as before ... */}
-          
           <div className="preview-header">
             <div>
               <div style={{ width: '80px', height: '60px', background: '#FF4500', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', marginBottom: '10px' }}>

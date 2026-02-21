@@ -38,6 +38,7 @@ import WebDevClients from "./components/WebDevClients.jsx";
 import WebDevProject from "./components/WebDevProject.jsx";
 import ReceiptHistory from "./pages/ReceiptHistory.jsx";
 import PaymentReceipt from "./pages/PaymentReceipt.jsx";
+import FixedInvoice from "./components/FixedInvoice.jsx";
 
 function App() {
   return (
@@ -97,6 +98,7 @@ function App() {
             <Route path="/admin-dashboard/invoice" element={<Invoice />} />
             <Route path="invoice/:id" element={<Invoice />} />
             <Route path="invoice-history" element={<InvoiceHistory />} />
+            <Route path="fixed-invoice" element={<FixedInvoice />} />
             
             {/* ADMIN QUOTE ROUTES */}
             <Route path="/admin-dashboard/quote" element={<Quote />} />

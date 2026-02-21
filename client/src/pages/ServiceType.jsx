@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Filter } from 'lucide-react'; // Added Filter icon
+import { ArrowLeft, Filter } from 'lucide-react';
 import './ServiceType.css';
 
 const ServiceType = () => {
   const { serviceName } = useParams();
   const navigate = useNavigate();
   const [leads, setLeads] = useState([]);
-  const [filteredLeads, setFilteredLeads] = useState([]); // State for filtered data
+  const [filteredLeads, setFilteredLeads] = useState([]); 
   const [loading, setLoading] = useState(true);
   
   // Filter State
@@ -114,8 +114,9 @@ const ServiceType = () => {
                             <th>Phone</th>
                             <th>Company</th>
                             <th>Call Status</th>
-                            <th>Order Status</th> {/* ✅ New Column */}
-                            <th>Requirement</th>
+                            <th>Order Status</th> 
+                            <th>Follow Up 1</th>
+                            <th>Follow Up 2</th>
                             <th>Priority</th>
                             <th>Closing</th>
                         </tr>
@@ -123,7 +124,8 @@ const ServiceType = () => {
                     <tbody>
                         {filteredLeads.length === 0 ? (
                             <tr>
-                                <td colSpan="9" className="st-no-data">
+                                {/* ✅ Updated colSpan to 10 due to new column */}
+                                <td colSpan="10" className="st-no-data">
                                     No {orderStatusFilter !== 'All' ? orderStatusFilter : ''} leads found.
                                 </td>
                             </tr>
@@ -145,15 +147,20 @@ const ServiceType = () => {
                                         </span>
                                     </td>
 
-                                    {/* ✅ Order Status Column */}
                                     <td>
                                         <span className={`st-status-badge ${lead.orderStatus?.toLowerCase() || 'open'}`}>
                                             {lead.orderStatus || 'Open'}
                                         </span>
                                     </td>
 
+                                    {/* ✅ Follow Up 1 (Requirement) */}
                                     <td className="st-truncate-cell" title={lead.requirement}>
                                         {lead.requirement || '-'}
+                                    </td>
+
+                                    {/* ✅ Follow Up 2 (Remainder 2) */}
+                                    <td className="st-truncate-cell" title={lead.remainder2}>
+                                        {lead.remainder2 || '-'}
                                     </td>
 
                                     <td>

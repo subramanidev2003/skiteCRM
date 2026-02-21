@@ -4,12 +4,16 @@ import Lead from '../models/Lead.js';
 const router = express.Router();
 
 // 1. ADD NEW LEAD (POST)
+// 1. ADD NEW LEAD (POST)
 router.post('/add', async (req, res) => {
     try {
         const { 
             date, name, email, companyName, business, location, phoneNumber, 
             serviceType, priority, requirement, callStatus, followUpStatus, 
-            callbackDate, leadStatus, payment, closing, salesAgentId 
+            callbackDate, payment, closing, salesAgentId,
+            
+            // ✅ PUDHUSA ADD PANNA FIELDS INGA VARANUM
+            remainder2, followUpResponsibility, orderStatus 
         } = req.body;
 
         if (!salesAgentId) {
@@ -19,8 +23,10 @@ router.post('/add', async (req, res) => {
         const newLead = new Lead({
             date, name, email, companyName, business, location, phoneNumber, 
             serviceType, priority, requirement, callStatus, followUpStatus, 
-            callbackDate, leadStatus, payment, closing, 
-            salesAgentId
+            callbackDate, payment, closing, salesAgentId,
+            
+            // ✅ INGAYUM PASS PANNANUM
+            remainder2, followUpResponsibility, orderStatus
         });
 
         await newLead.save();
