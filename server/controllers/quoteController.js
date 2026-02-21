@@ -11,7 +11,15 @@ export const createQuote = async (req, res) => {
       const price = Number(item.price) || 0;
       const total = qty * price;
       subtotal += total;
-      return { description: item.description, hsn: item.hsn, qty, price, total };
+      // ✅ FIX: Added subDescription here
+      return { 
+          description: item.description, 
+          subDescription: item.subDescription || '', // Pudhusa add panniyachu
+          hsn: item.hsn, 
+          qty, 
+          price, 
+          total 
+      };
     });
 
     const cgst = (subtotal * (Number(taxRate) || 0)) / 100;
@@ -59,7 +67,15 @@ export const updateQuote = async (req, res) => {
       const price = Number(item.price) || 0;
       const total = qty * price;
       subtotal += total;
-      return { description: item.description, hsn: item.hsn, qty, price, total };
+      // ✅ FIX: Added subDescription here
+      return { 
+          description: item.description, 
+          subDescription: item.subDescription || '', // Pudhusa add panniyachu
+          hsn: item.hsn, 
+          qty, 
+          price, 
+          total 
+      };
     });
 
     const cgst = (subtotal * (Number(taxRate) || 0)) / 100;
@@ -122,7 +138,6 @@ export const getQuoteById = async (req, res) => {
   try {
     const quote = await Quote.findById(req.params.id);
     if (!quote) return res.status(404).json({ message: "Quote not found" });
-    // console.log("QUOTE DATA:", JSON.stringify(quote, null, 2));
     res.status(200).json(quote);
   } catch (error) {
     res.status(500).json({ message: "Error fetching quote" });
