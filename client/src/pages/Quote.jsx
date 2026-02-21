@@ -42,15 +42,9 @@ const Quote = () => {
     gst: ''
   });
 
-  // ✅ ADDED subDescription field to handle nested features
+  // Default empty item structure
   const [items, setItems] = useState([
-    { 
-        description: 'Search engine optimization (SEO)', 
-        subDescription: 'Website Audit & Competitor Analysis\nOn-Page Optimization\nOff page optimization', 
-        hsn: 'Monthly', 
-        price: '10000', 
-        qty: '1' 
-    }
+    { description: '', subDescription: '', hsn: '', price: '', qty: '1' }
   ]);
 
   const [taxRate, setTaxRate] = useState(9);
@@ -101,6 +95,16 @@ Any additional page will be charged at Rs.1,500 per page.`);
       } else {
         const nextQuoteNo = await generateNextQuoteNo();
         setQuoteMeta(prev => ({ ...prev, quoteNo: nextQuoteNo }));
+        // When creating a new quote, pre-fill with a default example layout
+        setItems([
+          { 
+              description: 'Search engine optimization (SEO)', 
+              subDescription: 'Website Audit & Competitor Analysis\nOn-Page Optimization\nOff page optimization', 
+              hsn: 'Monthly', 
+              price: '10000', 
+              qty: '1' 
+          }
+        ]);
       }
     };
     initializeData();
@@ -128,11 +132,19 @@ Any additional page will be charged at Rs.1,500 per page.`);
           gst: cd.gst || cd.gstin || ''         
         });
 
-        setItems(
-          data.items?.length > 0
-            ? data.items
-            : [{ description: '', subDescription: '', hsn: '', price: '', qty: '1' }]
-        );
+        // ✅ FIX: Set items directly from DB if they exist, otherwise provide 1 empty row.
+        if (data.items && data.items.length > 0) {
+            setItems(data.items.map(item => ({
+                description: item.description || '',
+                subDescription: item.subDescription || '',
+                hsn: item.hsn || '',
+                price: item.price !== undefined && item.price !== null ? String(item.price) : '',
+                qty: item.qty !== undefined && item.qty !== null ? String(item.qty) : '1'
+            })));
+        } else {
+            setItems([{ description: '', subDescription: '', hsn: '', price: '', qty: '1' }]);
+        }
+
         setTaxRate(data.taxRate ?? 9);
         setTerms(data.terms || '');
       } else {
@@ -303,7 +315,6 @@ Any additional page will be charged at Rs.1,500 per page.`);
     const tableStartY = Math.max(currentDetailY + 10, 95);
     const validItems = items.filter(item => item.description?.trim() !== "");
 
-    // ✅ FIXED PDF TABLE DATA: Formats Sub-Descriptions beautifully inside the same cell
     autoTable(doc, {
       startY: tableStartY,
       head: [['DESCRIPTION', 'DETAILS', 'PRICE', 'QTY', 'TOTAL']],
@@ -313,7 +324,6 @@ Any additional page will be charged at Rs.1,500 per page.`);
         
         let descText = item.description;
         if (item.subDescription && item.subDescription.trim() !== '') {
-            // Adds bullet points to each sub-item and creates a new line
             const subLines = item.subDescription.split('\n').filter(line => line.trim() !== '');
             const formattedSubLines = subLines.map(line => `   • ${line.trim()}`).join('\n');
             descText += `\n${formattedSubLines}`;
@@ -448,14 +458,12 @@ Any additional page will be charged at Rs.1,500 per page.`);
             </div>
           </div>
 
-          {/* ✅ ITEMS SECTION UI REDESIGNED */}
           <div className="items-section">
             <h3 style={{ color: '#FF4500', marginBottom: '15px' }}>Items & Packages</h3>
             {items.map((item, index) => (
               <div key={index} className="item-card" style={{ padding: '15px', border: '1px solid #ddd', borderRadius: '8px', marginBottom: '15px', background: '#fff' }}>
                 <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
                   
-                  {/* Left Column: Descriptions */}
                   <div style={{ flex: '2', minWidth: '250px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     <div className="input-wrapper">
                       <label style={{ fontWeight: 'bold', color: '#333' }}>Main Package / Item</label>
@@ -479,7 +487,6 @@ Any additional page will be charged at Rs.1,500 per page.`);
                     </div>
                   </div>
 
-                  {/* Right Column: Pricing & Actions */}
                   <div style={{ flex: '1', minWidth: '150px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
                     <div className="input-wrapper">
                       <label>HSN / Details</label>
@@ -492,14 +499,14 @@ Any additional page will be charged at Rs.1,500 per page.`);
                     <div style={{ display: 'flex', gap: '10px' }}>
                       <div className="input-wrapper" style={{ flex: 1 }}>
                         <label>Price</label>
-                        <input type="text" placeholder="0.00" value={item.price}
+                        <input type="text" placeholder="Optional" value={item.price}
                           onChange={(e) => handleItemChange(index, 'price', e.target.value)} 
                           style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
                         />
                       </div>
                       <div className="input-wrapper" style={{ width: '60px' }}>
                         <label>Qty</label>
-                        <input type="text" placeholder="1" value={item.qty}
+                        <input type="text" placeholder="-" value={item.qty}
                           onChange={(e) => handleItemChange(index, 'qty', e.target.value)} 
                           style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc', textAlign: 'center' }}
                         />
@@ -581,7 +588,6 @@ Any additional page will be charged at Rs.1,500 per page.`);
                   
                   return (
                     <tr key={i}>
-                      {/* ✅ Render Main and Sub Description in Preview */}
                       <td>
                         <div style={{ fontWeight: 'bold', color: '#111' }}>{item.description}</div>
                         {item.subDescription && (

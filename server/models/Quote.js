@@ -12,6 +12,7 @@ const quoteSchema = new mongoose.Schema({
   items: [
     {
       description: { type: String },
+      subDescription:{ type: String },
       hsn: { type: String },
       price: { type: Number },
       qty: { type: Number, required: true, default: 1 },
