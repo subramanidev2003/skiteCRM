@@ -31,7 +31,7 @@ const Quote = () => {
   };
 
   const [quoteMeta, setQuoteMeta] = useState({
-    quoteNo: 'Loading...', // ✅ Initial state
+    quoteNo: 'Loading...', 
     refNo: '',
     date: new Date().toISOString().split('T')[0]
   });
@@ -42,8 +42,15 @@ const Quote = () => {
     gst: ''
   });
 
+  // ✅ ADDED subDescription field to handle nested features
   const [items, setItems] = useState([
-    { description: 'Social Media Poster', hsn: 'Monthly 10 Poster', price: 9000, qty: 1 }
+    { 
+        description: 'Search engine optimization (SEO)', 
+        subDescription: 'Website Audit & Competitor Analysis\nOn-Page Optimization\nOff page optimization', 
+        hsn: 'Monthly', 
+        price: '10000', 
+        qty: '1' 
+    }
   ]);
 
   const [taxRate, setTaxRate] = useState(9);
@@ -55,7 +62,6 @@ Any additional page will be charged at Rs.1,500 per page.`);
 
   const [pageLoading, setPageLoading] = useState(false);
 
-  // --- ✅ NEW LOGIC: GET HIGHEST QUOTE NO ---
   const generateNextQuoteNo = async () => {
     try {
       const response = await fetch('https://skitecrm-1l7f.onrender.com/api/quote/all');
@@ -67,7 +73,6 @@ Any additional page will be charged at Rs.1,500 per page.`);
         
         data.forEach(q => {
           if (q.quoteNo) {
-            // Extracts prefix and trailing numbers (e.g., "SKT44" -> "SKT" and "44")
             const match = q.quoteNo.match(/^(.*?)(\d+)$/);
             if (match) {
               const num = parseInt(match[2], 10);
@@ -79,7 +84,7 @@ Any additional page will be charged at Rs.1,500 per page.`);
           }
         });
         
-        const nextNum = maxNum > 0 ? maxNum + 1 : 45; // Defaults to 45 if nothing found
+        const nextNum = maxNum > 0 ? maxNum + 1 : 45; 
         return `${prefix}${nextNum}`;
       }
       return 'SKT45'; 
@@ -94,7 +99,6 @@ Any additional page will be charged at Rs.1,500 per page.`);
       if (id) {
         fetchQuoteById(id);
       } else {
-        // Fetch next quote number for new quote
         const nextQuoteNo = await generateNextQuoteNo();
         setQuoteMeta(prev => ({ ...prev, quoteNo: nextQuoteNo }));
       }
@@ -112,18 +116,11 @@ Any additional page will be charged at Rs.1,500 per page.`);
         setQuoteMeta({
           quoteNo: data.quoteNo || '',
           refNo: data.refNo || '',
-          date: data.date
-            ? new Date(data.date).toISOString().split('T')[0]
-            : new Date().toISOString().split('T')[0]
+          date: data.date ? new Date(data.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
         });
 
         const cd = data.clientDetails || {};
-        const resolvedAddress =
-          cd.address ||                          
-          [cd.addressLine1, cd.addressLine2, cd.location]
-            .filter(Boolean)
-            .join(', ') ||                       
-          '';
+        const resolvedAddress = cd.address || [cd.addressLine1, cd.addressLine2, cd.location].filter(Boolean).join(', ') || '';
 
         setClientDetails({
           name: cd.name || '',
@@ -134,7 +131,7 @@ Any additional page will be charged at Rs.1,500 per page.`);
         setItems(
           data.items?.length > 0
             ? data.items
-            : [{ description: '', hsn: '', price: 0, qty: 1 }]
+            : [{ description: '', subDescription: '', hsn: '', price: '', qty: '1' }]
         );
         setTaxRate(data.taxRate ?? 9);
         setTerms(data.terms || '');
@@ -148,9 +145,13 @@ Any additional page will be charged at Rs.1,500 per page.`);
     }
   };
 
-  // --- CALCULATIONS ---
   const calculateTotal = () => {
-    const subtotal = items.reduce((acc, item) => acc + ((item.price || 0) * (item.qty || 1)), 0);
+    const subtotal = items.reduce((acc, item) => {
+      const p = parseFloat(item.price) || 0;
+      const q = parseFloat(item.qty) || 1; 
+      if(item.price === '') return acc;
+      return acc + (p * q);
+    }, 0);
     const cgst = (subtotal * taxRate) / 100;
     const sgst = (subtotal * taxRate) / 100;
     const grandTotal = Math.round(subtotal + cgst + sgst);
@@ -165,7 +166,7 @@ Any additional page will be charged at Rs.1,500 per page.`);
     setItems(newItems);
   };
 
-  const addItem = () => setItems([...items, { description: '', hsn: '', price: 0, qty: 1 }]);
+  const addItem = () => setItems([...items, { description: '', subDescription: '', hsn: '', price: '', qty: '1' }]);
   const removeItem = (index) => setItems(items.filter((_, i) => i !== index));
 
   const saveQuoteToDB = async () => {
@@ -174,13 +175,22 @@ Any additional page will be charged at Rs.1,500 per page.`);
       return;
     }
 
-    const validItems = items.filter(item => item.description?.trim() !== "" || item.price > 0);
+    const validItems = items.filter(item => item.description?.trim() !== "");
     const quoteData = {
       quoteNo: quoteMeta.quoteNo,
       refNo: quoteMeta.refNo,
       date: quoteMeta.date,
       clientDetails,
-      items: validItems.map(item => ({ ...item, total: item.price * item.qty })),
+      items: validItems.map(item => {
+        const p = parseFloat(item.price) || 0;
+        const q = parseFloat(item.qty) || 1;
+        return { 
+            ...item, 
+            price: item.price === '' ? '' : p, 
+            qty: item.qty === '' ? '' : q, 
+            total: item.price === '' ? 0 : p * q 
+        };
+      }),
       subtotal, taxRate, cgst, sgst, grandTotal, terms
     };
 
@@ -203,7 +213,6 @@ Any additional page will be charged at Rs.1,500 per page.`);
       const data = await response.json();
       if (response.ok) {
         toast.success(id ? "Quote Updated Successfully!" : "Quote Saved Successfully!");
-        // ✅ Auto-refresh to next Quote No if it was a new Quote Create
         if (!id) {
             const nextNo = await generateNextQuoteNo();
             setQuoteMeta(prev => ({ ...prev, quoteNo: nextNo }));
@@ -241,8 +250,6 @@ Any additional page will be charged at Rs.1,500 per page.`);
 
     const doc = new jsPDF();
     const orangeColor = [255, 69, 0];
-    const formatCurrency = (num) =>
-      num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
     try { const lb = await getImageBase64(skitelogo); doc.addImage(lb, 'PNG', 14, 10, 40, 29); } catch (e) {}
 
@@ -291,28 +298,39 @@ Any additional page will be charged at Rs.1,500 per page.`);
     doc.setFont("helvetica", "bold"); doc.text("DATE:", 155, metaY);
     doc.setFont("helvetica", "normal");
     const dateObj = new Date(quoteMeta.date);
-    doc.text(
-      `${String(dateObj.getDate()).padStart(2,'0')}/${String(dateObj.getMonth()+1).padStart(2,'0')}/${dateObj.getFullYear()}`,
-      170, metaY
-    );
+    doc.text(`${String(dateObj.getDate()).padStart(2,'0')}/${String(dateObj.getMonth()+1).padStart(2,'0')}/${dateObj.getFullYear()}`, 170, metaY);
 
     const tableStartY = Math.max(currentDetailY + 10, 95);
-    const validItems = items.filter(item => item.description?.trim() !== "" || item.price > 0);
+    const validItems = items.filter(item => item.description?.trim() !== "");
 
+    // ✅ FIXED PDF TABLE DATA: Formats Sub-Descriptions beautifully inside the same cell
     autoTable(doc, {
       startY: tableStartY,
       head: [['DESCRIPTION', 'DETAILS', 'PRICE', 'QTY', 'TOTAL']],
-      body: validItems.map(item => [
-        item.description, item.hsn,
-        formatCurrency(item.price), item.qty,
-        formatCurrency(item.price * item.qty)
-      ]),
+      body: validItems.map(item => {
+        const p = parseFloat(item.price) || 0;
+        const qCalc = parseFloat(item.qty) || 1;
+        
+        let descText = item.description;
+        if (item.subDescription && item.subDescription.trim() !== '') {
+            // Adds bullet points to each sub-item and creates a new line
+            const subLines = item.subDescription.split('\n').filter(line => line.trim() !== '');
+            const formattedSubLines = subLines.map(line => `   • ${line.trim()}`).join('\n');
+            descText += `\n${formattedSubLines}`;
+        }
+
+        const priceDisplay = item.price === '' ? '' : `Rs. ${p.toLocaleString('en-IN')}`;
+        const qtyDisplay = item.qty === '' ? '' : item.qty;
+        const totalDisplay = item.price === '' ? '' : `Rs. ${(p * qCalc).toLocaleString('en-IN')}`;
+
+        return [ descText, item.hsn, priceDisplay, qtyDisplay, totalDisplay ];
+      }),
       theme: 'grid', tableLineColor: orangeColor, tableLineWidth: 0.1,
       margin: { left: 14, right: 14 },
       headStyles: { fillColor: orangeColor, textColor: 255, fontStyle: 'bold', lineColor: orangeColor, lineWidth: 0.1, halign: 'center', fontSize: 10, cellPadding: 3 },
-      bodyStyles: { textColor: 0, cellPadding: 3, lineColor: orangeColor, lineWidth: 0.1, fontSize: 9 },
+      bodyStyles: { textColor: 0, cellPadding: 4, lineColor: orangeColor, lineWidth: 0.1, fontSize: 9 },
       columnStyles: {
-        0: { cellWidth: 65, fontStyle: 'bold' }, 1: { cellWidth: 45 },
+        0: { cellWidth: 70 }, 1: { cellWidth: 40 },
         2: { halign: 'right', cellWidth: 25 }, 3: { halign: 'center', cellWidth: 15 },
         4: { halign: 'right', cellWidth: 32 }
       }
@@ -329,14 +347,14 @@ Any additional page will be charged at Rs.1,500 per page.`);
       doc.setFontSize(10); doc.setTextColor(255, 69, 0); doc.setFont("helvetica", "normal");
       doc.text(label, totalsX + 3, totalsStartY + (rowHeight + 1) * i + 5.5);
       doc.setTextColor(0);
-      doc.text(formatCurrency(val), totalsX + 69, totalsStartY + (rowHeight + 1) * i + 5.5, { align: 'right' });
+      doc.text(`Rs. ${val.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, totalsX + 69, totalsStartY + (rowHeight + 1) * i + 5.5, { align: 'right' });
     });
 
     doc.setFillColor(255, 69, 0);
     doc.rect(totalsX, totalsStartY + (rowHeight + 1) * 3, 72, rowHeight, 'F');
     doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold");
     doc.text("TOTAL", totalsX + 3, totalsStartY + (rowHeight + 1) * 3 + 5.5);
-    doc.text(grandTotal.toLocaleString('en-IN'), totalsX + 69, totalsStartY + (rowHeight + 1) * 3 + 5.5, { align: 'right' });
+    doc.text(`Rs. ${grandTotal.toLocaleString('en-IN')}`, totalsX + 69, totalsStartY + (rowHeight + 1) * 3 + 5.5, { align: 'right' });
 
     doc.setFontSize(11); doc.setTextColor(255, 69, 0); doc.setFont("helvetica", "bold");
     doc.text("TERMS & CONDITION", 14, totalsStartY);
@@ -373,13 +391,7 @@ Any additional page will be charged at Rs.1,500 per page.`);
   const handleBack = () => navigate(isSales ? '/sales-dashboard' : '/admin-dashboard');
   const handleHistory = () => navigate(isSales ? '/sales-dashboard/quote-history' : '/admin-dashboard/quote-history');
 
-  if (pageLoading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontSize: '18px', color: '#FF4500' }}>
-        Loading Quote...
-      </div>
-    );
-  }
+  if (pageLoading) return <div style={{ display: 'flex', justifyContent: 'center', height: '100vh', alignItems:'center' }}>Loading...</div>;
 
   return (
     <div className="quote-container">
@@ -394,15 +406,9 @@ Any additional page will be charged at Rs.1,500 per page.`);
         </div>
 
         <div className="header-actions">
-          <button className="action-btn history-btn" onClick={handleHistory}>
-            <History size={18} /> History
-          </button>
-          <button className="action-btn save-btn" onClick={saveQuoteToDB}>
-            <Save size={18} /> Save
-          </button>
-          <button className="action-btn pdf-btn" onClick={generatePDF}>
-            <Download size={18} /> PDF
-          </button>
+          <button className="action-btn history-btn" onClick={handleHistory}><History size={18} /> History</button>
+          <button className="action-btn save-btn" onClick={saveQuoteToDB}><Save size={18} /> Save</button>
+          <button className="action-btn pdf-btn" onClick={generatePDF}><Download size={18} /> PDF</button>
         </div>
       </div>
 
@@ -413,19 +419,15 @@ Any additional page will be charged at Rs.1,500 per page.`);
             <div className="row-inputs" style={{ display: 'flex', gap: '12px' }}>
               <div className="input-group" style={{ flex: 1 }}>
                 <label>Quote No</label>
-                <input type="text" value={quoteMeta.quoteNo}
-                  onChange={(e) => setQuoteMeta({...quoteMeta, quoteNo: e.target.value})} />
+                <input type="text" value={quoteMeta.quoteNo} onChange={(e) => setQuoteMeta({...quoteMeta, quoteNo: e.target.value})} />
               </div>
               <div className="input-group" style={{ flex: 1 }}>
                 <label>R.No</label>
-                <input type="text" placeholder="Reference No (Optional)"
-                  value={quoteMeta.refNo}
-                  onChange={(e) => setQuoteMeta({...quoteMeta, refNo: e.target.value})} />
+                <input type="text" placeholder="Reference No (Optional)" value={quoteMeta.refNo} onChange={(e) => setQuoteMeta({...quoteMeta, refNo: e.target.value})} />
               </div>
               <div className="input-group" style={{ flex: 1 }}>
                 <label>Date</label>
-                <input type="date" value={quoteMeta.date}
-                  onChange={(e) => setQuoteMeta({...quoteMeta, date: e.target.value})} />
+                <input type="date" value={quoteMeta.date} onChange={(e) => setQuoteMeta({...quoteMeta, date: e.target.value})} />
               </div>
             </div>
           </div>
@@ -434,60 +436,86 @@ Any additional page will be charged at Rs.1,500 per page.`);
             <h3>Client Details</h3>
             <div className="input-group">
               <label>Client / Business Name</label>
-              <input type="text" value={clientDetails.name}
-                onChange={(e) => setClientDetails({...clientDetails, name: e.target.value})}
-                placeholder="Enter Client or Business Name" />
+              <input type="text" value={clientDetails.name} onChange={(e) => setClientDetails({...clientDetails, name: e.target.value})} placeholder="Enter Client Name" />
             </div>
             <div className="input-group">
               <label>Client GSTIN</label>
-              <input type="text" value={clientDetails.gst}
-                onChange={(e) => setClientDetails({...clientDetails, gst: e.target.value.toUpperCase()})}
-                placeholder="GST Number (Optional)" />
+              <input type="text" value={clientDetails.gst} onChange={(e) => setClientDetails({...clientDetails, gst: e.target.value.toUpperCase()})} placeholder="GST Number (Optional)" />
             </div>
             <div className="input-group full-width" style={{ marginTop: '10px' }}>
               <label>Client Address</label>
-              <textarea value={clientDetails.address}
-                onChange={(e) => setClientDetails({...clientDetails, address: e.target.value})}
-                placeholder="Enter Billing Address" rows="3"
-                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ddd' }} />
+              <textarea value={clientDetails.address} onChange={(e) => setClientDetails({...clientDetails, address: e.target.value})} placeholder="Enter Billing Address" rows="3" style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ddd' }} />
             </div>
           </div>
 
+          {/* ✅ ITEMS SECTION UI REDESIGNED */}
           <div className="items-section">
-            <h3 style={{ color: '#FF4500', marginBottom: '15px' }}>Items</h3>
+            <h3 style={{ color: '#FF4500', marginBottom: '15px' }}>Items & Packages</h3>
             {items.map((item, index) => (
-              <div key={index} className="item-card">
-                <div className="item-row-top">
-                  <div className="input-wrapper description-wrapper">
-                    <label>Description</label>
-                    <input type="text" placeholder="Item Description" value={item.description || ''}
-                      onChange={(e) => handleItemChange(index, 'description', e.target.value)} />
+              <div key={index} className="item-card" style={{ padding: '15px', border: '1px solid #ddd', borderRadius: '8px', marginBottom: '15px', background: '#fff' }}>
+                <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                  
+                  {/* Left Column: Descriptions */}
+                  <div style={{ flex: '2', minWidth: '250px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div className="input-wrapper">
+                      <label style={{ fontWeight: 'bold', color: '#333' }}>Main Package / Item</label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g., Search engine optimization (SEO)" 
+                        value={item.description || ''}
+                        onChange={(e) => handleItemChange(index, 'description', e.target.value)} 
+                        style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc', fontSize: '14px' }}
+                      />
+                    </div>
+                    <div className="input-wrapper">
+                      <label style={{ fontSize: '13px', color: '#666' }}>Sub Descriptions / Features (Press Enter for next line)</label>
+                      <textarea 
+                        rows="4" 
+                        placeholder="Website Audit & Competitor Analysis&#10;On-Page Optimization&#10;Off-page optimization" 
+                        value={item.subDescription || ''}
+                        onChange={(e) => handleItemChange(index, 'subDescription', e.target.value)} 
+                        style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc', resize: 'vertical', fontSize: '13px', fontFamily: 'inherit' }}
+                      />
+                    </div>
                   </div>
-                  <div className="input-wrapper details-wrapper">
-                    <label>HSN / Details</label>
-                    <input type="text" placeholder="HSN" value={item.hsn || ''}
-                      onChange={(e) => handleItemChange(index, 'hsn', e.target.value)} />
+
+                  {/* Right Column: Pricing & Actions */}
+                  <div style={{ flex: '1', minWidth: '150px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    <div className="input-wrapper">
+                      <label>HSN / Details</label>
+                      <input type="text" placeholder="e.g., Monthly" value={item.hsn || ''}
+                        onChange={(e) => handleItemChange(index, 'hsn', e.target.value)} 
+                        style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                      />
+                    </div>
+                    
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <div className="input-wrapper" style={{ flex: 1 }}>
+                        <label>Price</label>
+                        <input type="text" placeholder="0.00" value={item.price}
+                          onChange={(e) => handleItemChange(index, 'price', e.target.value)} 
+                          style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                        />
+                      </div>
+                      <div className="input-wrapper" style={{ width: '60px' }}>
+                        <label>Qty</label>
+                        <input type="text" placeholder="1" value={item.qty}
+                          onChange={(e) => handleItemChange(index, 'qty', e.target.value)} 
+                          style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc', textAlign: 'center' }}
+                        />
+                      </div>
+                    </div>
+
+                    <button onClick={() => removeItem(index)} 
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', padding: '8px', background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: '4px', cursor: 'pointer', marginTop: 'auto', fontWeight: '500' }}>
+                      <Trash2 size={16} /> Remove
+                    </button>
                   </div>
-                </div>
-                <div className="item-row-bottom">
-                  <div className="input-wrapper price-wrapper">
-                    <label>Price</label>
-                    <input type="number" placeholder="0.00" value={item.price || 0}
-                      onChange={(e) => handleItemChange(index, 'price', parseFloat(e.target.value) || 0)} />
-                  </div>
-                  <div className="input-wrapper qty-wrapper">
-                    <label>Qty</label>
-                    <input type="number" placeholder="1" value={item.qty || 1}
-                      onChange={(e) => handleItemChange(index, 'qty', parseFloat(e.target.value) || 0)} />
-                  </div>
-                  <div className="delete-wrapper">
-                    <label>&nbsp;</label>
-                    <button onClick={() => removeItem(index)} className="remove-btn"><Trash2 size={18} /></button>
-                  </div>
+
                 </div>
               </div>
             ))}
-            <button onClick={addItem} className="add-item-btn"><Plus size={16} /> Add Item</button>
+            <button onClick={addItem} className="add-item-btn"><Plus size={16} /> Add Package/Item</button>
           </div>
 
           <div className="tax-total-section">
@@ -532,11 +560,7 @@ Any additional page will be charged at Rs.1,500 per page.`);
           <div className="preview-client">
             <h4>QUOTE TO:</h4>
             <p style={{ fontWeight: 'bold', fontSize: '1.1em' }}>{clientDetails.name || 'Client / Business Name'}</p>
-            {clientDetails.address && (
-              <p style={{ whiteSpace: 'pre-wrap', margin: '5px 0', fontSize: '0.95em', color: '#555' }}>
-                {clientDetails.address}
-              </p>
-            )}
+            {clientDetails.address && <p style={{ whiteSpace: 'pre-wrap', margin: '5px 0', fontSize: '0.95em', color: '#555' }}>{clientDetails.address}</p>}
             {clientDetails.gst && <p style={{ fontWeight: '500' }}>GSTIN: {clientDetails.gst}</p>}
           </div>
 
@@ -547,15 +571,34 @@ Any additional page will be charged at Rs.1,500 per page.`);
               </tr>
             </thead>
             <tbody>
-              {items.map((item, i) => (
-                <tr key={i}>
-                  <td>{item.description}</td>
-                  <td>{item.hsn}</td>
-                  <td>₹ {(item.price || 0).toLocaleString('en-IN')}</td>
-                  <td>{item.qty || 1}</td>
-                  <td>₹ {((item.price || 0) * (item.qty || 1)).toLocaleString('en-IN')}</td>
-                </tr>
-              ))}
+              {items.map((item, i) => {
+                  const p = parseFloat(item.price) || 0;
+                  const qCalc = parseFloat(item.qty) || 1;
+                  
+                  const priceDisplay = item.price === '' ? '' : `₹ ${p.toLocaleString('en-IN')}`;
+                  const qtyDisplay = item.qty === '' ? '' : item.qty;
+                  const totalDisplay = item.price === '' ? '' : `₹ ${(p * qCalc).toLocaleString('en-IN')}`;
+                  
+                  return (
+                    <tr key={i}>
+                      {/* ✅ Render Main and Sub Description in Preview */}
+                      <td>
+                        <div style={{ fontWeight: 'bold', color: '#111' }}>{item.description}</div>
+                        {item.subDescription && (
+                           <div style={{ fontSize: '0.85em', color: '#555', marginTop: '4px' }}>
+                               {item.subDescription.split('\n').filter(l => l.trim() !== '').map((line, lIdx) => (
+                                   <div key={lIdx}>• {line}</div>
+                               ))}
+                           </div>
+                        )}
+                      </td>
+                      <td>{item.hsn}</td>
+                      <td>{priceDisplay}</td>
+                      <td>{qtyDisplay}</td>
+                      <td>{totalDisplay}</td>
+                    </tr>
+                  )
+              })}
             </tbody>
           </table>
 
