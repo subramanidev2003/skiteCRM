@@ -4,7 +4,7 @@ import {
   CreditCard, FileText, Upload, Save, ArrowLeft, Image as ImageIcon 
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import './Addemployee.css';
+import './AddEmployee.css';
 
 
 const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';

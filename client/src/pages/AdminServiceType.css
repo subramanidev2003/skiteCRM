@@ -210,7 +210,24 @@
 }
 
 
+/* Table veliya pogaama horizontal scroll kondu vara */
+.ad-table-wrapper, 
+.st-table-wrapper {
+    width: 100%;
+    overflow-x: auto; /* ✅ Ithu thaan horizontal scroll-a kondu varum */
+    -webkit-overflow-scrolling: touch; 
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
 
+/* Table columns nasungaama irukka min-width set panrom */
+.ad-leads-table, 
+.st-leads-table {
+    width: 100%;
+    min-width: 1200px; /* ✅ Total columns niraya irukurathaala minimum 1200px irukanum nu set panrom */
+    border-collapse: collapse;
+}
 
 
 

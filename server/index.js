@@ -59,7 +59,7 @@ import receiptRoutes from "./routes/receiptRoutes.js";
 
 
 const app = express();
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 8080; // Idhu mattum irukkatum
 
 // Connect to Database
 connectDB(); 
@@ -159,6 +159,8 @@ app.use((req, res) => {
     message: 'Route not found' 
   });
 });
+
+
 
 // ✅ START SERVER
 app.listen(PORT, () => {

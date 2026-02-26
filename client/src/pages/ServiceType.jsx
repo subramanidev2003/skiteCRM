@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Filter } from 'lucide-react';
+import { ArrowLeft, Filter, Search, Calendar, Phone } from 'lucide-react'; 
 import './ServiceType.css';
 
 const ServiceType = () => {
@@ -10,7 +10,10 @@ const ServiceType = () => {
   const [filteredLeads, setFilteredLeads] = useState([]); 
   const [loading, setLoading] = useState(true);
   
-  // Filter State
+  // ✅ All Filter States
+  const [globalSearch, setGlobalSearch] = useState(''); // Name filter changed to Global Search
+  const [dateFilter, setDateFilter] = useState('');
+  const [callStatusFilter, setCallStatusFilter] = useState('All');
   const [orderStatusFilter, setOrderStatusFilter] = useState('All');
 
   useEffect(() => {
@@ -20,7 +23,7 @@ const ServiceType = () => {
       return;
     }
 
-    // ✅ Fetch ALL leads using common API
+    // Fetch ALL leads using common API
     fetch(`https://skitecrm-1l7f.onrender.com/api/leads/common/all`) 
       .then(res => {
           if (!res.ok) {
@@ -30,7 +33,6 @@ const ServiceType = () => {
       })
       .then(data => {
         if (Array.isArray(data)) {
-          
           const targetService = decodeURIComponent(serviceName).trim().toLowerCase();
 
           const filtered = data.filter(lead => {
@@ -47,7 +49,7 @@ const ServiceType = () => {
           });
 
           setLeads(filtered);
-          setFilteredLeads(filtered); // Initialize filtered leads
+          setFilteredLeads(filtered); 
         }
       })
       .catch(err => {
@@ -57,47 +59,120 @@ const ServiceType = () => {
       
   }, [navigate, serviceName]);
 
-  // ✅ Handle Filter Change
+  // ✅ Handle Multiple Filters Change
   useEffect(() => {
-    if (orderStatusFilter === 'All') {
-        setFilteredLeads(leads);
-    } else {
-        const result = leads.filter(lead => 
+    let result = leads;
+
+    // 1. Global Search Filter (Search anything)
+    if (globalSearch.trim() !== '') {
+        const query = globalSearch.toLowerCase();
+        result = result.filter(lead => 
+            (lead.name || '').toLowerCase().includes(query) ||
+            (lead.companyName || '').toLowerCase().includes(query) ||
+            (lead.phoneNumber || '').toLowerCase().includes(query) ||
+            (lead.followUpResponsibility || '').toLowerCase().includes(query) ||
+            (lead.requirement || '').toLowerCase().includes(query) ||
+            (lead.remainder2 || '').toLowerCase().includes(query)
+        );
+    }
+
+    // 2. Date Filter
+    if (dateFilter) {
+        result = result.filter(lead => lead.date === dateFilter);
+    }
+
+    // 3. Call Status Filter
+    if (callStatusFilter !== 'All') {
+        result = result.filter(lead => 
+            (lead.callStatus || '').toLowerCase() === callStatusFilter.toLowerCase()
+        );
+    }
+
+    // 4. Order Status Filter
+    if (orderStatusFilter !== 'All') {
+        result = result.filter(lead => 
             (lead.orderStatus || 'Open').toLowerCase() === orderStatusFilter.toLowerCase()
         );
-        setFilteredLeads(result);
     }
-  }, [orderStatusFilter, leads]);
+
+    setFilteredLeads(result);
+  }, [globalSearch, dateFilter, callStatusFilter, orderStatusFilter, leads]);
 
   return (
     <div className="st-page-container">
       <div className="st-page-content">
         
         {/* HEADER */}
-        <div className="st-page-header">
-            <div style={{flex: 1}}>
+        <div className="st-page-header" style={{ marginBottom: '15px' }}>
+            <div>
                 <button className="st-btn-back" onClick={() => navigate('/sales-dashboard')}>
-                    <ArrowLeft size={20} /> Back to Dashboard
+                    <ArrowLeft size={20} /> Back
                 </button>
             </div>
-            
             <h2 className="st-page-title">{decodeURIComponent(serviceName)} Leads</h2>
+            <div style={{width: '100px'}}></div> {/* Spacer for balance */}
+        </div>
 
-            {/* ✅ FILTER DROPDOWN */}
-            <div style={{flex: 1, display: 'flex', justifyContent: 'flex-end'}}>
-                <div className="st-filter-container">
-                    <Filter size={18} color="#555" />
-                    <select 
-                        className="st-filter-select"
-                        value={orderStatusFilter}
-                        onChange={(e) => setOrderStatusFilter(e.target.value)}
-                    >
-                        <option value="All">All Orders</option>
-                        <option value="Open">Open</option>
-                        <option value="Closed">Closed</option>
-                        <option value="Rejected">Rejected</option>
-                    </select>
-                </div>
+        {/* ✅ FILTER BAR */}
+        <div style={{ 
+            display: 'flex', flexWrap: 'wrap', gap: '15px', padding: '15px', 
+            background: 'white', borderRadius: '8px', marginBottom: '20px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+        }}>
+            {/* Global Search Filter */}
+            <div style={{ flex: '1', minWidth: '250px', display: 'flex', alignItems: 'center', background: '#f9fafb', padding: '8px 12px', borderRadius: '6px', border: '1px solid #e5e7eb' }}>
+                <Search size={16} color="#6b7280" style={{marginRight: '8px'}} />
+                <input 
+                    type="text" 
+                    placeholder="Search name, company, follow up..." 
+                    value={globalSearch}
+                    onChange={(e) => setGlobalSearch(e.target.value)}
+                    style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%' }}
+                />
+            </div>
+
+            {/* Date Filter */}
+            <div style={{ flex: '1', minWidth: '150px', display: 'flex', alignItems: 'center', background: '#f9fafb', padding: '8px 12px', borderRadius: '6px', border: '1px solid #e5e7eb' }}>
+                <Calendar size={16} color="#6b7280" style={{marginRight: '8px'}} />
+                <input 
+                    type="date" 
+                    value={dateFilter}
+                    onChange={(e) => setDateFilter(e.target.value)}
+                    style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', color: '#374151' }}
+                />
+                {dateFilter && (
+                    <button onClick={() => setDateFilter('')} style={{border:'none', background:'transparent', color:'#ef4444', cursor:'pointer', fontSize:'12px', marginLeft:'5px'}}>Clear</button>
+                )}
+            </div>
+
+            {/* Call Status Filter */}
+            <div style={{ flex: '1', minWidth: '150px', display: 'flex', alignItems: 'center', background: '#f9fafb', padding: '8px 12px', borderRadius: '6px', border: '1px solid #e5e7eb' }}>
+                <Phone size={16} color="#6b7280" style={{marginRight: '8px'}} />
+                <select 
+                    value={callStatusFilter}
+                    onChange={(e) => setCallStatusFilter(e.target.value)}
+                    style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', cursor: 'pointer', color: '#374151' }}
+                >
+                    <option value="All">All Calls</option>
+                    <option value="Attend">Attend</option>
+                    <option value="Not Attend">Not Attend</option>
+                    <option value="Callback">Callback</option>
+                </select>
+            </div>
+
+            {/* Order Status Filter */}
+            <div style={{ flex: '1', minWidth: '150px', display: 'flex', alignItems: 'center', background: '#f9fafb', padding: '8px 12px', borderRadius: '6px', border: '1px solid #e5e7eb' }}>
+                <Filter size={16} color="#6b7280" style={{marginRight: '8px'}} />
+                <select 
+                    value={orderStatusFilter}
+                    onChange={(e) => setOrderStatusFilter(e.target.value)}
+                    style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', cursor: 'pointer', color: '#374151' }}
+                >
+                    <option value="All">All Orders</option>
+                    <option value="Open">Open</option>
+                    <option value="Closed">Closed</option>
+                    <option value="Rejected">Rejected</option>
+                </select>
             </div>
         </div>
 
@@ -117,6 +192,7 @@ const ServiceType = () => {
                             <th>Order Status</th> 
                             <th>Follow Up 1</th>
                             <th>Follow Up 2</th>
+                            <th>Responsibility</th>
                             <th>Priority</th>
                             <th>Closing</th>
                         </tr>
@@ -124,9 +200,8 @@ const ServiceType = () => {
                     <tbody>
                         {filteredLeads.length === 0 ? (
                             <tr>
-                                {/* ✅ Updated colSpan to 10 due to new column */}
-                                <td colSpan="10" className="st-no-data">
-                                    No {orderStatusFilter !== 'All' ? orderStatusFilter : ''} leads found.
+                                <td colSpan="11" className="st-no-data" style={{textAlign: 'center', padding: '30px', color: '#6b7280'}}>
+                                    No leads found matching your filters.
                                 </td>
                             </tr>
                         ) : (
@@ -153,14 +228,16 @@ const ServiceType = () => {
                                         </span>
                                     </td>
 
-                                    {/* ✅ Follow Up 1 (Requirement) */}
                                     <td className="st-truncate-cell" title={lead.requirement}>
                                         {lead.requirement || '-'}
                                     </td>
 
-                                    {/* ✅ Follow Up 2 (Remainder 2) */}
                                     <td className="st-truncate-cell" title={lead.remainder2}>
                                         {lead.remainder2 || '-'}
+                                    </td>
+
+                                    <td style={{fontWeight: '500', color: '#4f46e5'}}>
+                                        {lead.followUpResponsibility || '-'}
                                     </td>
 
                                     <td>
