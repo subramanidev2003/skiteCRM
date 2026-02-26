@@ -24,7 +24,9 @@ jobs:
           node-version: '20.x'
 
       - name: npm install, build, and test
+        # Vithyasam 1: 'server' folder-kulla poyi run panna solrom!
         run: |
+          cd server
           npm install
           npm run build --if-present
           npm run test --if-present
@@ -33,7 +35,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: .
+          # Vithyasam 2: 'server' folder-ai mattum upload pandrom!
+          path: ./server
 
   deploy:
     runs-on: ubuntu-latest
@@ -62,4 +65,3 @@ jobs:
           app-name: 'skite-crm-backend-api'
           slot-name: 'Production'
           package: .
-          
