@@ -6,10 +6,11 @@ import {
 } from 'lucide-react';
 import './EditEmployee.css';
 import { toast } from 'react-toastify';
+import { API_BASE } from '../api';
 
 // ✅ LIVE URL used here. Switch to localhost if testing locally.
-const API_BASE = 'https://skitecrm-1l7f.onrender.com/api'; 
-const API_UPLOAD = 'https://skitecrm-1l7f.onrender.com/api/uploads';
+// const API_BASE = 'https://skitecrm-1l7f.onrender.com/api'; 
+const API_UPLOAD = `${API_BASE}/uploads`;
 
 const EditEmployee = () => {
   const { id } = useParams();

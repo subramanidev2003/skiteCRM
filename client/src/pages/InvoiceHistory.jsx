@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Trash2, Plus, Search, FileText, FileX } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { API_BASE } from '../api';
 import './Invoice.css'; 
 
 // ✅ FIX 1: Correct API Base URL (Removed hyphen)
-const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
+// const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
 
 const InvoiceHistory = () => {
   const navigate = useNavigate();

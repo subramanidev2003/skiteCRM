@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Search, Wallet, CheckCircle, Clock, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { API_BASE } from '../api';
 import './InvoicePayment.css';
 
-const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
+// const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
 
 const InvoicePayment = () => {
   const navigate = useNavigate();

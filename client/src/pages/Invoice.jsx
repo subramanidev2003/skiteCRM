@@ -4,6 +4,7 @@ import { ArrowLeft, Plus, Trash2, Download, Save, History, ChevronDown } from 'l
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { toast } from 'react-toastify'; 
+import { API_BASE } from '../api';
 import './Invoice.css';
 
 // IMAGES IMPORT
@@ -77,7 +78,7 @@ const Invoice = () => {
   const generateNextInvoiceNo = async () => {
     try {
         const token = localStorage.getItem('adminToken') || localStorage.getItem('accountantToken'); 
-        const response = await fetch('https://skitecrm-1l7f.onrender.com/api/invoice/all', {
+        const response = await fetch(`${API_BASE}/invoice/all`, {
             method: 'GET',
             headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -121,7 +122,7 @@ const Invoice = () => {
         // 1. History-la irunthu Edit/View panna
         if (id) {
             try {
-                const response = await fetch(`https://skitecrm-1l7f.onrender.com/api/invoice/${id}`);
+                const response = await fetch(`${API_BASE}/invoice/${id}`);
                 const data = await response.json();
 
                 if (response.ok) {
@@ -273,7 +274,7 @@ const Invoice = () => {
         grandTotal
       };
 
-      const response = await fetch('https://skitecrm-1l7f.onrender.com/api/invoice/create', {
+      const response = await fetch(`${API_BASE}/invoice/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(invoiceData)

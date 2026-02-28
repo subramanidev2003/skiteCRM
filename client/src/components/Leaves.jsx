@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Check, X } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { API_BASE } from '../api';
 import '../pages/Attendance.css';
 
 const Leaves = () => {
@@ -12,7 +13,7 @@ const Leaves = () => {
 
     const fetchLeaves = async () => {
         try {
-            const res = await fetch('https://skitecrm-1l7f.onrender.com/api/leaves/all', {
+            const res = await fetch(`${API_BASE}/leaves/all`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if(res.ok) {
@@ -24,7 +25,7 @@ const Leaves = () => {
 
     const updateStatus = async (id, status) => {
         try {
-            const res = await fetch(`https://skitecrm-1l7f.onrender.com/api/leaves/update/${id}`, {
+            const res = await fetch(`${API_BASE}/leaves/update/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ status })

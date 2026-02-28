@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Trash2, Plus, Search, FileText, FileX } from 'lucide-react';
 import { useNavigate } from 'react-router-dom'; 
 import { toast } from 'react-toastify';
+import { API_BASE } from '../api';
 import './Invoice.css'; 
 
 const QuoteHistory = () => {
@@ -23,7 +24,7 @@ const QuoteHistory = () => {
   // 1. Fetch Data
   const fetchQuotes = async () => {
     try {
-      const response = await fetch('https://skitecrm-1l7f.onrender.com/api/quote/all');
+      const response = await fetch(`${API_BASE}/quote/all`);
       const data = await response.json();
       if (response.ok) {
         setQuotes(data);
@@ -47,7 +48,7 @@ const QuoteHistory = () => {
     if (!window.confirm("Are you sure you want to delete this quote?")) return;
 
     try {
-      const response = await fetch(`https://skitecrm-1l7f.onrender.com/api/quote/delete/${id}`, {
+      const response = await fetch(`${API_BASE}/quote/delete/${id}`, {
         method: 'DELETE',
       });
 

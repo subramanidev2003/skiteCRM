@@ -4,9 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { toast } from 'react-toastify';
+import { API_BASE } from '../api';
 import './Attendance.css'; 
 
-const API_BASE = 'https://skitecrm-1l7f.onrender.com/api'; 
+// const API_BASE = 'https://skitecrm-1l7f.onrender.com/api'; 
 
 const PayRoll = () => {
   const navigate = useNavigate();

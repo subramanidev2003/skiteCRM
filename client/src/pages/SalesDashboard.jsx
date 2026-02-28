@@ -6,10 +6,11 @@ import {
 } from "lucide-react"; 
 import "./SalesDashboard.css"; 
 import { toast } from "react-toastify";
+import { API_BASE } from '../api';
 import * as XLSX from 'xlsx'; 
 
 // --- CONFIGURATION ---
-const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
+// const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
 const ATTENDANCE_URL = `${API_BASE}/attendance`;
 const TASKS_URL = `${API_BASE}/tasks`; 
 
@@ -66,7 +67,7 @@ const SalesDashboard = () => {
 
       if (userId) {
         // ✅ CHANGED TO COMMON API to fetch ALL leads for correct counts
-        fetch(`https://skitecrm-1l7f.onrender.com/api/leads/common/all`) 
+        fetch(`${API_BASE}/leads/common/all`) 
           .then((res) => (res.ok ? res.json() : []))
           .then((data) => {
             const validLeads = Array.isArray(data) ? data : [];
@@ -216,7 +217,7 @@ const storedUser = JSON.parse(localStorage.getItem("salesUser") || localStorage.
             return;
         }
     try {
-      const res = await fetch("https://skitecrm-1l7f.onrender.com/api/leads/add", {
+      const res = await fetch(`${API_BASE}/leads/add`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...formData, salesAgentId: agentId }),
       });
@@ -373,7 +374,7 @@ const sendLeadsToBackend = async (importedLeads, agentId) => {
     toast.info("Importing leads, please wait..."); 
 
     try {
-        const res = await fetch("https://skitecrm-1l7f.onrender.com/api/leads/import", {
+        const res = await fetch(`${API_BASE}/leads/import`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ leads: importedLeads, salesAgentId: agentId }),
@@ -384,7 +385,7 @@ const sendLeadsToBackend = async (importedLeads, agentId) => {
         if (res.ok) {
             toast.success(`Success! ${responseData.count} leads imported.`);
             // டேட்டாவை உடனே Refresh செய்கிறோம்
-            const refreshRes = await fetch(`https://skitecrm-1l7f.onrender.com/api/leads/common/all`);
+            const refreshRes = await fetch(`${API_BASE}/leads/common/all`);
             if(refreshRes.ok) {
                 const refreshedLeads = await refreshRes.json();
                 setLeads(refreshedLeads);

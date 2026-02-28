@@ -7,10 +7,11 @@ import {
 import { useNavigate } from 'react-router-dom';
 import './EmployeeDashboard.css'; 
 import { toast } from 'react-toastify';
+import { API_BASE } from '../api';
 
 // --- CONFIGURATION ---
-const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
-const UPLOADS_URL = "https://skitecrm-1l7f.onrender.com/api/uploads";
+// const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
+const UPLOADS_URL = `${API_BASE}/uploads`;
 const LEAVE_URL = `${API_BASE}/leaves`;
 
 const ATTENDANCE_URL = `${API_BASE}/attendance`;

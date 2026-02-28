@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Users, Phone, Mail } from 'lucide-react'; // Icons added
 import { toast } from 'react-toastify';
+import { API_BASE } from '../api';
 import './SocialMedia.css'; 
 
-const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
+// const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
 
 const SocialMediaClients = () => {
   const navigate = useNavigate();

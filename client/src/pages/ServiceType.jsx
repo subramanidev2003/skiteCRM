@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Filter, Search, Calendar, Phone } from 'lucide-react'; 
+import { API_BASE } from '../api';
 import './ServiceType.css';
 
 const ServiceType = () => {
@@ -24,7 +25,7 @@ const ServiceType = () => {
     }
 
     // Fetch ALL leads using common API
-    fetch(`https://skitecrm-1l7f.onrender.com/api/leads/common/all`) 
+    fetch(`${API_BASE}/leads/common/all`) 
       .then(res => {
           if (!res.ok) {
               throw new Error(`API Error: ${res.status}`);

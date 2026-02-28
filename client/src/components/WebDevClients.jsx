@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Globe, Phone, Mail, Trash2, Link } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { API_BASE } from '../api';
 import './SocialMedia.css'; 
 
-const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
+// const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
 
 const WebDevClients = () => {
   const navigate = useNavigate();

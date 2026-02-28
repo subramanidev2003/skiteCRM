@@ -5,6 +5,7 @@ import {
   CreditCard, Activity, Tag, ClipboardCheck, MessageSquare, Lock, Mail, Link, ShoppingCart 
 } from 'lucide-react'; // ✅ Added ShoppingCart & Link
 import { toast } from 'react-toastify';
+import { API_BASE } from '../api';
 import './LeadPageModern.css'; 
 
 // --- ACTION ROW COMPONENT (EDITABLE FIELD) ---
@@ -117,7 +118,7 @@ const AdminLeadPage = () => {
         const id = currentLead._id || currentLead.id;
         const updatedData = { ...currentLead, [fieldName]: newValue };
 
-        const response = await fetch(`https://skitecrm-1l7f.onrender.com/api/leads/update/${id}`, {
+        const response = await fetch(`${API_BASE}/leads/update/${id}`, {
              method: 'PUT',
              headers: { 'Content-Type': 'application/json' },
              body: JSON.stringify(updatedData)

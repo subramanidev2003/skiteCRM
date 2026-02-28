@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Plus, Trash2, TrendingUp, TrendingDown, FileText, CheckCircle, Filter } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { API_BASE } from '../api';
 import './IncomeExpense.css';
 
-const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
+// const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
 
 const IncomeExpense = () => {
   const navigate = useNavigate();

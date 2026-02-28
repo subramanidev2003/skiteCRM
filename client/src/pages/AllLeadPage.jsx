@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Filter, X, Trash2 } from 'lucide-react'; 
 import './AllLeadPage.css';
+import { API_BASE } from '../api';
 import { toast } from 'react-toastify'; 
 
 const AllLeadPage = () => {
@@ -23,7 +24,7 @@ const AllLeadPage = () => {
   const isAdmin = location.pathname.includes('admin');
 
   useEffect(() => {
-    fetch("https://skitecrm-1l7f.onrender.com/api/leads/common/all")
+    fetch(`${API_BASE}/leads/common/all`)
       .then((res) => (res.ok ? res.json() : []))
       .then((data) => {
         if (Array.isArray(data)) {
@@ -40,7 +41,7 @@ const AllLeadPage = () => {
     if (!window.confirm("Delete this lead permanently?")) return;
 
     try {
-        const response = await fetch(`https://skitecrm-1l7f.onrender.com/api/leads/delete/${leadId}`, {
+        const response = await fetch(`${API_BASE}/leads/delete/${leadId}`, {
             method: 'DELETE',
         });
 

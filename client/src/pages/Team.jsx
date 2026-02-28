@@ -2,10 +2,11 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { ArrowLeft, Trash2, Mail, Calendar, User, Search } from "lucide-react";
+import { API_BASE } from '../api';
 import "./Team.css"; // ✅ New CSS File
 
-const API_BASE = "https://skitecrm-1l7f.onrender.com/api";
-const UPLOADS_URL = "https://skitecrm-1l7f.onrender.com/api/uploads";
+// const API_BASE = "https://skitecrm-1l7f.onrender.com/api";
+const UPLOADS_URL = `${API_BASE}/uploads`;
 
 const Team = () => {
   const navigate = useNavigate();

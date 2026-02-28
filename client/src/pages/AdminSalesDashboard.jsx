@@ -8,6 +8,7 @@ import {
   X,
   ArrowLeft,
 } from "lucide-react";
+import { API_BASE } from '../api';
 import "./AdminSalesDashboard.css"; 
 import { toast } from "react-toastify";
 
@@ -48,7 +49,7 @@ const AdminSalesDashboard = () => {
     if (storedAdmin) {
       setAdmin(JSON.parse(storedAdmin));
       
-      fetch("https://skitecrm-1l7f.onrender.com/api/leads/admin/all")
+     fetch(`${API_BASE}/leads/admin/all`)
         .then((res) => (res.ok ? res.json() : []))
         .then((data) => {
           const validLeads = Array.isArray(data) ? data : [];
@@ -88,7 +89,7 @@ const AdminSalesDashboard = () => {
     }
 
     try {
-      const response = await fetch("https://skitecrm-1l7f.onrender.com/api/leads/add", {
+      const response = await fetch(`${API_BASE}/leads/add`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...formData, salesAgentId: finalAgentId }),

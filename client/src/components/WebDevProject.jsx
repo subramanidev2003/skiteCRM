@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, User, Trash2, Edit2, Check, Globe, Phone, Mail } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { API_BASE } from '../api';
 import './SocialMedia.css'; 
-
-const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
 
 const WebDevProject = () => {
     const { id } = useParams();
@@ -85,19 +84,16 @@ const WebDevProject = () => {
     const handleAddItem = async (type, description, setInput) => {
         if(!description) return toast.warning("Enter description!");
         
-        // Project-க்கு Developer assign ஆகியுள்ளாரா என்று செக் செய்கிறோம்
         if(!editData.assignedDev) {
             return toast.error("Please assign a developer to this project first!");
         }
         
-        // ✅ Task Name-ல் Project Name-ஐ சேர்க்கிறோம்
         const fullDescription = `[${client.businessName}] - ${description}`;
 
         try {
             const res = await fetch(`${API_BASE}/webdev/requirements/add`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                // assignedDev-ஐ project-ல் இருந்தே எடுக்கிறோம்
                 body: JSON.stringify({ 
                     clientId: id, 
                     type, 
@@ -134,9 +130,16 @@ const WebDevProject = () => {
             });
             if(res.ok) {
                 setClient(prev => ({ ...prev, [field]: value }));
-                toast.success("Status Updated");
+                toast.success("Updated successfully");
             }
         } catch(err) { toast.error("Update failed"); }
+    };
+
+    // Helper to format date for input field
+    const formatDateForInput = (dateString) => {
+        if (!dateString) return '';
+        const d = new Date(dateString);
+        return isNaN(d.getTime()) ? '' : d.toISOString().split('T')[0];
     };
 
     const requirements = items.filter(i => i.type === 'Requirement');
@@ -206,7 +209,6 @@ const WebDevProject = () => {
                               </div>}
                         </div>
 
-                        {/* ✅ ASSIGN DEVELOPER TO THE PROJECT HERE */}
                         <div>
                             <label style={{fontSize: '12px', color: '#FF4500', fontWeight: 'bold'}}>Assigned Developer</label>
                             {isEditing ? (
@@ -308,11 +310,12 @@ const WebDevProject = () => {
                     </div>
                 </div>
 
-                {/* Bottom: Client Status */}
+                {/* Bottom: Client Status & Dates */}
                 <div style={{marginTop:'30px', background:'white', padding:'20px', borderRadius:'10px', boxShadow:'0 2px 10px rgba(0,0,0,0.05)'}}>
                     <h3 style={{marginTop:0, color:'#333'}}>Project Status Control</h3>
-                    <div style={{display:'flex', justifyContent:'space-around', gap:'20px', padding:'20px', background:'#f9fafb', borderRadius:'8px', flexWrap:'wrap'}}>
-                        
+                    
+                    {/* Status Dropdowns */}
+                    <div style={{display:'flex', justifyContent:'space-around', gap:'20px', padding:'20px', background:'#f9fafb', borderRadius:'8px', flexWrap:'wrap', marginBottom: '20px'}}>
                         <div style={{textAlign:'center', flex:1, minWidth:'200px'}}>
                             <label style={{display:'block', marginBottom:'10px', fontWeight:'600', color:'#555'}}>Client Status</label>
                             <select 
@@ -340,8 +343,55 @@ const WebDevProject = () => {
                                 <option value="Completed">Completed</option>
                             </select>
                         </div>
+                    </div>
+
+                    {/* ✅ NEW: Project Dates Section */}
+                    <h4 style={{color:'#555', borderBottom: '1px solid #eee', paddingBottom: '10px'}}>Timeline & Payments</h4>
+                    <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(200px, 1fr))', gap:'20px', padding:'20px', background:'#f9fafb', borderRadius:'8px'}}>
+                        
+                        <div>
+                            <label style={{display:'block', marginBottom:'5px', fontSize:'13px', fontWeight:'600', color:'#555'}}>Start Date</label>
+                            <input 
+                                type="date" 
+                                value={formatDateForInput(client.startDate)} 
+                                onChange={e => updateClientStatus('startDate', e.target.value)}
+                                style={{width:'100%', padding:'10px', borderRadius:'5px', border:'1px solid #ddd', color: '#333'}}
+                            />
+                        </div>
+
+                        <div>
+                            <label style={{display:'block', marginBottom:'5px', fontSize:'13px', fontWeight:'600', color:'#555'}}>End Date</label>
+                            <input 
+                                type="date" 
+                                value={formatDateForInput(client.endDate)} 
+                                onChange={e => updateClientStatus('endDate', e.target.value)}
+                                style={{width:'100%', padding:'10px', borderRadius:'5px', border:'1px solid #ddd', color: '#333'}}
+                            />
+                        </div>
+
+                        <div>
+                            <label style={{display:'block', marginBottom:'5px', fontSize:'13px', fontWeight:'600', color:'#555'}}>Advance Payment Date</label>
+                            <input 
+                                type="date" 
+                                value={formatDateForInput(client.advancePaymentDate)} 
+                                onChange={e => updateClientStatus('advancePaymentDate', e.target.value)}
+                                style={{width:'100%', padding:'10px', borderRadius:'5px', border:'1px solid #ddd', color: '#333'}}
+                            />
+                        </div>
+
+                        <div>
+                            <label style={{display:'block', marginBottom:'5px', fontSize:'13px', fontWeight:'600', color:'#555'}}>Full Payment Date</label>
+                            <input 
+                                type="date" 
+                                value={formatDateForInput(client.fullPaymentDate)} 
+                                onChange={e => updateClientStatus('fullPaymentDate', e.target.value)}
+                                style={{width:'100%', padding:'10px', borderRadius:'5px', border:'1px solid #ddd', color: '#333'}}
+                            />
+                        </div>
 
                     </div>
+                    {/* End of Timeline */}
+
                 </div>
 
             </main>

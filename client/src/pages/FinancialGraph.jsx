@@ -4,9 +4,10 @@ import {
 } from 'recharts';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE } from '../api';
 import './FinancialGraph.css'; // CSS தனியாக கீழே உள்ளது
 
-const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
+// const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
 
 const FinancialGraph = () => {
   const navigate = useNavigate();

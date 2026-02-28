@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Video, FileText, Edit, Send, Calendar, Clock, CheckCircle2, Trash2 } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { API_BASE } from '../api';
 import './SocialMedia.css';
 
-const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
+// const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
 
 const SocialMediaProject = () => {
     const navigate = useNavigate();

@@ -4,10 +4,11 @@ import {
   User, Mail, Lock, Calendar, Briefcase, FileText, 
   CreditCard, Building, ArrowLeft, Edit, Trash2
 } from 'lucide-react';
+import { API_BASE } from '../api';
 import './EmployeeDetail.css';
 
-const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
-const API_UPLOAD = 'https://skitecrm-1l7f.onrender.com/api/uploads';
+// const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
+const API_UPLOAD = `${API_BASE}/uploads`;
 
 const EmployeeDetails = () => {
   const { id } = useParams();

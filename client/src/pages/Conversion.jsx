@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import './Conversion.css'; // ✅ Using the NEW Separate CSS
+import { API_BASE } from '../api';
 
 const Conversion = () => {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ const Conversion = () => {
   ];
 
   useEffect(() => {
-    fetch("https://skitecrm-1l7f.onrender.com/api/leads/common/all")
+    fetch(`${API_BASE}/leads/common/all`)
       .then((res) => (res.ok ? res.json() : []))
       .then((data) => {
         setAllLeads(data);

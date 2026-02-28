@@ -6,8 +6,9 @@ import './Attendance.css';
 import { toast } from 'react-toastify';
 import { ArrowLeft, X, ChevronLeft, ChevronRight, Calendar, ListChecks } from 'lucide-react';
 import Leaves from '../components/Leaves'; // ✅ Import Leaves Component
+import { API_BASE } from '../api';
 
-const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
+// const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
 
 const Attendance = () => {
   const navigate = useNavigate();

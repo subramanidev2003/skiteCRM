@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import Lottie from "lottie-react";
 import skitelogo from '../assets/skitelogo.png'; 
 import rocketAnimation from '../assets/rocket.json'; 
+import { API_BASE } from '../api';
 import './Login.css';
 
-const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
+
+// const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
 
 const Login = () => {
     const navigate = useNavigate();

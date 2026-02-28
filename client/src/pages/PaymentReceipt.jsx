@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { toast } from 'react-toastify';
+import { API_BASE } from '../api';
 import './Quote.css'; // reuse same CSS
 
 import skitelogo from '../assets/skite-logo.jpg';
@@ -69,7 +70,7 @@ const PaymentReceipt = () => {
     };
 
     try {
-      const response = await fetch('https://skitecrm-1l7f.onrender.com/api/receipt/create', {
+      const response = await fetch(`${API_BASE}/receipt/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(receiptData)

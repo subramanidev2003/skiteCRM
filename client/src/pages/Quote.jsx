@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import jsPDF from 'jspdf'; 
 import autoTable from 'jspdf-autotable'; 
 import { toast } from 'react-toastify'; 
+import { API_BASE } from '../api';
 import './Quote.css'; 
 
 import skitelogo from '../assets/skite-logo.jpg'; 
@@ -58,7 +59,7 @@ Any additional page will be charged at Rs.1,500 per page.`);
 
   const generateNextQuoteNo = async () => {
     try {
-      const response = await fetch('https://skitecrm-1l7f.onrender.com/api/quote/all');
+      const response = await fetch(`${API_BASE}/quote/all`);
       const data = await response.json();
 
       if (response.ok && Array.isArray(data) && data.length > 0) {
@@ -113,7 +114,7 @@ Any additional page will be charged at Rs.1,500 per page.`);
   const fetchQuoteById = async (quoteId) => {
     setPageLoading(true);
     try {
-      const response = await fetch(`https://skitecrm-1l7f.onrender.com/api/quote/${quoteId}`);
+      const response = await fetch(`${API_BASE}/quote/${quoteId}`);
       const data = await response.json();
 
       if (response.ok) {
@@ -209,13 +210,13 @@ Any additional page will be charged at Rs.1,500 per page.`);
     try {
       let response;
       if (id) {
-        response = await fetch(`https://skitecrm-1l7f.onrender.com/api/quote/update/${id}`, {
+        response = await fetch(`${API_BASE}/quote/update/${id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(quoteData)
         });
       } else {
-        response = await fetch('https://skitecrm-1l7f.onrender.com/api/quote/create', {
+        response = await fetch(`${API_BASE}/quote/create`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(quoteData)

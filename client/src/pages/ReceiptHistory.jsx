@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Trash2, Plus, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { API_BASE } from '../api';
 import './Invoice.css';
 
 const ReceiptHistory = () => {
@@ -14,7 +15,7 @@ const ReceiptHistory = () => {
 
   const fetchReceipts = async () => {
     try {
-      const response = await fetch('https://skitecrm-1l7f.onrender.com/api/receipt/all');
+      const response = await fetch(`${API_BASE}/receipt/all`);
       const data = await response.json();
       if (response.ok) setReceipts(data);
       else toast.error("Failed to fetch receipts");
@@ -30,7 +31,7 @@ const ReceiptHistory = () => {
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this receipt?")) return;
     try {
-      const response = await fetch(`https://skitecrm-1l7f.onrender.com/api/receipt/delete/${id}`, { method: 'DELETE' });
+      const response = await fetch(`${API_BASE}/receipt/delete/${id}`, { method: 'DELETE' });
       if (response.ok) {
         toast.success("Receipt Deleted!");
         setReceipts(receipts.filter(r => r._id !== id));
