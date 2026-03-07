@@ -5,8 +5,6 @@ import { toast } from 'react-toastify';
 import { API_BASE } from '../api';
 import './SocialMedia.css';
 
-// const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
-
 const SocialMediaProject = () => {
     const navigate = useNavigate();
     const { id } = useParams();
@@ -16,7 +14,7 @@ const SocialMediaProject = () => {
     const [items, setItems] = useState([]);
     const [employees, setEmployees] = useState([]);
     
-    // ✅ NEW: Client Details State
+    // Client Details State
     const [clientDetails, setClientDetails] = useState({ clientName: 'Loading...', businessName: '' });
 
     const [formData, setFormData] = useState({
@@ -24,33 +22,46 @@ const SocialMediaProject = () => {
         startTime: '',
         endTime: '',
         details: '',
-        assignedTo: ''
+        assignedTo: '',
+        editorId: '' // ✅ Puthusa Video Editor-a save panna state
     });
 
     useEffect(() => {
         if (id) {
             fetchItems();
-            fetchClientInfo(); // ✅ Call Fetch Client Info
+            fetchClientInfo();
         }
     }, [id, activeTab]);
 
     useEffect(() => {
         if (isModalOpen) {
             if (activeTab === 'Script') fetchEmployees('Content Writer');
-            if (activeTab === 'Edit') fetchEmployees('Video Editor');
+            // ✅ Edit AND Post tab rendu kum Video Editors thevai
+            if (activeTab === 'Edit' || activeTab === 'Post') fetchEmployees('Video Editor');
         }
     }, [isModalOpen, activeTab]);
 
-    // ✅ NEW: Fetch Single Client Info for Header
+    // ✅ UPDATED: Fetch Single Client Info
+   // ✅ FIX: Changed API path from /content/... to /social-media/...
+   // ✅ UPDATED EXACTLY TO MATCH YOUR BACKEND
     const fetchClientInfo = async () => {
         try {
-            // Need a route like: router.get('/client-details/:id') in backend
-            const res = await fetch(`${API_BASE}/content/client-details/${id}`);
+            // Path-a '/social-media/${id}' nu maathiyachu
+            const res = await fetch(`${API_BASE}/social-media/${id}`); 
             const data = await res.json();
+            
             if (res.ok) {
-                setClientDetails(data);
+                setClientDetails({
+                    clientName: data.clientName || 'Unknown Client',
+                    businessName: data.businessName || ''
+                });
+            } else {
+                setClientDetails({ clientName: 'Client Details Not Found', businessName: '' });
             }
-        } catch (err) { console.error("Error fetching client details", err); }
+        } catch (err) { 
+            console.error("Error fetching client details", err); 
+            setClientDetails({ clientName: 'Error Loading API', businessName: '' });
+        }
     };
 
     const fetchItems = async () => {
@@ -71,22 +82,54 @@ const SocialMediaProject = () => {
         } catch (err) { console.error(err); }
     };
 
+    // ✅ UPDATED SUBMIT LOGIC (Auto create Edit Task before 2 days)
     const handleAddItem = async (e) => {
         e.preventDefault();
         try {
+            // 1. Main Task create panrathu (Shoot, Script, Edit, or Post)
             const bodyData = { clientId: id, type: activeTab, ...formData };
+            
             const res = await fetch(`${API_BASE}/content/add`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(bodyData)
             });
+            
             if (res.ok) {
+                // 2. AUTOMATIC EDIT TASK CREATION (Only if tab is 'Post' and an editor is selected)
+                if (activeTab === 'Post' && formData.editorId) {
+                    const postDate = new Date(formData.date);
+                    postDate.setDate(postDate.getDate() - 2); // ✅ Subtract 2 days
+                    const editDateStr = postDate.toISOString().split('T')[0]; // Format back to YYYY-MM-DD
+
+                    const editBodyData = {
+                        clientId: id,
+                        type: 'Edit',
+                        date: editDateStr,
+                        startTime: formData.startTime,
+                        endTime: formData.endTime,
+                        details: `[Auto-created for Post] ${formData.details}`,
+                        assignedTo: formData.editorId // Assign to selected Video Editor
+                    };
+
+                    // Send second request to create the Edit task
+                    await fetch(`${API_BASE}/content/add`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(editBodyData)
+                    });
+                }
+
                 toast.success(`${activeTab} Added Successfully!`);
                 setIsModalOpen(false);
-                setFormData({ date: '', startTime: '', endTime: '', details: '', assignedTo: '' });
+                setFormData({ date: '', startTime: '', endTime: '', details: '', assignedTo: '', editorId: '' });
                 fetchItems();
-            } else { toast.error("Failed to add item"); }
-        } catch (err) { toast.error("Error adding item"); }
+            } else { 
+                toast.error("Failed to add item"); 
+            }
+        } catch (err) { 
+            toast.error("Error adding item"); 
+        }
     };
 
     const handleDelete = async (itemId) => {
@@ -121,19 +164,15 @@ const SocialMediaProject = () => {
                         <ArrowLeft size={20} /> Back
                     </button>
                     <div>
-                        {/* ✅ Client Name in Header */}
                         <h1 style={{ margin: 0, color: '#111827' }}>
                             {clientDetails.clientName}
                         </h1>
                         <span style={{ fontSize: '13px', color: '#6b7280' }}>
-                             Content Workflow {clientDetails.businessName && `• ${clientDetails.businessName}`}
+                            Content Workflow {clientDetails.businessName && `• ${clientDetails.businessName}`}
                         </span>
                     </div>
                 </div>
 
-                {/* ... (Tabs and Table remain the same as your previous working code) ... */}
-                {/* Just ensure you copy the rest of the Tabs and Table logic from the previous answer here */}
-                
                 <div className="tabs-container" style={{ display: 'flex', gap: '15px', marginBottom: '30px', borderBottom: '1px solid #e5e7eb', paddingBottom: '10px' }}>
                     {['Shoot', 'Script', 'Edit', 'Post'].map((tab) => (
                         <button
@@ -162,13 +201,8 @@ const SocialMediaProject = () => {
                     </button>
                 </div>
 
-                {/* Table and Modal same as previous logic... */}
-                {/* ... (Copy Tabs, Table, and Modal form exactly from the previous correct response) ... */}
-                 
-                 {/* For the Modal, use the same logic as previous answer. */}
-                 {/* ... */}
-                 {/* --- TABLE VIEW --- */}
-                 <div className="table-container">
+                {/* --- TABLE VIEW --- */}
+                <div className="table-container">
                     <table className="custom-table">
                         <thead>
                             <tr>
@@ -275,6 +309,7 @@ const SocialMediaProject = () => {
                                     <label>Description</label>
                                     <textarea rows="3" required placeholder="Enter details..." value={formData.details} onChange={e => setFormData({ ...formData, details: e.target.value })} style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ddd' }} />
                                 </div>
+
                                 {activeTab === 'Script' && (
                                     <div className="input-group">
                                         <label>Assign to Content Writer</label>
@@ -284,6 +319,7 @@ const SocialMediaProject = () => {
                                         </select>
                                     </div>
                                 )}
+
                                 {activeTab === 'Edit' && (
                                     <div className="input-group">
                                         <label>Assign to Video Editor</label>
@@ -293,11 +329,23 @@ const SocialMediaProject = () => {
                                         </select>
                                     </div>
                                 )}
+
+                                {/* ✅ NEW: POST TAB OPTIONS (Dropdown for Video Editor) */}
                                 {activeTab === 'Post' && (
-                                    <div style={{padding:'10px', background:'#f0f9ff', color:'#0284c7', borderRadius:'5px', marginBottom:'15px', fontSize:'13px'}}>
-                                        ℹ️ This task will be automatically assigned to <b>Bhuvana</b>.
-                                    </div>
+                                    <>
+                                        <div style={{padding:'10px', background:'#f0f9ff', color:'#0284c7', borderRadius:'5px', marginBottom:'15px', fontSize:'13px'}}>
+                                            ℹ️ This Post task goes to <b>Bhuvana</b>. An "Edit" task will be automatically created 2 days before the selected date.
+                                        </div>
+                                        <div className="input-group">
+                                            <label>Select Video Editor (For Auto-Edit Task)</label>
+                                            <select required value={formData.editorId} onChange={e => setFormData({ ...formData, editorId: e.target.value })} style={{width:'100%', padding:'10px', borderRadius:'5px', border:'1px solid #ddd'}}>
+                                                <option value="">Select Editor</option>
+                                                {employees.map(emp => <option key={emp._id} value={emp._id}>{emp.name}</option>)}
+                                            </select>
+                                        </div>
+                                    </>
                                 )}
+
                                 <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
                                     <button type="submit" className="btn-primary-fill" style={{ flex: 1 }}>Save</button>
                                     <button type="button" onClick={() => setIsModalOpen(false)} style={{ background: 'transparent', border: 'none', color: '#666', cursor: 'pointer' }}>Cancel</button>

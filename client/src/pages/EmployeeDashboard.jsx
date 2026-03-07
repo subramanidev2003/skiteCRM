@@ -759,6 +759,28 @@ const EmployeeDashboard = () => {
                 </div>
             )}
 
+            {/* ✅ NEW: TEAM ATTENDANCE CARD (Visible ONLY for Bhuvana/Content Writers) */}
+{isContentWriter && (
+    <div 
+        className="widget-card" 
+        onClick={() => navigate('/admin-dashboard/attendance')}
+        style={{ cursor: 'pointer', transition: 'transform 0.2s', border: '1px solid #bae6fd', background:'#f0f9ff', marginTop: '10px' }}
+        onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-3px)'}
+        onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+    >
+        <div className="widget-header">
+            <Clock size={20} color="#0369a1" />
+            <span style={{color: '#0369a1', fontWeight: 'bold'}}>Team Attendance</span>
+        </div>
+        <div style={{padding: '10px 0', fontSize: '0.9rem', color: '#666'}}>
+            View live attendance status of all team members.
+        </div>
+        <div style={{textAlign: 'right'}}>
+            <ArrowRight size={16} color="#0369a1" />
+        </div>
+    </div>
+)}
+
             {isContentWriter && (
               <div className="widget-card">
                 <div className="widget-header">

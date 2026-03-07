@@ -32,13 +32,11 @@
 
 
 // middleware/userAuth.js
-
 import jwt from 'jsonwebtoken';
 import userModel from '../models/userModel.js';
 
 const userAuth = async (req, res, next) => {
   try {
-    // Get token from Authorization header
     const authHeader = req.headers.authorization;
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -47,7 +45,6 @@ const userAuth = async (req, res, next) => {
       });
     }
     
-    // Extract token
     const token = authHeader.split(' ')[1];
     
     if (!token) {
@@ -56,13 +53,10 @@ const userAuth = async (req, res, next) => {
       });
     }
     
-    // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    // console.log('🔓 Token decoded:', decoded);
-    
-    // Get user from database to get the latest role
-    const user = await userModel.findById(decoded.id).select('_id role name email');
+    // ✅ UPDATED: Added 'designation' in select to fetch it from DB
+    const user = await userModel.findById(decoded.id).select('_id role name email designation');
     
     if (!user) {
       return res.status(401).json({ 
@@ -70,35 +64,23 @@ const userAuth = async (req, res, next) => {
       });
     }
     
-    // ✅ IMPORTANT: Set both userId and userRole on req object
     req.userId = user._id;
-    req.userRole = user.role; // This is crucial for adminAuth
-    req.user = user; // Optional: attach full user object
+    req.userRole = user.role; 
+    // ✅ NEW: Attaching designation to req object
+    req.userDesignation = user.designation || ""; 
+    req.user = user; 
     
-    // console.log('✅ userAuth: User authenticated');
-    // console.log('   User ID:', req.userId);
-    // console.log('   User Role:', req.userRole);
-    
-    next(); // Proceed to next middleware or route handler
+    next(); 
     
   } catch (error) {
     console.error('❌ userAuth Error:', error.message);
-    
     if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({ 
-        message: "Invalid token. Authorization denied." 
-      });
+      return res.status(401).json({ message: "Invalid token. Authorization denied." });
     }
-    
     if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({ 
-        message: "Token expired. Please login again." 
-      });
+      return res.status(401).json({ message: "Token expired. Please login again." });
     }
-    
-    return res.status(500).json({ 
-      message: "Server error in authentication" 
-    });
+    return res.status(500).json({ message: "Server error in authentication" });
   }
 };
 

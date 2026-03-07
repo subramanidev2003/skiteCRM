@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom'; 
-// ✅ NEW: Added FileCheck for Fixed Invoice
-import { CalendarCheck, Megaphone, IndianRupee, FileText, ScrollText, Landmark, Briefcase, ReceiptText, FileCheck } from 'lucide-react';
+import { CalendarCheck, Megaphone, IndianRupee, FileText, ScrollText, Landmark, Briefcase, ReceiptText, FileCheck, Clock } from 'lucide-react';
 import skitelogo from '../assets/skitelogo.png'; 
 import { API_BASE } from '../api';
 import './AdminDashboard.css'; 
-    
-// const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
 
 export const LogoutIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
@@ -21,102 +18,110 @@ export const TaskIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#FF4500" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>
 );
 
-const DashboardCards = ({ handleCardClick, role }) => (
-    <div className="cards-container">
+const DashboardCards = ({ handleCardClick, role, designation }) => {
+    // Check if user is Content Writer
+    const isContentWriter = (designation || "").toLowerCase().includes("content writ");
 
-        {/* ADMIN ONLY */}
-        {role === 'admin' && (
-            <>
-                <div className="card" onClick={() => handleCardClick('add')}>
-                    <div className="card-icon"><PlusIcon /></div>
-                    <div className="card-title1">Add employee</div>
-                    <div className="card-accent"></div>
-                </div>
-                <div className="card" onClick={() => handleCardClick('teams')}>
-                    <div className="card-icon"><TeamIcon /></div>
-                    <div className="card-title1">Teams</div>
-                    <div className="card-accent"></div>
-                </div>
-                <div className="card" onClick={() => handleCardClick('tasks')}>
-                    <div className="card-icon"><TaskIcon /></div>
-                    <div className="card-title1">Task</div>
-                    <div className="card-accent"></div>
-                </div>
+    return (
+        <div className="cards-container">
+            {/* ADMIN ONLY CARDS */}
+            {role === 'admin' && (
+                <>
+                    <div className="card" onClick={() => handleCardClick('add')}>
+                        <div className="card-icon"><PlusIcon /></div>
+                        <div className="card-title1">Add employee</div>
+                        <div className="card-accent"></div>
+                    </div>
+                    <div className="card" onClick={() => handleCardClick('teams')}>
+                        <div className="card-icon"><TeamIcon /></div>
+                        <div className="card-title1">Teams</div>
+                        <div className="card-accent"></div>
+                    </div>
+                    <div className="card" onClick={() => handleCardClick('tasks')}>
+                        <div className="card-icon"><TaskIcon /></div>
+                        <div className="card-title1">Task</div>
+                        <div className="card-accent"></div>
+                    </div>
+                    <div className="card" onClick={() => handleCardClick('leads')}>
+                        <div className="card-icon"><Megaphone size={40} color="#FF4500" /></div>
+                        <div className="card-title1">Leads</div>
+                        <div className="card-accent"></div>
+                    </div>
+                </>
+            )}
+
+            {/* ATTENDANCE CARD: Visible for Admin OR Content Writer (Bhuvana) */}
+            {(role === 'admin' || isContentWriter) && (
                 <div className="card" onClick={() => handleCardClick('attendance')}>
                     <div className="card-icon"><CalendarCheck size={40} color="#FF4500" /></div>
                     <div className="card-title1">Attendance</div>
                     <div className="card-accent"></div>
                 </div>
-                <div className="card" onClick={() => handleCardClick('leads')}>
-                    <div className="card-icon"><Megaphone size={40} color="#FF4500" /></div>
-                    <div className="card-title1">Leads</div>
-                    <div className="card-accent"></div>
-                </div>
-            </>
-        )}
+            )}
 
-        {/* PROJECTS: Admin + Employee */}
-        {(role === 'admin' || role === 'employee') && (
-            <div className="card" onClick={() => handleCardClick('projects')}>
-                <div className="card-icon"><Briefcase size={40} color="#FF4500" /></div>
-                <div className="card-title1">Projects</div>
-                <div className="card-accent"></div>
-            </div>
-        )}
+            {/* PROJECTS: Admin + Employee (Including Content Writers) */}
+            {(role === 'admin' || role === 'employee') && (
+                <div className="card" onClick={() => handleCardClick('projects')}>
+                    <div className="card-icon"><Briefcase size={40} color="#FF4500" /></div>
+                    <div className="card-title1">Projects</div>
+                    <div className="card-accent"></div>
+                </div>
+            )}
 
-        {/* ADMIN + ACCOUNTANT */}
-        {(role === 'admin' || role === 'accountant') && (
-            <>
-                <div className="card" onClick={() => handleCardClick('payroll')}>
-                    <div className="card-icon"><IndianRupee size={40} color="#FF4500" /></div>
-                    <div className="card-title1">Payroll</div>
-                    <div className="card-accent"></div>
-                </div>
-                
-                <div className="card" onClick={() => handleCardClick('invoice')}>
-                    <div className="card-icon"><FileText size={40} color="#FF4500" /></div>
-                    <div className="card-title1">Invoice</div>
-                    <div className="card-accent"></div>
-                </div>
-
-                {/* ✅ NEW: Fixed Invoice Card Added Here */}
-                <div className="card" onClick={() => handleCardClick('fixed-invoice')}>
-                    <div className="card-icon"><FileCheck size={40} color="#FF4500" /></div>
-                    <div className="card-title1">Fixed Invoice</div>
-                    <div className="card-accent"></div>
-                </div>
-
-                <div className="card" onClick={() => handleCardClick('quote')}>
-                    <div className="card-icon"><ScrollText size={40} color="#FF4500" /></div>
-                    <div className="card-title1">Quote</div>
-                    <div className="card-accent"></div>
-                </div>
-                {/* ✅ Payment Receipt Card */}
-                <div className="card" onClick={() => handleCardClick('receipt')}>
-                    <div className="card-icon"><ReceiptText size={40} color="#FF4500" /></div>
-                    <div className="card-title1">Payment Receipt</div>
-                    <div className="card-accent"></div>
-                </div>
-                <div className="card" onClick={() => handleCardClick('accounts')}>
-                    <div className="card-icon"><Landmark size={40} color="#FF4500" /></div>
-                    <div className="card-title1">Accounts</div>
-                    <div className="card-accent"></div>
-                </div>
-            </>
-        )}
-    </div>
-);
+            {/* ADMIN + ACCOUNTANT CARDS */}
+            {(role === 'admin' || role === 'accountant') && (
+                <>
+                    <div className="card" onClick={() => handleCardClick('payroll')}>
+                        <div className="card-icon"><IndianRupee size={40} color="#FF4500" /></div>
+                        <div className="card-title1">Payroll</div>
+                        <div className="card-accent"></div>
+                    </div>
+                    <div className="card" onClick={() => handleCardClick('invoice')}>
+                        <div className="card-icon"><FileText size={40} color="#FF4500" /></div>
+                        <div className="card-title1">Invoice</div>
+                        <div className="card-accent"></div>
+                    </div>
+                    <div className="card" onClick={() => handleCardClick('fixed-invoice')}>
+                        <div className="card-icon"><FileCheck size={40} color="#FF4500" /></div>
+                        <div className="card-title1">Fixed Invoice</div>
+                        <div className="card-accent"></div>
+                    </div>
+                    <div className="card" onClick={() => handleCardClick('quote')}>
+                        <div className="card-icon"><ScrollText size={40} color="#FF4500" /></div>
+                        <div className="card-title1">Quote</div>
+                        <div className="card-accent"></div>
+                    </div>
+                    <div className="card" onClick={() => handleCardClick('receipt')}>
+                        <div className="card-icon"><ReceiptText size={40} color="#FF4500" /></div>
+                        <div className="card-title1">Payment Receipt</div>
+                        <div className="card-accent"></div>
+                    </div>
+                    <div className="card" onClick={() => handleCardClick('accounts')}>
+                        <div className="card-icon"><Landmark size={40} color="#FF4500" /></div>
+                        <div className="card-title1">Accounts</div>
+                        <div className="card-accent"></div>
+                    </div>
+                </>
+            )}
+        </div>
+    );
+};
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [userRole, setUserRole] = useState('');
+    const [userDesignation, setUserDesignation] = useState(''); // ✅ Added State for Designation
 
     useEffect(() => {
         const adminToken = localStorage.getItem('adminToken');
         const accountantToken = localStorage.getItem('accountantToken');
         const employeeToken = localStorage.getItem('employeeToken');
         const storedRole = localStorage.getItem('userRole');
+        
+        // Fetch User Details from LocalStorage to get Designation
+        const userData = JSON.parse(localStorage.getItem('employeeUser') || localStorage.getItem('adminUser') || '{}');
+        setUserDesignation(userData.designation || '');
 
         if (!adminToken && !accountantToken && !employeeToken) {
             navigate('/');
@@ -160,7 +165,7 @@ const AdminDashboard = () => {
             'leads': '/admin-dashboard/leads',
             'payroll': '/admin-dashboard/payroll',
             'invoice': '/admin-dashboard/invoice',
-            'fixed-invoice': '/admin-dashboard/fixed-invoice', // ✅ NEW: Routing for Fixed Invoice
+            'fixed-invoice': '/admin-dashboard/fixed-invoice',
             'quote': '/admin-dashboard/quote',
             'receipt': '/admin-dashboard/receipt',          
             'receipt-history': '/admin-dashboard/receipt-history',
@@ -188,7 +193,13 @@ const AdminDashboard = () => {
             </header>
 
             <main className={isBaseDashboard ? "main-content1" : "main-content-child"}>
-                {isBaseDashboard && <DashboardCards handleCardClick={handleCardClick} role={userRole} />}
+                {isBaseDashboard && (
+                    <DashboardCards 
+                        handleCardClick={handleCardClick} 
+                        role={userRole} 
+                        designation={userDesignation} // ✅ Passing Designation
+                    />
+                )}
                 <Outlet />
             </main>
         </div>

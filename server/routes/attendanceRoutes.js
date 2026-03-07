@@ -16,44 +16,48 @@ const router = express.Router();
 router.post("/checkin", checkin); 
 router.post("/checkout", checkout);
 
-// --- GET ALL (Manager Filtered & Payroll Ready) ---
+// --- GET ALL (Manager Filtered & Payroll Ready) ---   
 router.get('/all', userAuth, async (req, res) => {
     try {
         let query = {};
-        
-        // Manager Logic: Only show specific designations
-        if (req.userRole && req.userRole.toLowerCase() === 'manager') {
+
+        // 1. Logged-in user details (middleware moolama kidaikum)
+        const userRole = req.userRole ? req.userRole.toLowerCase() : '';
+        const userDesignation = req.userDesignation ? req.userDesignation.toLowerCase() : '';
+
+        // 2. Access Control Check
+        // Manager-ah iruntha specific designations mattum kaattu
+        if (userRole === 'manager') {
             const allowedDesignations = ['Web Developer', 'Web Developer(intern)', 'SEO(intern)'];
             const eligibleUsers = await User.find({ designation: { $in: allowedDesignations } }).select('_id');
             const userIds = eligibleUsers.map(u => u._id);
             query.userId = { $in: userIds };
+        } 
+        // Admin illai Content Writer-ah irunthaal FULL access (No filters in query)
+        else if (userRole === 'admin' || userDesignation.includes('content writ')) {
+            // No additional filters, query stays empty {} to fetch all
+        } 
+        // Vera yaaraachum (Normal Employee) intha URL-ku vanthaal, avanga data mattum kaattu (Security)
+        else {
+            query.userId = req.userId;
         }
 
         // Fetch Records
         const attendanceRecords = await Attendance.find(query)
-            // ✅ FIX 1: Added 'salaryPerDay' to populate
             .populate('userId', 'name email designation salaryPerDay') 
             .sort({ checkInTime: -1 }); 
 
         const formattedRecords = attendanceRecords.map(record => ({
             id: record._id, 
             _id: record._id, 
-            
-            // ✅ FIX 2: CRITICAL! Included userId object so Payroll page can filter by employee
             userId: record.userId, 
-
             employeeName: record.userId?.name || 'Unknown',
             designation: record.userId?.designation || 'N/A', 
-            
-            // Send correctly named fields for Frontend
             checkInTime: record.checkInTime, 
             checkOutTime: record.checkOutTime,
-            
-            // Keep existing fields for compatibility
             date: record.checkInTime,
             checkIn: record.checkInTime,
             checkOut: record.checkOutTime,
-            
             taskDescription: record.taskDescription,
             duration: record.checkOutTime ? Math.floor((new Date(record.checkOutTime) - new Date(record.checkInTime)) / 1000) : null
         }));

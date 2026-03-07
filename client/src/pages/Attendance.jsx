@@ -14,9 +14,13 @@ const Attendance = () => {
   const navigate = useNavigate();
   
   // AUTH
-  const adminToken = localStorage.getItem('adminToken');
+ const adminToken = localStorage.getItem('adminToken');
   const managerToken = localStorage.getItem('managerToken');
-  const token = adminToken || managerToken;
+  const employeeToken = localStorage.getItem('employeeToken');
+  
+  // ✅ FIX 1: employeeToken-aiyum sethu check pannanum!
+  const token = adminToken || managerToken || employeeToken; 
+
   const managerUser = JSON.parse(localStorage.getItem('managerUser'));
   const isManager = !!managerUser;
   const allowedDesignations = ['Web Developer', 'Web Developer(intern)', 'SEO(intern)'];
@@ -44,44 +48,61 @@ const Attendance = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // FETCH DATA
+// --- FETCH DATA LOGIC ---
   useEffect(() => {
     const fetchAttendance = async () => {
-      try {
-        if (!token) {
-          setError("No authentication token found.");
-          setLoading(false);
-          return;
-        }
-
-        // ✅ Only fetch attendance if tab is active (Optimization)
-        if (activeTab === 'attendance') {
-            const response = await fetch(`${API_BASE}/attendance/all`, {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-            });
-
-            if (response.status === 401 || response.status === 403) {
-              localStorage.clear(); 
-              navigate('/');
-              return;
+        try {
+            // ✅ Ippo 'token' available-ah irukkum (Employee-kum sethu)
+            if (!token) {
+                setError("No authentication token found.");
+                setLoading(false);
+                return;
             }
 
-            const data = await response.json();
-            setAttendance(data);
+            const storedUser = JSON.parse(localStorage.getItem('employeeUser') || localStorage.getItem('adminUser') || '{}');
+            const designation = (storedUser?.designation || "").toLowerCase();
+            const isContentWriter = designation.includes("content writ");
+            const isAdmin = !!adminToken;
+
+            // console.log("Accessing with:", { role: storedUser.role, designation: designation, isContentWriter });
+
+            // ✅ URL Logic
+            let url = `${API_BASE}/attendance/all`;
+            
+            // Oruvela content writer-um illai, admin-um illai na avanga own data mattum
+            if (!isAdmin && !isContentWriter) {
+                url = `${API_BASE}/attendance/${storedUser._id || storedUser.id}`;
+            }
+
+            const response = await fetch(url, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`, // ✅ Authorization headers kidaichidum
+                },
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                // console.log("Success! Data count:", data.length);
+                setAttendance(Array.isArray(data) ? data : []);
+            } else {
+                const errorData = await response.json();
+                setError(errorData.msg || "Failed to fetch records.");
+            }
+
+            setLoading(false);
+        } catch (err) {
+            console.error('Fetch error:', err);
+            setError("Network error.");
+            setLoading(false);
         }
-        setLoading(false);
-      } catch (err) {
-        console.error('Fetch error:', err);
-        setError("Network error.");
-        setLoading(false);
-      }
     };
-    fetchAttendance();
-  }, [navigate, token, activeTab]); // ✅ Added activeTab dependency
+
+    if (activeTab === 'attendance') {
+        fetchAttendance();
+    }
+  }, [navigate, token, activeTab, adminToken]);
 
   // FILTER LOGIC
   useEffect(() => {
@@ -325,6 +346,7 @@ const Attendance = () => {
                         <tr><td colSpan="7" className="text-center">No records.</td></tr>
                         ) : (
                         currentItems.map((row) => {
+                          // console.log("Single Row Data:", row);
                             // ✅ Calculate logic for each row
                             const { text, hours, isAbsent, reason } = calculateDuration(row.checkIn, row.checkOut);
 

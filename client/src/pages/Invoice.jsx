@@ -75,6 +75,7 @@ const Invoice = () => {
   const dropdownRef = useRef(null); 
 
   // --- ✅ NEW LOGIC: GET HIGHEST INVOICE NO ---
+ // --- ✅ UPDATED LOGIC: GET HIGHEST INVOICE NO (ONLY FOR WITH GST) ---
   const generateNextInvoiceNo = async () => {
     try {
         const token = localStorage.getItem('adminToken') || localStorage.getItem('accountantToken'); 
@@ -87,25 +88,34 @@ const Invoice = () => {
 
         if (response.ok && Array.isArray(data) && data.length > 0) {
             let maxNum = 0;
-            let prefix = 'SKT/25-26/'; // Default
-            
-            // Loop through all invoices to find the highest number (ignoring date)
-            data.forEach(inv => {
-                if (inv.invoiceNo) {
-                    const parts = inv.invoiceNo.split('/');
-                    if (parts.length >= 3) {
-                        const numStr = parts[parts.length - 1]; // gets '033'
-                        const num = parseInt(numStr, 10); // converts to 33
-                        if (!isNaN(num) && num > maxNum) {
-                            maxNum = num;
-                            // dynamically capture the prefix e.g., 'SKT/25-26/'
-                            prefix = parts.slice(0, parts.length - 1).join('/') + '/'; 
+            let prefix = 'SKT/25-26/'; // Default prefix
+
+            // ✅ Filter ONLY invoices that have Tax (With GST)
+            // TaxRate 0 vida athigama iruntha mattum thaan ithu eduthukum
+            const withGstInvoices = data.filter(inv => parseFloat(inv.taxRate) > 0);
+
+            if (withGstInvoices.length > 0) {
+                // Loop through With GST invoices to find the highest number
+                withGstInvoices.forEach(inv => {
+                    if (inv.invoiceNo) {
+                        const parts = inv.invoiceNo.split('/');
+                        if (parts.length >= 3) {
+                            const numStr = parts[parts.length - 1]; // gets '033'
+                            const num = parseInt(numStr, 10); // converts to 33
+                            if (!isNaN(num) && num > maxNum) {
+                                maxNum = num;
+                                // dynamically capture the prefix e.g., 'SKT/25-26/'
+                                prefix = parts.slice(0, parts.length - 1).join('/') + '/'; 
+                            }
                         }
                     }
-                }
-            });
+                });
+            } else {
+                // Oruvela "With GST" invoice onnu kooda illana, default start number
+                return 'SKT/25-26/034'; // Allathu ungalukku starting yethu venumo atha podunga (e.g. 001)
+            }
             
-            const nextNum = maxNum + 1; // 33 + 1 = 34
+            const nextNum = maxNum + 1; 
             const paddedNum = nextNum.toString().padStart(3, '0'); // '034'
             return `${prefix}${paddedNum}`;
         }
