@@ -35,7 +35,6 @@ const WebDevProject = () => {
             if(res.ok) {
                 const data = await res.json();
                 setClient(data);
-                // Initialize edit data
                 setEditData({
                     clientName: data.clientName || '',
                     businessName: data.businessName || '',
@@ -62,7 +61,6 @@ const WebDevProject = () => {
         } catch(err) { console.error(err); }
     };
 
-    // ✅ SAVE EDITED CLIENT DETAILS
     const handleSaveClientDetails = async () => {
         try {
             const res = await fetch(`${API_BASE}/webdev/client/update/${id}`, {
@@ -73,23 +71,19 @@ const WebDevProject = () => {
             if(res.ok) {
                 toast.success("Client details updated!");
                 setIsEditing(false);
-                fetchClientData(); // Refresh data
+                fetchClientData();
             } else {
                 toast.error("Failed to update details");
             }
         } catch(err) { toast.error("Error updating details"); }
     };
 
-    // ✅ ADD ITEM (Requirement / Change)
     const handleAddItem = async (type, description, setInput) => {
         if(!description) return toast.warning("Enter description!");
-        
         if(!editData.assignedDev) {
             return toast.error("Please assign a developer to this project first!");
         }
-        
         const fullDescription = `[${client.businessName}] - ${description}`;
-
         try {
             const res = await fetch(`${API_BASE}/webdev/requirements/add`, {
                 method: 'POST',
@@ -121,7 +115,29 @@ const WebDevProject = () => {
         }
     };
 
+    // ✅ UPDATED STATUS UPDATE LOGIC
     const updateClientStatus = async (field, value) => {
+        // நிபந்தனை: Project Status-ஐ 'Completed' ஆக மாற்றும் போது மட்டும் சரிபார்க்கவும்
+        if (field === 'projectStatus' && value === 'Completed') {
+            
+            // 1. Client Status 'Completed' ஆக உள்ளதா என பார்க்கவும்
+            if (client.clientStatus !== 'Completed') {
+                return toast.error("Cannot complete project! First set Client Status to 'Completed'.");
+            }
+
+            // 2. அனைத்து Requirements மற்றும் Changes 'Completed' ஆக உள்ளதா என பார்க்கவும்
+            const areAllTasksDone = items.every(item => item.assignedTaskId?.status === 'Completed');
+            
+            if (!areAllTasksDone) {
+                return toast.error("Cannot complete project! All Requirements and Changes must be 'Completed'.");
+            }
+
+            // ஏதேனும் டாஸ்க்குகள் இன்னும் ஆட் செய்யப்படாமல் இருந்தால் அதையும் செக் செய்யலாம் (Optional)
+            if (items.length === 0) {
+                return toast.warning("Project has no tasks to complete!");
+            }
+        }
+
         try {
             const res = await fetch(`${API_BASE}/webdev/client/update/${id}`, {
                 method: 'PUT',
@@ -135,7 +151,6 @@ const WebDevProject = () => {
         } catch(err) { toast.error("Update failed"); }
     };
 
-    // Helper to format date for input field
     const formatDateForInput = (dateString) => {
         if (!dateString) return '';
         const d = new Date(dateString);
@@ -151,7 +166,7 @@ const WebDevProject = () => {
         <div className="admin-dashboard">
             <main className="main-content-child" style={{padding:'30px'}}>
                 
-                {/* ✅ TOP HEADER & CLIENT DETAILS */}
+                {/* TOP HEADER & CLIENT DETAILS */}
                 <div style={{background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', marginBottom: '30px'}}>
                     
                     <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', borderBottom: '1px solid #eee', paddingBottom: '15px', marginBottom: '15px'}}>
@@ -166,7 +181,6 @@ const WebDevProject = () => {
                             </div>
                         </div>
 
-                        {/* Edit Button */}
                         <div>
                             {isEditing ? (
                                 <button onClick={handleSaveClientDetails} className="btn-primary" style={{background: '#10b981', display:'flex', gap:'5px', alignItems:'center'}}>
@@ -180,7 +194,6 @@ const WebDevProject = () => {
                         </div>
                     </div>
 
-                    {/* Client Info Grid */}
                     <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px'}}>
                         
                         <div>
@@ -314,7 +327,6 @@ const WebDevProject = () => {
                 <div style={{marginTop:'30px', background:'white', padding:'20px', borderRadius:'10px', boxShadow:'0 2px 10px rgba(0,0,0,0.05)'}}>
                     <h3 style={{marginTop:0, color:'#333'}}>Project Status Control</h3>
                     
-                    {/* Status Dropdowns */}
                     <div style={{display:'flex', justifyContent:'space-around', gap:'20px', padding:'20px', background:'#f9fafb', borderRadius:'8px', flexWrap:'wrap', marginBottom: '20px'}}>
                         <div style={{textAlign:'center', flex:1, minWidth:'200px'}}>
                             <label style={{display:'block', marginBottom:'10px', fontWeight:'600', color:'#555'}}>Client Status</label>
@@ -345,7 +357,6 @@ const WebDevProject = () => {
                         </div>
                     </div>
 
-                    {/* ✅ NEW: Project Dates Section */}
                     <h4 style={{color:'#555', borderBottom: '1px solid #eee', paddingBottom: '10px'}}>Timeline & Payments</h4>
                     <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(200px, 1fr))', gap:'20px', padding:'20px', background:'#f9fafb', borderRadius:'8px'}}>
                         
@@ -388,12 +399,8 @@ const WebDevProject = () => {
                                 style={{width:'100%', padding:'10px', borderRadius:'5px', border:'1px solid #ddd', color: '#333'}}
                             />
                         </div>
-
                     </div>
-                    {/* End of Timeline */}
-
                 </div>
-
             </main>
         </div>
     );
