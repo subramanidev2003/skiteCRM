@@ -4,21 +4,20 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import './Attendance.css';
 import { toast } from 'react-toastify';
-import { ArrowLeft, X, ChevronLeft, ChevronRight, Calendar, ListChecks } from 'lucide-react';
+import { 
+  ArrowLeft, X, ChevronLeft, ChevronRight, Calendar, 
+  ListChecks, Search, Filter 
+} from 'lucide-react';
 import Leaves from '../components/Leaves'; // ✅ Import Leaves Component
 import { API_BASE } from '../api';
-
-// const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
 
 const Attendance = () => {
   const navigate = useNavigate();
   
   // AUTH
- const adminToken = localStorage.getItem('adminToken');
+  const adminToken = localStorage.getItem('adminToken');
   const managerToken = localStorage.getItem('managerToken');
   const employeeToken = localStorage.getItem('employeeToken');
-  
-  // ✅ FIX 1: employeeToken-aiyum sethu check pannanum!
   const token = adminToken || managerToken || employeeToken; 
 
   const managerUser = JSON.parse(localStorage.getItem('managerUser'));
@@ -26,7 +25,7 @@ const Attendance = () => {
   const allowedDesignations = ['Web Developer', 'Web Developer(intern)', 'SEO(intern)'];
 
   // ✅ ACTIVE TAB STATE
-  const [activeTab, setActiveTab] = useState('attendance'); // 'attendance' or 'leaves'
+  const [activeTab, setActiveTab] = useState('attendance'); 
 
   // STATE
   const [attendance, setAttendance] = useState([]);
@@ -39,20 +38,42 @@ const Attendance = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAttendance, setSelectedAttendance] = useState(null);
 
-  // FILTERS
+  // FILTERS (Attendance)
   const [searchTerm, setSearchTerm] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+
+  // ✅ NEW STATE: LEAVE BADGE & FILTERS
+  const [pendingLeavesCount, setPendingLeavesCount] = useState(0);
+  const [leaveSearch, setLeaveSearch] = useState("");
+  const [leaveMonth, setLeaveMonth] = useState("");
 
   // PAGINATION STATE
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-// --- FETCH DATA LOGIC ---
+  // --- NEW: FETCH PENDING LEAVES FOR BADGE ---
+  const fetchPendingLeavesCount = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/leaves/all`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const pending = Array.isArray(data) ? data.filter(l => l.status === 'Pending').length : 0;
+        setPendingLeavesCount(pending);
+      }
+    } catch (err) { console.error("Badge Fetch Error", err); }
+  };
+
+  useEffect(() => {
+    if (token) fetchPendingLeavesCount();
+  }, [token, activeTab]);
+
+  // --- FETCH DATA LOGIC (Exactly as your code) ---
   useEffect(() => {
     const fetchAttendance = async () => {
         try {
-            // ✅ Ippo 'token' available-ah irukkum (Employee-kum sethu)
             if (!token) {
                 setError("No authentication token found.");
                 setLoading(false);
@@ -64,12 +85,8 @@ const Attendance = () => {
             const isContentWriter = designation.includes("content writ");
             const isAdmin = !!adminToken;
 
-            // console.log("Accessing with:", { role: storedUser.role, designation: designation, isContentWriter });
-
-            // ✅ URL Logic
             let url = `${API_BASE}/attendance/all`;
             
-            // Oruvela content writer-um illai, admin-um illai na avanga own data mattum
             if (!isAdmin && !isContentWriter) {
                 url = `${API_BASE}/attendance/${storedUser._id || storedUser.id}`;
             }
@@ -78,13 +95,12 @@ const Attendance = () => {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`, // ✅ Authorization headers kidaichidum
+                    Authorization: `Bearer ${token}`,
                 },
             });
 
             if (response.ok) {
                 const data = await response.json();
-                // console.log("Success! Data count:", data.length);
                 setAttendance(Array.isArray(data) ? data : []);
             } else {
                 const errorData = await response.json();
@@ -104,7 +120,7 @@ const Attendance = () => {
     }
   }, [navigate, token, activeTab, adminToken]);
 
-  // FILTER LOGIC
+  // FILTER LOGIC (Exactly as your code)
   useEffect(() => {
     let result = attendance;
 
@@ -146,87 +162,42 @@ const Attendance = () => {
   const goToNextPage = () => { if (currentPage < totalPages) setCurrentPage(prev => prev + 1); };
   const goToPrevPage = () => { if (currentPage > 1) setCurrentPage(prev => prev - 1); };
 
-  // --- HELPERS ---
+  // HELPERS
   const formatDate = (dateString) => dateString ? new Date(dateString).toLocaleDateString() : "N/A";
   const formatTime = (dateString) => dateString ? new Date(dateString).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "--:--";
 
-  // ✅ UPDATED: Calculate Duration with 9 PM Limit & Date Check
   const calculateDuration = (checkIn, checkOut) => {
     if (!checkIn) return { text: "0h 0m", hours: 0, isAbsent: false, reason: "" };
-    
     const start = new Date(checkIn);
-    
-    // If not checked out yet, assume current time for duration calculation only
     const end = checkOut ? new Date(checkOut) : new Date(); 
-    
-    // 1. Check Date Mismatch (Next Day Checkout)
     if (checkOut && start.toDateString() !== end.toDateString()) {
         return { text: "Date Mismatch", hours: 0, isAbsent: true, reason: "Next Day Checkout" };
     }
-
-    // 2. Check 9 PM Limit (Checkout after 21:00)
-    if (checkOut) {
-        const checkoutHour = end.getHours();
-        // If hour is 21 (9 PM) or greater
-        if (checkoutHour >= 21) { 
-             return { text: "Late Checkout", hours: 0, isAbsent: true, reason: "After 9 PM" };
-        }
+    if (checkOut && end.getHours() >= 21) { 
+         return { text: "Late Checkout", hours: 0, isAbsent: true, reason: "After 9 PM" };
     }
-
     const diffMs = end - start;
     const diffHrs = Math.floor(diffMs / 3600000); 
     const diffMins = Math.floor((diffMs % 3600000) / 60000); 
-    
-    const totalHoursDecimal = diffMs / (1000 * 60 * 60);
-
-    return { 
-        text: `${diffHrs}h ${diffMins}m`, 
-        hours: totalHoursDecimal,
-        isAbsent: false,
-        reason: ""
-    };
+    return { text: `${diffHrs}h ${diffMins}m`, hours: diffMs / 3600000, isAbsent: false };
   };
 
-  // ✅ FIX: Render Status Badge
   const renderStatusBadge = (hours, isAbsent, reason) => {
-      if (isAbsent) {
-          // You can optionally show the reason in tooltip or text
-          return <span style={{backgroundColor:'#fef2f2', color:'#991b1b', padding:'4px 8px', borderRadius:'12px', fontSize:'0.75rem', fontWeight:'600'}} title={reason}>Absent</span>;
-      }
-
+      if (isAbsent) return <span style={{backgroundColor:'#fef2f2', color:'#991b1b', padding:'4px 8px', borderRadius:'12px', fontSize:'0.75rem', fontWeight:'600'}} title={reason}>Absent</span>;
       if (hours >= 6) return <span style={{backgroundColor:'#d1fae5', color:'#065f46', padding:'4px 8px', borderRadius:'12px', fontSize:'0.75rem', fontWeight:'600'}}>Present</span>;
       if (hours >= 3) return <span style={{backgroundColor:'#ffedd5', color:'#9a3412', padding:'4px 8px', borderRadius:'12px', fontSize:'0.75rem', fontWeight:'600'}}>Half Day</span>;
-      
       return <span style={{backgroundColor:'#fee2e2', color:'#991b1b', padding:'4px 8px', borderRadius:'12px', fontSize:'0.75rem', fontWeight:'600'}}>Short</span>;
   };
 
   const downloadPDF = () => {
     const doc = new jsPDF();
     doc.text("Attendance Report", 14, 15);
-    
     const tableRows = filteredAttendance.map(row => {
         const { text, hours, isAbsent, reason } = calculateDuration(row.checkIn, row.checkOut);
-        let statusText = "Short";
-        
-        if (isAbsent) statusText = `Absent (${reason})`; 
-        else if (hours >= 6) statusText = "Present";
-        else if (hours >= 3) statusText = "Half Day";
-
-        return [
-            row.employeeName, 
-            formatDate(row.checkIn), 
-            formatTime(row.checkIn),
-            row.checkOut ? formatTime(row.checkOut) : "Active", 
-            isAbsent ? "—" : text, 
-            statusText 
-        ];
+        let statusText = isAbsent ? `Absent (${reason})` : hours >= 6 ? "Present" : hours >= 3 ? "Half Day" : "Short";
+        return [row.employeeName, formatDate(row.checkIn), formatTime(row.checkIn), row.checkOut ? formatTime(row.checkOut) : "Active", isAbsent ? "—" : text, statusText];
     });
-
-    autoTable(doc, { 
-        head: [["Employee", "Date", "In", "Out", "Duration", "Status"]], 
-        body: tableRows, 
-        startY: 20 
-    });
+    autoTable(doc, { head: [["Employee", "Date", "In", "Out", "Duration", "Status"]], body: tableRows, startY: 20 });
     doc.save("attendance.pdf");
   };
 
@@ -251,19 +222,9 @@ const Attendance = () => {
     <div className="attendance-page1">
       <button className="modern-back-btn" 
               style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  background: 'white',
-                  border: '1px solid #e0e0e0',
-                  padding: '8px 16px',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  color: '#4b5563',
-                  transition: 'all 0.2s ease',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                  display: 'flex', alignItems: 'center', gap: '8px', background: 'white', border: '1px solid #e0e0e0',
+                  padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '600',
+                  color: '#4b5563', transition: 'all 0.2s ease', boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
               }}
               onMouseOver={(e) => {
                   e.currentTarget.style.borderColor = '#FF4500';
@@ -282,7 +243,7 @@ const Attendance = () => {
 
       <h2 className="page-title">Attendance & Leave Management</h2>
 
-      {/* ✅ TAB NAVIGATION */}
+      {/* ✅ TAB NAVIGATION WITH NOTIFICATION BADGE */}
       <div style={{display:'flex', gap:'20px', borderBottom:'2px solid #eee', marginBottom:'20px'}}>
           <button 
             onClick={() => setActiveTab('attendance')}
@@ -302,18 +263,52 @@ const Attendance = () => {
                 borderBottom: activeTab === 'leaves' ? '3px solid #FF4500' : 'none',
                 color: activeTab === 'leaves' ? '#FF4500' : '#666',
                 fontWeight: 'bold', cursor:'pointer', background:'none', borderTop:'none', borderLeft:'none', borderRight:'none',
-                display: 'flex', alignItems: 'center', gap: '8px'
+                display: 'flex', alignItems: 'center', gap: '8px', position: 'relative'
             }}>
             <Calendar size={18} /> Leave Requests
+            {/* ✅ DYNAMIC NOTIFICATION BADGE */}
+            {pendingLeavesCount > 0 && (
+              <span style={{
+                position: 'absolute', top: '0', right: '-5px', background: '#ef4444',
+                color: 'white', fontSize: '10px', padding: '2px 6px', borderRadius: '10px'
+              }}>
+                {pendingLeavesCount}
+              </span>
+            )}
           </button>
       </div>
 
-      {/* ✅ CONDITIONAL RENDERING BASED ON TAB */}
+      {/* ✅ CONDITIONAL CONTENT */}
       {activeTab === 'leaves' ? (
-          <Leaves />
+          <>
+            {/* ✅ NEW: LEAVE FILTERS */}
+            <div className="filter-container1" style={{marginBottom:'20px', background:'#f9fafb', padding:'15px', borderRadius:'10px'}}>
+              <div className="filter-inputs" style={{display:'flex', gap:'15px'}}>
+                <div style={{display:'flex', alignItems:'center', background:'white', border:'1px solid #ddd', padding:'5px 10px', borderRadius:'8px'}}>
+                  <Search size={16} color="#888" />
+                  <input 
+                    type="text" placeholder="Search Name..." value={leaveSearch} 
+                    onChange={(e) => setLeaveSearch(e.target.value)} 
+                    style={{border:'none', outline:'none', padding:'5px', marginLeft:'5px'}}
+                  />
+                </div>
+                <select 
+                  value={leaveMonth} onChange={(e) => setLeaveMonth(e.target.value)}
+                  style={{padding:'8px', borderRadius:'8px', border:'1px solid #ddd'}}
+                >
+                  <option value="">All Months</option>
+                  {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map((m, index) => (
+                    <option key={m} value={index}>{m}</option>
+                  ))}
+                </select>
+                <button onClick={() => {setLeaveSearch(""); setLeaveMonth("");}} className="clear-btn">Reset</button>
+              </div>
+            </div>
+            <Leaves searchTerm={leaveSearch} filterMonth={leaveMonth} />
+          </>
       ) : (
           <>
-            {/* EXISTING ATTENDANCE CONTENT */}
+            {/* EXISTING ATTENDANCE CONTENT (Exactly as your code) */}
             <div className="filter-container1">
                 <div className="filter-inputs">
                 <input type="text" placeholder="Search Name..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="search-input" />
@@ -346,25 +341,15 @@ const Attendance = () => {
                         <tr><td colSpan="7" className="text-center">No records.</td></tr>
                         ) : (
                         currentItems.map((row) => {
-                          // console.log("Single Row Data:", row);
-                            // ✅ Calculate logic for each row
                             const { text, hours, isAbsent, reason } = calculateDuration(row.checkIn, row.checkOut);
-
                             return (
                                 <tr key={row._id} onClick={() => {setSelectedAttendance(row); setIsModalOpen(true);}} className="att-clickable-row">
                                 <td><strong>{row.employeeName}</strong><br/><small>{row.designation}</small></td>
                                 <td>{formatDate(row.checkIn)}</td>
                                 <td className="text-green">{formatTime(row.checkIn)}</td>
                                 <td className={row.checkOut ? "text-red" : "text-blue"}>{row.checkOut ? formatTime(row.checkOut) : "Active"}</td>
-                                
-                                {/* ✅ Duration Logic Display */}
-                                <td style={{fontWeight:'bold', color: isAbsent ? '#991b1b' : '#555'}}>
-                                    {isAbsent ? "—" : text}
-                                </td>
-                                
-                                {/* ✅ Status Badge */}
+                                <td style={{fontWeight:'bold', color: isAbsent ? '#991b1b' : '#555'}}>{isAbsent ? "—" : text}</td>
                                 <td>{renderStatusBadge(hours, isAbsent, reason)}</td>
-
                                 <td className="td-task">{row.taskDescription || "—"}</td>
                                 </tr>
                             );
@@ -375,7 +360,6 @@ const Attendance = () => {
                 </div>
             )}
 
-            {/* PAGINATION CONTROLS */}
             {filteredAttendance.length > 0 && (
                 <div className="pagination-container" style={{display:'flex', justifyContent:'flex-end', marginTop:'15px', gap:'10px'}}>
                 <span>Page {currentPage} of {totalPages}</span>
@@ -386,7 +370,7 @@ const Attendance = () => {
           </>
       )}
 
-      {/* DETAIL MODAL */}
+      {/* DETAIL MODAL (Exactly as your code) */}
       {isModalOpen && selectedAttendance && (
         <div className="att-modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="att-modal-box" onClick={(e) => e.stopPropagation()}>
@@ -394,8 +378,6 @@ const Attendance = () => {
             <div className="att-modal-content">
                <h3>{selectedAttendance.employeeName}</h3>
                <p>Date: {formatDate(selectedAttendance.checkIn)}</p>
-               
-               {/* ✅ Modal Logic */}
                {(() => {
                    const { text, isAbsent, reason } = calculateDuration(selectedAttendance.checkIn, selectedAttendance.checkOut);
                    return (
@@ -405,7 +387,6 @@ const Attendance = () => {
                        </>
                    );
                })()}
-               
                <p>Task: {selectedAttendance.taskDescription}</p>
             </div>
           </div>

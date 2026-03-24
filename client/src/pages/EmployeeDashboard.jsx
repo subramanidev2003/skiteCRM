@@ -7,6 +7,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import './EmployeeDashboard.css'; 
 import { toast } from 'react-toastify';
+import emailjs from '@emailjs/browser';
 import { API_BASE } from '../api';
 
 // --- CONFIGURATION ---
@@ -421,33 +422,66 @@ const EmployeeDashboard = () => {
 
 
   // ✅ HANDLE LEAVE SUBMISSION (இதைச் சேர்க்கவும்)
-  const handleLeaveSubmit = async (e) => {
+const handleLeaveSubmit = async (e) => {
     e.preventDefault();
+    
+    // 1. Validation
     if (!leaveData.fromDate || !leaveData.toDate || !leaveData.reason) {
         toast.error("Please fill all fields");
         return;
     }
+
     setLoading(true);
+
+    // 2. EmailJS Variables (Must match your template brackets)
+    const templateParams = {
+        from_name: EMPLOYEE_NAME,
+        designation: EMPLOYEE_DESIGNATION,
+        from_date: leaveData.fromDate,
+        to_date: leaveData.toDate,
+        reason: leaveData.reason,
+        to_email: 'walkalan28@gmail.com'
+    };
+
     try {
+        // A. CRM Dashboard-க்காக Database-ல சேமிக்கிறோம்
         const res = await fetch(`${LEAVE_URL}/create`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ ...leaveData, userId: EMPLOYEE_ID, name: EMPLOYEE_NAME, designation: EMPLOYEE_DESIGNATION })
+            headers: { 
+                'Content-Type': 'application/json', 
+                'Authorization': `Bearer ${token}` 
+            },
+            body: JSON.stringify({ 
+                ...leaveData, 
+                userId: EMPLOYEE_ID, 
+                name: EMPLOYEE_NAME, 
+                designation: EMPLOYEE_DESIGNATION 
+            })
         });
-        const data = await res.json();
-        if (res.ok) {
-            toast.success("Leave Request Sent!");
+
+        // B. EmailJS வழியா மின்னஞ்சல் அனுப்புகிறோம்
+        // இப்போ உங்க புதிய Service ID 'service_ythjnuq' குடுத்துருக்கேன் ✅
+        const emailRes = await emailjs.send(
+            'service_ythjnuq',     // Corrected Service ID
+            'template_qtl1hoh',    // Template ID
+            templateParams, 
+            'ExKCl2ZACI_vbkRBo'    // Public Key
+        );
+
+        if (emailRes.status === 200) {
+            toast.success("Leave Request Sent & Email Delivered! ✅");
             setIsLeaveModalOpen(false);
             setLeaveData({ fromDate: '', toDate: '', reason: '' });
-        } else {
-            toast.error(data.message || "Failed to send request");
         }
+
     } catch (error) {
-        toast.error("Network Error");
+        console.error("Submission Error:", error);
+        // ஏதாவது எர்ரர் வந்தா, இப்போ தெளிவா காட்டும்
+        toast.error(`Error: ${error.text || "Check IDs & Connection"}`);
     } finally {
         setLoading(false);
     }
-  };
+};
 
   return (
     <div className={`dashboard-layout ${isMobile ? "mobile-view" : ""}`}>
