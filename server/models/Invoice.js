@@ -7,6 +7,7 @@ const invoiceSchema = new mongoose.Schema({
   // Client Details
   clientDetails: {
     name: { type: String, required: true },
+    gstNo: { type: String },
     addressLine1: { type: String },
     addressLine2: { type: String },
     location: { type: String }

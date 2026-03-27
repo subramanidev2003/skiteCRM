@@ -40,6 +40,9 @@ import ReceiptHistory from "./pages/ReceiptHistory.jsx";
 import PaymentReceipt from "./pages/PaymentReceipt.jsx";
 import FixedInvoice from "./components/FixedInvoice.jsx";
 
+// ✅ 1. OfferLetter Import
+import OfferLetter from "./pages/OfferLetter.jsx";
+
 function App() {
   return (
     <>
@@ -62,14 +65,12 @@ function App() {
             <Route path="/sales-dashboard/conversion" element={<Conversion />} />
             <Route path="/sales-dashboard/all-leads" element={<AllLeadPage />} />
             
-            {/* ✅ QUOTE ROUTES FOR SALES - All Correctly Added */}
             <Route path="/sales-dashboard/quote" element={<Quote />} />
             <Route path="/sales-dashboard/quote/:id" element={<Quote />} /> 
             <Route path="/sales-dashboard/quote-history" element={<QuoteHistory />} />
 
             <Route path="/sales-dashboard/receipt" element={<PaymentReceipt />} />
-<Route path="/sales-dashboard/receipt-history" element={<ReceiptHistory />} />
-            
+            <Route path="/sales-dashboard/receipt-history" element={<ReceiptHistory />} />
           </Route>
         </Route>
 
@@ -100,7 +101,6 @@ function App() {
             <Route path="invoice-history" element={<InvoiceHistory />} />
             <Route path="fixed-invoice" element={<FixedInvoice />} />
             
-            {/* ADMIN QUOTE ROUTES */}
             <Route path="/admin-dashboard/quote" element={<Quote />} />
             <Route path="quote/:id" element={<Quote />} />
             <Route path="/admin-dashboard/quote-history" element={<QuoteHistory />} />
@@ -111,10 +111,12 @@ function App() {
             <Route path="income-expense" element={<IncomeExpense />} />
 
             <Route path="/admin-dashboard/receipt" element={<PaymentReceipt />} />
-<Route path="/admin-dashboard/receipt-history" element={<ReceiptHistory />} />
+            <Route path="/admin-dashboard/receipt-history" element={<ReceiptHistory />} />
             
-            {/* Projects Route inside AdminDashboard Layout */}
             <Route path="/admin-dashboard/projects" element={<Projects />} />
+
+            {/* ✅ 2. Added Offer Letter Route inside Admin Dashboard Layout */}
+            <Route path="offer-letter" element={<OfferLetter />} />
           </Route>
 
           <Route path="/add-employee" element={<AddEmployee />} />

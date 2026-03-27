@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom'; 
-import { CalendarCheck, Megaphone, IndianRupee, FileText, ScrollText, Landmark, Briefcase, ReceiptText, FileCheck, Clock } from 'lucide-react';
+import { CalendarCheck, Megaphone, IndianRupee, FileText, ScrollText, Landmark, Briefcase, ReceiptText, FileCheck, Clock, MailOpen } from 'lucide-react';
 import skitelogo from '../assets/skitelogo.png'; 
 import { API_BASE } from '../api';
 import './AdminDashboard.css'; 
@@ -45,6 +45,11 @@ const DashboardCards = ({ handleCardClick, role, designation }) => {
                     <div className="card" onClick={() => handleCardClick('leads')}>
                         <div className="card-icon"><Megaphone size={40} color="#FF4500" /></div>
                         <div className="card-title1">Leads</div>
+                        <div className="card-accent"></div>
+                    </div>
+                    <div className="card" onClick={() => handleCardClick('offer-letter')}>
+                        <div className="card-icon"><MailOpen size={40} color="#FF4500" /></div>
+                        <div className="card-title1">Offer Letter</div>
                         <div className="card-accent"></div>
                     </div>
                 </>
@@ -169,7 +174,8 @@ const AdminDashboard = () => {
             'quote': '/admin-dashboard/quote',
             'receipt': '/admin-dashboard/receipt',          
             'receipt-history': '/admin-dashboard/receipt-history',
-            'accounts': '/admin-dashboard/accounts'
+            'accounts': '/admin-dashboard/accounts',
+            'offer-letter': '/admin-dashboard/offer-letter'
         };
         if (routes[type]) navigate(routes[type]);
     };
