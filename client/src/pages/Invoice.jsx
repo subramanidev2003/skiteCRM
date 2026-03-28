@@ -260,49 +260,58 @@ const Invoice = () => {
   };
 
   // SAVE TO DB (Create)
-  const saveInvoiceToDB = async () => {
+// Invoice.jsx - saveInvoiceToDB function-ai ithu maathiri replace pannunga
+const saveInvoiceToDB = async () => {
     if (!clientDetails.name) {
         toast.error("Please enter Client Name!");
         return;
     }
 
     try {
-      const invoiceData = {
-        invoiceNo: invoiceMeta.invoiceNo,
-        date: invoiceMeta.date,
-        clientDetails: clientDetails,
-        items: items.map(item => ({
-          ...item,
-          price: parseFloat(item.price) || 0,
-          qty: parseFloat(item.qty) || 0,
-          total: (parseFloat(item.price) || 0) * (parseFloat(item.qty) || 0)
-        })),
-        subtotal,
-        taxRate,
-        cgst,
-        sgst,
-        grandTotal
-      };
+        const invoiceData = {
+            invoiceNo: invoiceMeta.invoiceNo,
+            date: invoiceMeta.date,
+            clientDetails: clientDetails, 
+            items: items.map(item => ({
+                ...item,
+                price: parseFloat(item.price) || 0,
+                qty: parseFloat(item.qty) || 0,
+                total: (parseFloat(item.price) || 0) * (parseFloat(item.qty) || 0)
+            })),
+            subtotal,
+            taxRate,
+            cgst,
+            sgst,
+            grandTotal
+        };
 
-      const response = await fetch(`${API_BASE}/invoice/create`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(invoiceData)
-      });
+        // Edit panna PUT, Pudhusa create panna POST
+        // Invoice.jsx-la intha line-ai sariyaa check pannunga
+const url = id ? `${API_BASE}/invoice/update/${id}` : `${API_BASE}/invoice/create`;
+// Intha URL-oda end-la extra slash illama paathukonga.
+        const method = id ? 'PUT' : 'POST';
 
-      const data = await response.json();
+        const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(invoiceData)
+        });
 
-      if (response.ok) {
-        toast.success("Invoice Saved Successfully!");
-        // ✅ Onamum save aanathum next number kaata
-        const nextNo = await generateNextInvoiceNo();
-        setInvoiceMeta(prev => ({...prev, invoiceNo: nextNo})); 
-      } else {
-        toast.error(data.message || "Failed to save invoice");
-      }
+        const data = await response.json();
+
+        if (response.ok) {
+            toast.success(id ? "Invoice Updated Successfully!" : "Invoice Saved Successfully!");
+            if (!id) {
+                const nextNo = await generateNextInvoiceNo();
+                setInvoiceMeta(prev => ({...prev, invoiceNo: nextNo}));
+            }
+        } else {
+            // Ippo "Route not found" error varutha nu check pannunga
+            toast.error(data.message || "Failed to process invoice");
+        }
     } catch (error) {
-      console.error("Error:", error);
-      toast.error("Server Error");
+        console.error("Error:", error);
+        toast.error("Server Connection Error");
     }
   };
 
@@ -506,9 +515,10 @@ const Invoice = () => {
                 <History size={18} /> History
             </button>
             
-            <button className="action-btn" onClick={saveInvoiceToDB} style={{ backgroundColor: '#28a745' }}>
-                <Save size={18} /> Save New
-            </button>
+            // Return section-la action-btn-ai ithu maathiri update pannunga
+<button className="action-btn" onClick={saveInvoiceToDB} style={{ backgroundColor: id ? '#007bff' : '#28a745' }}>
+    <Save size={18} /> {id ? 'Update Invoice' : 'Save New'}
+</button>
             
             <button className="action-btn" onClick={generatePDF} style={{ backgroundColor: '#FF4500' }}>
                 <Download size={18} /> PDF

@@ -1,6 +1,6 @@
 import Invoice from "../models/Invoice.js";
 
-// Create New Invoice
+// ✅ 1. Create New Invoice
 export const createInvoice = async (req, res) => {
   try {
     const newInvoice = new Invoice(req.body);
@@ -9,12 +9,12 @@ export const createInvoice = async (req, res) => {
   } catch (error) {
     console.error("Error saving invoice:", error);
 
-    // ✅ Handle Duplicate Invoice Number Error
+    // Handle Duplicate Invoice Number Error
     if (error.code === 11000) {
       return res.status(400).json({ message: "Error: This Invoice Number already exists!" });
     }
 
-    // Handle Validation Errors (e.g., missing fields)
+    // Handle Validation Errors
     if (error.name === 'ValidationError') {
         const messages = Object.values(error.errors).map(val => val.message);
         return res.status(400).json({ message: messages.join(', ') });
@@ -24,7 +24,27 @@ export const createInvoice = async (req, res) => {
   }
 };
 
-// Get All Invoices
+// ✅ 2. Update Existing Invoice (Fixed syntax error here)
+export const updateInvoice = async (req, res) => {
+    try {
+        const updatedInvoice = await Invoice.findByIdAndUpdate(
+            req.params.id, 
+            { $set: req.body }, 
+            { new: true }
+        );
+
+        if (!updatedInvoice) {
+            return res.status(404).json({ message: "Invoice not found" });
+        }
+
+        res.status(200).json(updatedInvoice);
+    } catch (err) {
+        console.error("Update Error:", err);
+        res.status(500).json({ message: "Update Failed", error: err.message });
+    }
+};
+
+// ✅ 3. Get All Invoices
 export const getAllInvoices = async (req, res) => {
   try {
     const invoices = await Invoice.find().sort({ createdAt: -1 });
@@ -33,9 +53,8 @@ export const getAllInvoices = async (req, res) => {
     res.status(500).json({ message: "Error fetching invoices" });
   }
 };
-// ... existing imports and functions
 
-// ✅ Delete Invoice
+// ✅ 4. Delete Invoice
 export const deleteInvoice = async (req, res) => {
   try {
     const { id } = req.params;
@@ -45,7 +64,8 @@ export const deleteInvoice = async (req, res) => {
     res.status(500).json({ message: "Error deleting invoice" });
   }
 };
-// ✅ Get Single Invoice by ID
+
+// ✅ 5. Get Single Invoice by ID
 export const getInvoiceById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -59,18 +79,15 @@ export const getInvoiceById = async (req, res) => {
   }
 };
 
-// ... பழைய code ...
-
-// ✅ Update Invoice Payment
+// ✅ 6. Update Invoice Payment Status
 export const updatePayment = async (req, res) => {
   try {
     const { paidAmount } = req.body;
     
-    // குறிப்பிட்ட ID உள்ள Invoice-ஐ கண்டுபிடித்து Update செய்தல்
     const updatedInvoice = await Invoice.findByIdAndUpdate(
       req.params.id,
       { paidAmount: paidAmount },
-      { new: true } // புதிய விபரங்களை ரிட்டர்ன் செய்யும்
+      { new: true } 
     );
 
     if (!updatedInvoice) {

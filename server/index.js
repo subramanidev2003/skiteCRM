@@ -133,6 +133,10 @@ app.use('/api/attendance', attendanceRoutes);
 app.use('/api/tasks', taskRouter);
 app.use('/api/leads', leadRoutes);
 app.use('/api/invoice', invoiceRoutes);
+// ❌ Intha line ellathukkum keela thaan irukkanum
+app.use((req, res) => {
+  res.status(404).json({ success: false, message: 'Route not found' });
+});
 app.use('/api/quote', quoteRoutes); // Add this line
 app.use('/api/transaction', transactionRoutes);
 app.use('/api/social-media', socialMediaRoutes);
@@ -185,43 +189,4 @@ process.on('uncaughtException', (err) => {
   console.error('❌ Uncaught Exception:', err);
   process.exit(1);
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// server/index.js-la kadaisiya pottu paarunga

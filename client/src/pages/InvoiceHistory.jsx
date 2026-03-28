@@ -82,7 +82,6 @@ const InvoiceHistory = () => {
     return num === 0 ? "Zero Rupees Only" : "Indian Rupees " + convert(num) + " Only";
   };
 
-  // ✅ LOGIC 1: Accurate Filtering
   const filteredInvoices = invoices.filter(inv => {
     const isGST = inv.taxRate && Number(inv.taxRate) > 0;
     if (activeTab === 'gst' && !isGST) return false;
@@ -91,7 +90,8 @@ const InvoiceHistory = () => {
     const searchLower = searchTerm.toLowerCase();
     const matchesSearch = 
       (inv.clientDetails?.name || '').toLowerCase().includes(searchLower) ||
-      (inv.invoiceNo || '').toLowerCase().includes(searchLower);
+      (inv.invoiceNo || '').toLowerCase().includes(searchLower) ||
+      (inv.clientDetails?.gstNo || '').toLowerCase().includes(searchLower); // Search by GST No added
     if (!matchesSearch) return false;
 
     if (fromDate || toDate) {
@@ -107,7 +107,6 @@ const InvoiceHistory = () => {
     return true;
   }).sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  // ✅ LOGIC 2: Fixed Download Function
   const downloadAllInvoicesBulk = async () => {
     if (filteredInvoices.length === 0) return toast.warning("No records to download!");
 
@@ -139,7 +138,6 @@ const InvoiceHistory = () => {
       if (i > 0) doc.addPage();
       const inv = invoicesToDownload[i];
 
-      // Header Layout
       if (logoBase64) doc.addImage(logoBase64, 'JPG', 14, 10, 40, 29);
       doc.setFontSize(10).setFont("helvetica", "bold").setTextColor(0).text("SKITE", 14, 40);
       doc.setFont("helvetica", "normal").text(senderDetails.addressLine1, 14, 46);
@@ -147,20 +145,22 @@ const InvoiceHistory = () => {
       doc.text(`GST NO: ${senderDetails.gst}`, 14, 57);
       doc.setFontSize(22).setTextColor(255, 69, 0).text("INVOICE", 195, 25, { align: 'right' });
 
-      // Info Section
       const infoY = 75;
       doc.setFontSize(10).setTextColor(0).setFont("helvetica", "bold").text("ISSUED TO:", 14, infoY);
       doc.setFont("helvetica", "normal").text(inv.clientDetails?.name || "N/A", 14, infoY + 6);
       doc.text(inv.clientDetails?.addressLine1 || "", 14, infoY + 11);
       doc.text(inv.clientDetails?.location || "", 14, infoY + 16);
-      if (inv.clientDetails?.gstNo) doc.setFont("helvetica", "bold").text(`GST: ${inv.clientDetails.gstNo}`, 14, infoY + 22);
+      
+      // ✅ GST No in Bulk PDF
+      if (inv.clientDetails?.gstNo) {
+          doc.setFont("helvetica", "bold").text(`GST: ${inv.clientDetails.gstNo}`, 14, infoY + 22);
+      }
 
       doc.setFont("helvetica", "bold").text("INVOICE NO:", 120, infoY);
       doc.setFont("helvetica", "normal").text(inv.invoiceNo, 155, infoY);
       doc.setFont("helvetica", "bold").text("DATE:", 120, infoY + 6);
       doc.setFont("helvetica", "normal").text(new Date(inv.date).toLocaleDateString('en-GB'), 155, infoY + 6);
 
-      // ✅ FIXED: Corrected table body logic
       const tableBody = inv.items.map(item => [
         item.description, item.hsn, Number(item.price || 0).toFixed(2), item.qty, (item.price * item.qty).toFixed(2)
       ]);
@@ -181,7 +181,6 @@ const InvoiceHistory = () => {
         columnStyles: { 0: { cellWidth: 80 }, 4: { halign: 'right' } }
       });
 
-      // Footer Section
       const finalY = doc.lastAutoTable.finalY + 10;
       doc.setFontSize(10).setFont("helvetica", "bold").text("Amount in Words:", 14, finalY);
       doc.setFont("helvetica", "italic").text(numberToWords(inv.grandTotal), 45, finalY);
@@ -216,7 +215,7 @@ const InvoiceHistory = () => {
       </div>
 
       <div className="filters-bar-container">
-        <div className="search-box"><Search size={18} /><input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
+        <div className="search-box"><Search size={18} /><input type="text" placeholder="Search Client, Inv No or GST..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
         <div className="date-filters">
           <div className="date-input-group"><Calendar size={16} /><label>From:</label><input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} /></div>
           <div className="date-input-group"><Calendar size={16} /><label>To:</label><input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} /></div>
@@ -227,14 +226,28 @@ const InvoiceHistory = () => {
       <div className="history-table-wrapper">
         {loading ? <div className="loading-state">Loading...</div> : (
           <table className="history-main-table">
-            <thead><tr><th>INVOICE NO</th><th>DATE</th><th>CLIENT NAME</th><th>AMOUNT</th><th>ACTIONS</th></tr></thead>
+            <thead>
+                <tr>
+                    <th>INVOICE NO</th>
+                    <th>DATE</th>
+                    <th>CLIENT NAME</th>
+                    {/* ✅ Added GST NO Column */}
+                    <th>GST NO</th>
+                    <th>AMOUNT</th>
+                    <th>ACTIONS</th>
+                </tr>
+            </thead>
             <tbody>
-              {filteredInvoices.length === 0 ? <tr><td colSpan="5" className="empty-row">No Invoices Found.</td></tr> : 
+              {filteredInvoices.length === 0 ? <tr><td colSpan="6" className="empty-row">No Invoices Found.</td></tr> : 
                 filteredInvoices.map((inv) => (
                   <tr key={inv._id} onClick={() => navigate(`/admin-dashboard/invoice/${inv._id}`)}>
                     <td className="inv-no-cell">{inv.invoiceNo}</td>
                     <td>{new Date(inv.date).toLocaleDateString('en-GB')}</td>
                     <td className="client-name-cell">{inv.clientDetails?.name || 'N/A'}</td>
+                    {/* ✅ Displaying GST NO */}
+                    <td style={{fontWeight:'bold', color: inv.clientDetails?.gstNo ? '#28a745' : '#888'}}>
+                        {inv.clientDetails?.gstNo || '---'}
+                    </td>
                     <td className="amount-cell">₹ {inv.grandTotal?.toLocaleString('en-IN')}</td>
                     <td><button onClick={(e) => { e.stopPropagation(); handleDelete(inv._id); }} className="delete-icon-btn"><Trash2 size={18} /></button></td>
                   </tr>
