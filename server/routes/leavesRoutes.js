@@ -26,6 +26,7 @@ router.post('/create', async (req, res) => {
 
 // 2. Get All Leave Requests
 router.get('/all', async (req, res) => {
+  // console.log("🚀 GET ALL LEAVES API CALLED!");
   try {
     const leaves = await Leave.find().sort({ createdAt: -1 });
     res.status(200).json(leaves);

@@ -56,44 +56,35 @@ import webDevRoutes from './routes/webdevRoutes.js';
 import leaveRoutes from './routes/leavesRoutes.js';
 import receiptRoutes from "./routes/receiptRoutes.js";
 
-
-
 const app = express();
-const PORT = process.env.PORT || 8080; // Idhu mattum irukkatum
+const PORT = process.env.PORT || 8080;
 
-// Connect to Database
+// 1. Connect to Database
 connectDB(); 
 
-// Get directory path (ES modules workaround)
+// ES modules workaround for directory paths
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ✅ CREATE UPLOADS DIRECTORY IF IT DOESN'T EXIST
+// 2. Create Uploads Directory
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
-  // console.log('✅ Uploads directory created at:', uploadsDir);
-} else {
-  // console.log('✅ Uploads directory exists at:', uploadsDir);
-
 }
 
-// ✅ CORS CONFIGURATION - UPDATED WITH PRODUCTION URL
+// 3. CORS Configuration
 const allowedOrigins = [
-  "http://localhost:5173",           // Local development
-  "https://crm.skitedigital.in",     // Your production frontend
-  "https://skitecrm.onrender.com"   // Your backend (for testing)
+  "http://localhost:5173",
+  "https://crm.skitedigital.in",
+  "https://skitecrm.onrender.com"
 ];
 
 app.use(cors({
   origin: function(origin, callback) {
-    // Allow requests with no origin (mobile apps, Postman, curl)
     if (!origin) return callback(null, true);
-    
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
-      console.log('❌ Blocked by CORS:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -102,51 +93,43 @@ app.use(cors({
   credentials: true
 }));
 
-// ✅ MIDDLEWARE
-app.use(express.json()); // Parse JSON bodies
-app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
-app.use(cookieparser()); // Parse cookies
+// 4. Global Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieparser());
 
-// ✅ SERVE STATIC FILES - Images accessible via /api/uploads/filename.jpg
+// 5. Serve Static Files
 app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
-// console.log('✅ Static files served from /api/uploads');
 
-// ✅ ROOT ENDPOINT
+// 6. Root Endpoint
 app.get('/', (req, res) => {
-  res.json({ 
-    message: 'API is working!',
-    version: '1.0.0',
-    endpoints: {
-      auth: '/api/auth',
-      user: '/api/user',
-      attendance: '/api/attendance',
-      tasks: '/api/tasks',
-      uploads: '/api/uploads'
-    }
-  });
+  res.json({ message: 'API is working!', version: '1.0.0' });
 });
 
-// ✅ API ROUTES
+// 7. ✅ ALL API ROUTES (Ellaamae munnadi irukkanum)
 app.use('/api/auth', authRouter); 
 app.use('/api/user', userRouter); 
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/tasks', taskRouter);
 app.use('/api/leads', leadRoutes);
 app.use('/api/invoice', invoiceRoutes);
-// ❌ Intha line ellathukkum keela thaan irukkanum
-app.use((req, res) => {
-  res.status(404).json({ success: false, message: 'Route not found' });
-});
-app.use('/api/quote', quoteRoutes); // Add this line
+app.use('/api/quote', quoteRoutes); 
 app.use('/api/transaction', transactionRoutes);
 app.use('/api/social-media', socialMediaRoutes);
 app.use('/api/content', contentRoutes);
-// Web Development Routes
 app.use('/api/webdev', webDevRoutes);
 app.use('/api/leaves', leaveRoutes);
 app.use("/api/receipt", receiptRoutes);
 
-// ✅ ERROR HANDLING MIDDLEWARE
+// 8. ❌ 404 HANDLER (Ithu thaan KADAISIYA irukkanum)
+app.use((req, res) => {
+  res.status(404).json({ 
+    success: false, 
+    message: `Route not found: ${req.originalUrl}` 
+  });
+});
+
+// 9. ERROR HANDLING MIDDLEWARE (Last fallback)
 app.use((err, req, res, next) => {
   console.error('❌ Error:', err.stack);
   res.status(500).json({ 
@@ -156,37 +139,19 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ✅ 404 HANDLER
-app.use((req, res) => {
-  res.status(404).json({ 
-    success: false, 
-    message: 'Route not found' 
-  });
-});
-
-
-
-// ✅ START SERVER
+// 10. START SERVER
 app.listen(PORT, () => {
   console.log('🚀 Server is running');
   console.log(`📍 Port: ${PORT}`);
-  // console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
-  // console.log(`📁 Uploads Directory: ${uploadsDir}`);
-  // console.log(`🔒 CORS Allowed Origins:`, allowedOrigins);
 });
 
-// ✅ HANDLE UNHANDLED REJECTIONS
+// Handle Rejections/Exceptions
 process.on('unhandledRejection', (err) => {
   console.error('❌ Unhandled Rejection:', err);
-  // Don't exit in production, just log the error
-  if (process.env.NODE_ENV === 'development') {
-    process.exit(1);
-  }
+  if (process.env.NODE_ENV === 'development') process.exit(1);
 });
 
-// ✅ HANDLE UNCAUGHT EXCEPTIONS
 process.on('uncaughtException', (err) => {
   console.error('❌ Uncaught Exception:', err);
   process.exit(1);
 });
-// server/index.js-la kadaisiya pottu paarunga
