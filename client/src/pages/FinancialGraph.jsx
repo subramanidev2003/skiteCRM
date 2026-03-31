@@ -1,146 +1,183 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area 
+  ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
 } from 'recharts';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Calendar, X } from 'lucide-react'; // Icons added
 import { useNavigate } from 'react-router-dom';
 import { API_BASE } from '../api';
-import './FinancialGraph.css'; // CSS தனியாக கீழே உள்ளது
-
-// const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
+import './FinancialGraph.css'; 
 
 const FinancialGraph = () => {
   const navigate = useNavigate();
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // ✅ DATE FILTER STATES
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
 
-  // --- FETCH & PROCESS DATA ---
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // 1. Fetch Invoices & Transactions
-        const [invRes, transRes] = await Promise.all([
-          fetch(`${API_BASE}/invoice/all`),
-          fetch(`${API_BASE}/transaction/all`)
-        ]);
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [invRes, transRes] = await Promise.all([
+        fetch(`${API_BASE}/invoice/all`),
+        fetch(`${API_BASE}/transaction/all`)
+      ]);
 
-        const invoices = await invRes.json();
-        const transactions = await transRes.json();
+      const invoices = await invRes.json();
+      const transactions = await transRes.json();
 
-        // 2. Initialize Monthly Data Structure
-        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        const currentYear = new Date().getFullYear();
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      
+      let monthlyStats = months.map(month => ({
+        name: month,
+        income: 0,
+        expense: 0,
+        profit: 0
+      }));
+
+      // ✅ HELPER FUNCTION TO CHECK DATE RANGE
+      const isWithinRange = (dateStr) => {
+        if (!dateStr) return false;
+        const d = new Date(dateStr).toISOString().split('T')[0]; // Format: YYYY-MM-DD
         
-        // மாதம் வாரியாக டேட்டாவை சேமிக்க ஒரு டெம்ப்ளேட்
-        let monthlyStats = months.map(month => ({
-          name: month,
-          income: 0,
-          expense: 0,
-          profit: 0
-        }));
-
-        // 3. Process Invoice Income (Paid Amounts)
-        if (invRes.ok) {
-          invoices.forEach(inv => {
-            if (inv.paidAmount > 0) {
-              const date = new Date(inv.date); // அல்லது inv.updatedAt
-              if (date.getFullYear() === currentYear) {
-                const monthIndex = date.getMonth();
-                monthlyStats[monthIndex].income += inv.paidAmount;
-              }
-            }
-          });
+        if (fromDate && d < fromDate) return false;
+        if (toDate && d > toDate) return false;
+        
+        // Date range select pannalana, default-ah current year data mattum kaatum
+        if (!fromDate && !toDate) {
+            return new Date(dateStr).getFullYear() === new Date().getFullYear();
         }
+        return true;
+      };
 
-        // 4. Process Transactions (Manual Income & Expense)
-        if (transRes.ok) {
-          transactions.forEach(t => {
-            const date = new Date(t.date);
-            if (date.getFullYear() === currentYear) {
-              const monthIndex = date.getMonth();
-              if (t.type === 'income') {
-                monthlyStats[monthIndex].income += t.amount;
-              } else if (t.type === 'expense') {
-                monthlyStats[monthIndex].expense += t.amount;
-              }
-            }
-          });
-        }
-
-        // 5. Calculate Profit
-        monthlyStats = monthlyStats.map(item => ({
-          ...item,
-          profit: item.income - item.expense
-        }));
-
-        setChartData(monthlyStats);
-
-      } catch (err) {
-        console.error("Error fetching graph data:", err);
-      } finally {
-        setLoading(false);
+      // Process Invoices
+      if (invRes.ok) {
+        invoices.forEach(inv => {
+          if (inv.paidAmount > 0 && isWithinRange(inv.date)) {
+            const monthIndex = new Date(inv.date).getMonth();
+            monthlyStats[monthIndex].income += inv.paidAmount;
+          }
+        });
       }
-    };
 
+      // Process Transactions
+      if (transRes.ok) {
+        transactions.forEach(t => {
+          if (isWithinRange(t.date)) {
+            const monthIndex = new Date(t.date).getMonth();
+            if (t.type === 'income') {
+              monthlyStats[monthIndex].income += t.amount;
+            } else if (t.type === 'expense') {
+              monthlyStats[monthIndex].expense += t.amount;
+            }
+          }
+        });
+      }
+
+      // Calculate Profit
+      const finalData = monthlyStats.map(item => ({
+        ...item,
+        profit: item.income - item.expense
+      }));
+
+      setChartData(finalData);
+    } catch (err) {
+      console.error("Error fetching graph data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ FETCH DATA WHEN COMPONENT MOUNTS OR DATES CHANGE
+  useEffect(() => {
     fetchData();
-  }, []);
+  }, [fromDate, toDate]);
 
   return (
     <div className="graph-container">
       
-      <div className="header-left">
-            {/* ✅ UPDATED BUTTON */}
-            <button className="modern-back-btn" onClick={() => navigate('/admin-dashboard/accounts')}>
-                <ArrowLeft size={20} />
-                <span>Back</span>
-            </button>
-            <h2>Financial Overview</h2>
+      <div className="graph-header-section">
+        <div className="header-left">
+          <button className="modern-back-btn" onClick={() => navigate('/admin-dashboard/accounts')}>
+            <ArrowLeft size={20} />
+            <span>Back</span>
+          </button>
+          <h2>Financial Overview</h2>
         </div>
+
+        {/* ✅ DATE FILTERS UI */}
+        <div className="graph-filters">
+          <div className="date-input-group">
+            <Calendar size={16} />
+            <label>From:</label>
+            <input 
+              type="date" 
+              value={fromDate} 
+              onChange={(e) => setFromDate(e.target.value)} 
+            />
+          </div>
+          <div className="date-input-group">
+            <Calendar size={16} />
+            <label>To:</label>
+            <input 
+              type="date" 
+              value={toDate} 
+              onChange={(e) => setToDate(e.target.value)} 
+            />
+          </div>
+          {(fromDate || toDate) && (
+            <button className="clear-filter-btn" onClick={() => { setFromDate(''); setToDate(''); }}>
+              <X size={16} /> Clear
+            </button>
+          )}
+        </div>
+      </div>
 
       <div className="chart-wrapper mt-5">
         {loading ? (
-          <p>Loading Chart...</p>
+          <div className="chart-loader">
+             <p>Processing data...</p>
+          </div>
         ) : (
           <ResponsiveContainer width="100%" height={500}>
             <ComposedChart
               data={chartData}
               margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
             >
-              <CartesianGrid stroke="#f5f5f5" />
-              <XAxis dataKey="name" scale="point" padding={{ left: 20, right: 20 }} />
-              <YAxis />
-              <Tooltip />
+              <CartesianGrid stroke="#f5f5f5" vertical={false} />
+              <XAxis dataKey="name" tick={{fontSize: 12}} />
+              <YAxis tick={{fontSize: 12}} />
+              <Tooltip 
+                contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                formatter={(value) => `₹${value.toLocaleString()}`}
+              />
               <Legend />
               
-              {/* Income Bar (Blue) */}
-              <Bar dataKey="income" name="Income" barSize={20} fill="#32e90e" radius={[4, 4, 0, 0]} />
-              
-              {/* Expense Bar (Dark Blue) */}
-              <Bar dataKey="expense" name="Expenses" barSize={20} fill="#ff0000" radius={[4, 4, 0, 0]} />
-              
-              {/* Profit Line (Red/Orange) */}
-              <Line type="monotone" dataKey="profit" name="Profit" stroke="#ff6404" strokeWidth={3} dot={{r: 4}} />
-            
+              <Bar dataKey="income" name="Income" barSize={35} fill="#32e90e" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="expense" name="Expenses" barSize={35} fill="#ff0000" radius={[6, 6, 0, 0]} />
+              <Line type="monotone" dataKey="profit" name="Profit" stroke="#ff6404" strokeWidth={4} dot={{r: 6, fill: '#ff6404'}} activeDot={{ r: 8 }} />
             </ComposedChart>
           </ResponsiveContainer>
         )}
       </div>
 
       <div className="graph-summary">
-        <div className="summary-card">
+        <div className="summary-card income">
             <span>Total Income</span>
-            <h3 style={{color: '#32e90e'}}>₹ {chartData.reduce((acc, curr) => acc + curr.income, 0).toLocaleString()}</h3>
+            <h3>₹ {chartData.reduce((acc, curr) => acc + curr.income, 0).toLocaleString()}</h3>
         </div>
-        <div className="summary-card">
+        <div className="summary-card expense">
             <span>Total Expense</span>
-            <h3 style={{color: '#ff0000'}}>₹ {chartData.reduce((acc, curr) => acc + curr.expense, 0).toLocaleString()}</h3>
+            <h3>₹ {chartData.reduce((acc, curr) => acc + curr.expense, 0).toLocaleString()}</h3>
         </div>
-        <div className="summary-card">
+        <div className="summary-card profit">
             <span>Net Profit</span>
-            <h3 style={{color: '#ff6404'}}>₹ {chartData.reduce((acc, curr) => acc + curr.profit, 0).toLocaleString()}</h3>
+            <h3 style={{ color: chartData.reduce((acc, curr) => acc + curr.profit, 0) >= 0 ? '#ff6404' : '#d32f2f' }}>
+                ₹ {chartData.reduce((acc, curr) => acc + curr.profit, 0).toLocaleString()}
+            </h3>
         </div>
       </div>
-
     </div>
   );
 };

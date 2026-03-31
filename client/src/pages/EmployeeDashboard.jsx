@@ -87,7 +87,7 @@ const EmployeeDashboard = () => {
   
   // ✅ Leave Modal State (இதைச் சேர்க்கவும்)
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
-  const [leaveData, setLeaveData] = useState({ fromDate: '', toDate: '', reason: '' });
+  const [leaveData, setLeaveData] = useState({ fromDate: '', toDate: '', reason: '',leaveType: 'Sick Leave' });
 
   // --- INIT ---
   useEffect(() => { if (!token || !storedUser) navigate('/'); }, [navigate, token]);
@@ -437,6 +437,7 @@ const handleLeaveSubmit = async (e) => {
     const templateParams = {
         from_name: EMPLOYEE_NAME,
         designation: EMPLOYEE_DESIGNATION,
+        leave_type: leaveData.leaveType,
         from_date: leaveData.fromDate,
         to_date: leaveData.toDate,
         reason: leaveData.reason,
@@ -1347,6 +1348,27 @@ const handleLeaveSubmit = async (e) => {
           <form onSubmit={handleLeaveSubmit}>
               <div className="modal-body">
                   <div className="row-inputs">
+                    {/* Leave Modal-kulla 'From Date'-ku mela ithai podunga */}
+<div className="input-group">
+  <label>Leave Type</label>
+  <select 
+    value={leaveData.leaveType} 
+    onChange={(e) => setLeaveData({...leaveData, leaveType: e.target.value})}
+    required
+    style={{
+      padding: '10px',
+      borderRadius: '8px',
+      border: '1px solid #ddd',
+      fontSize: '14px',
+      outline: 'none',
+      width: '100%'
+    }}
+  >
+    <option value="Sick Leave">Sick Leave</option>
+    <option value="Casual Leave">Casual Leave (Paid)</option>
+    <option value="Permission">Permission</option>
+  </select>
+</div>
                       <div className="input-group"><label>From Date</label><input type="date" required value={leaveData.fromDate} onChange={(e) => setLeaveData({...leaveData, fromDate: e.target.value})} /></div>
                       <div className="input-group"><label>To Date</label><input type="date" required value={leaveData.toDate} onChange={(e) => setLeaveData({...leaveData, toDate: e.target.value})} /></div>
                   </div>

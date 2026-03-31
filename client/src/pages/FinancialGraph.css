@@ -20,7 +20,58 @@
     box-shadow: 0 4px 20px rgba(0,0,0,0.05);
     border: 1px solid #e5e7eb;
 }
+.graph-header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 30px;
+}
 
+.graph-filters {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    background: #f8f9fa;
+    padding: 10px 20px;
+    border-radius: 12px;
+    border: 1px solid #eee;
+}
+
+.date-input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #666;
+}
+
+.date-input-group input {
+    border: 1px solid #ddd;
+    padding: 5px 10px;
+    border-radius: 6px;
+    outline: none;
+    font-size: 14px;
+}
+
+.clear-filter-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: #fff;
+    border: 1px solid #ff0000;
+    color: #ff0000;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: 0.2s;
+}
+
+.clear-filter-btn:hover {
+    background: #ff0000;
+    color: white;
+}
 /* Summary Cards below chart */
 .graph-summary {
     display: grid;

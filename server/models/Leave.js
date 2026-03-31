@@ -7,6 +7,11 @@ const LeaveSchema = new mongoose.Schema({
   fromDate: { type: Date, required: true },
   toDate: { type: Date, required: true },
   reason: { type: String, required: true },
+  leaveType: { 
+    type: String, 
+    enum: ['Sick Leave', 'Casual Leave', 'Permission'], 
+    required: true 
+  },
   status: { type: String, default: 'Pending', enum: ['Pending', 'Approved', 'Rejected'] },
   createdAt: { type: Date, default: Date.now }
 });
