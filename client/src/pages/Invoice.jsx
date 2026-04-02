@@ -74,52 +74,61 @@ const Invoice = () => {
   const [activeDropdownIndex, setActiveDropdownIndex] = useState(null);
   const dropdownRef = useRef(null); 
 
-  // --- ✅ NEW LOGIC: GET HIGHEST INVOICE NO ---
- // --- ✅ UPDATED LOGIC: GET HIGHEST INVOICE NO (ONLY FOR WITH GST) ---
-  const generateNextInvoiceNo = async () => {
+  // --- ✅ UPDATED LOGIC: GET HIGHEST INVOICE NO (SMART SWITCH FOR GST vs NON-GST) ---
+  const generateNextInvoiceNo = async (currentTaxRate) => {
     try {
-        const token = localStorage.getItem('adminToken') || localStorage.getItem('accountantToken'); 
+        const token = localStorage.getItem('adminToken') || localStorage.getItem('accountantToken') || localStorage.getItem('managerToken'); 
         const response = await fetch(`${API_BASE}/invoice/all`, {
             method: 'GET',
             headers: { 'Authorization': `Bearer ${token}` }
         });
         
         const data = await response.json();
+        const isWithoutGst = parseFloat(currentTaxRate) === 0;
 
         if (response.ok && Array.isArray(data) && data.length > 0) {
             let maxNum = 0;
-            let prefix = 'SKT/25-26/'; // Default prefix
+            let prefix = isWithoutGst ? 'SKT/25-26/N' : 'SKT/25-26/';
 
-            // ✅ Filter ONLY invoices that have Tax (With GST)
-            // TaxRate 0 vida athigama iruntha mattum thaan ithu eduthukum
-            const withGstInvoices = data.filter(inv => parseFloat(inv.taxRate) > 0);
+            // ✅ Filter based on Non-GST (Tax=0) or With GST (Tax>0)
+            const filteredInvoices = data.filter(inv => {
+                const invTax = parseFloat(inv.taxRate) || 0;
+                return isWithoutGst ? invTax === 0 : invTax > 0;
+            });
 
-            if (withGstInvoices.length > 0) {
-                // Loop through With GST invoices to find the highest number
-                withGstInvoices.forEach(inv => {
+            if (filteredInvoices.length > 0) {
+                filteredInvoices.forEach(inv => {
                     if (inv.invoiceNo) {
                         const parts = inv.invoiceNo.split('/');
                         if (parts.length >= 3) {
-                            const numStr = parts[parts.length - 1]; // gets '033'
-                            const num = parseInt(numStr, 10); // converts to 33
+                            const numStr = parts[parts.length - 1]; 
+                            let num;
+                            if (isWithoutGst) {
+                                // e.g. converts 'N22' to 22
+                                num = parseInt(numStr.replace('N', ''), 10);
+                            } else {
+                                // e.g. converts '033' to 33
+                                num = parseInt(numStr, 10);
+                            }
                             if (!isNaN(num) && num > maxNum) {
                                 maxNum = num;
-                                // dynamically capture the prefix e.g., 'SKT/25-26/'
-                                prefix = parts.slice(0, parts.length - 1).join('/') + '/'; 
                             }
                         }
                     }
                 });
+                
+                const nextNum = maxNum + 1; 
+                if (isWithoutGst) {
+                    return `SKT/25-26/N${nextNum}`; // returns e.g. SKT/25-26/N23
+                } else {
+                    const paddedNum = nextNum.toString().padStart(3, '0');
+                    return `SKT/25-26/${paddedNum}`; // returns e.g. SKT/25-26/034
+                }
             } else {
-                // Oruvela "With GST" invoice onnu kooda illana, default start number
-                return 'SKT/25-26/034'; // Allathu ungalukku starting yethu venumo atha podunga (e.g. 001)
+                return isWithoutGst ? 'SKT/25-26/N22' : 'SKT/25-26/034';
             }
-            
-            const nextNum = maxNum + 1; 
-            const paddedNum = nextNum.toString().padStart(3, '0'); // '034'
-            return `${prefix}${paddedNum}`;
         }
-        return 'SKT/25-26/034'; // Fallback if no invoices exist
+        return isWithoutGst ? 'SKT/25-26/N22' : 'SKT/25-26/034';
     } catch (error) {
         console.error("Error generating invoice no:", error);
         return 'SKT/25-26/034';
@@ -153,8 +162,8 @@ const Invoice = () => {
         } 
         // 2. New Invoice (Create New or Fixed Invoice)
         else {
-            // Fetch next invoice number
-            const nextInvoiceNo = await generateNextInvoiceNo();
+            // Fetch next invoice number based on current tax rate
+            const nextInvoiceNo = await generateNextInvoiceNo(taxRate);
             setInvoiceMeta(prev => ({ ...prev, invoiceNo: nextInvoiceNo }));
 
             // If coming from Fixed Invoice, auto-fill client details
@@ -169,6 +178,17 @@ const Invoice = () => {
 
     initializeData();
   }, [id, location.state]);
+
+  // ✅ NEW EFFECT: AUTO UPDATE INVOICE NO WHEN TAX RATE CHANGES (Only for New Invoices)
+  useEffect(() => {
+    if (!id) {
+      const updateNo = async () => {
+        const nextNo = await generateNextInvoiceNo(taxRate);
+        setInvoiceMeta(prev => ({ ...prev, invoiceNo: nextNo }));
+      };
+      updateNo();
+    }
+  }, [taxRate, id]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -260,7 +280,6 @@ const Invoice = () => {
   };
 
   // SAVE TO DB (Create)
-// Invoice.jsx - saveInvoiceToDB function-ai ithu maathiri replace pannunga
 const saveInvoiceToDB = async () => {
     if (!clientDetails.name) {
         toast.error("Please enter Client Name!");
@@ -285,10 +304,7 @@ const saveInvoiceToDB = async () => {
             grandTotal
         };
 
-        // Edit panna PUT, Pudhusa create panna POST
-        // Invoice.jsx-la intha line-ai sariyaa check pannunga
-const url = id ? `${API_BASE}/invoice/update/${id}` : `${API_BASE}/invoice/create`;
-// Intha URL-oda end-la extra slash illama paathukonga.
+        const url = id ? `${API_BASE}/invoice/update/${id}` : `${API_BASE}/invoice/create`;
         const method = id ? 'PUT' : 'POST';
 
         const response = await fetch(url, {
@@ -302,11 +318,10 @@ const url = id ? `${API_BASE}/invoice/update/${id}` : `${API_BASE}/invoice/creat
         if (response.ok) {
             toast.success(id ? "Invoice Updated Successfully!" : "Invoice Saved Successfully!");
             if (!id) {
-                const nextNo = await generateNextInvoiceNo();
+                const nextNo = await generateNextInvoiceNo(taxRate);
                 setInvoiceMeta(prev => ({...prev, invoiceNo: nextNo}));
             }
         } else {
-            // Ippo "Route not found" error varutha nu check pannunga
             toast.error(data.message || "Failed to process invoice");
         }
     } catch (error) {
@@ -514,11 +529,9 @@ const url = id ? `${API_BASE}/invoice/update/${id}` : `${API_BASE}/invoice/creat
             <button className="action-btn" onClick={() => navigate('/admin-dashboard/invoice-history')} style={{ backgroundColor: '#6c757d' }}>
                 <History size={18} /> History
             </button>
-            
-            // Return section-la action-btn-ai ithu maathiri update pannunga
-<button className="action-btn" onClick={saveInvoiceToDB} style={{ backgroundColor: id ? '#007bff' : '#28a745' }}>
-    <Save size={18} /> {id ? 'Update Invoice' : 'Save New'}
-</button>
+            <button className="action-btn" onClick={saveInvoiceToDB} style={{ backgroundColor: id ? '#007bff' : '#28a745' }}>
+                <Save size={18} /> {id ? 'Update Invoice' : 'Save New'}
+            </button>
             
             <button className="action-btn" onClick={generatePDF} style={{ backgroundColor: '#FF4500' }}>
                 <Download size={18} /> PDF
@@ -713,20 +726,20 @@ const url = id ? `${API_BASE}/invoice/update/${id}` : `${API_BASE}/invoice/creat
                 <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>Tax Rate (CGST + SGST %)</label>
                 
                 <input 
-  type="number" 
-  value={taxRate} 
-  onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
-  placeholder="0"
-  onWheel={(e) => e.target.blur()}
-  style={{ 
-      width: '100px', 
-      padding: '8px', 
-      border: '1px solid #ddd', 
-      borderRadius: '4px', 
-      fontSize: '16px',
-      background: 'white' 
-  }}
-/>
+                  type="number" 
+                  value={taxRate} 
+                  onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
+                  placeholder="0"
+                  onWheel={(e) => e.target.blur()}
+                  style={{ 
+                      width: '100px', 
+                      padding: '8px', 
+                      border: '1px solid #ddd', 
+                      borderRadius: '4px', 
+                      fontSize: '16px',
+                      background: 'white' 
+                  }}
+                />
               </div>
               <div style={{ textAlign: 'right' }}>
                 <h3 style={{ color: '#FF4500', fontSize: '24px', margin: 0 }}>

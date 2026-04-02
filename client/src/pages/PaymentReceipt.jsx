@@ -256,9 +256,24 @@ const PaymentReceipt = () => {
     return result;
   };
 
-  const handleBack = () => navigate(isSales ? '/sales-dashboard' : '/admin-dashboard');
-  const handleHistory = () => navigate(isSales ? '/sales-dashboard/receipt-history' : '/admin-dashboard/receipt-history');
+// ✅ புதியது - இதை போடுங்க
+const storedUser = JSON.parse(
+  localStorage.getItem("adminUser") || 
+  localStorage.getItem("managerUser") || 
+  localStorage.getItem("userData") || '{}'
+);
+const isManager = storedUser?.role?.toLowerCase() === 'manager';
 
+const handleBack = () => {
+  if (isSales) navigate('/sales-dashboard');
+  else if (isManager) navigate('/manager-dashboard');
+  else navigate('/admin-dashboard');
+};
+
+const handleHistory = () => {
+  if (isSales) navigate('/sales-dashboard/receipt-history');
+  else navigate('/admin-dashboard/receipt-history');
+};
   const amountPaid = parseFloat(paymentDetails.amountPaid) || 0;
   const balanceAmount = parseFloat(paymentDetails.balanceAmount) || 0;
 

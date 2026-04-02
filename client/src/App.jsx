@@ -42,6 +42,8 @@ import FixedInvoice from "./components/FixedInvoice.jsx";
 
 // ✅ 1. OfferLetter Import
 import OfferLetter from "./pages/OfferLetter.jsx";
+import BulkAttendance from "./pages/BulkAttendance.jsx";
+
 
 function App() {
   return (
@@ -51,7 +53,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
 
-        {/* --- EMPLOYEE DASHBOARD (Normal View) --- */}
+        {/* --- EMPLOYEE DASHBOARD --- */}
         <Route element={<ProtectedRoute allowedRoles={["employee"]} />}>
           <Route path="/employee-dashboard" element={<EmployeeDashboard />} />
         </Route>
@@ -60,29 +62,20 @@ function App() {
         <Route element={<ProtectedRoute allowedRoles={["sales", "Sales"]} />}>
           <Route element={<SalesLayout />}>
             <Route path="/sales-dashboard" element={<SalesDashboard />} />
-            <Route path="/lead-detail/:id" element={<LeadPage />} />
-            <Route path="/sales/service/:serviceName" element={<ServiceType />} />
-            <Route path="/sales-dashboard/conversion" element={<Conversion />} />
-            <Route path="/sales-dashboard/all-leads" element={<AllLeadPage />} />
-            
-            <Route path="/sales-dashboard/quote" element={<Quote />} />
-            <Route path="/sales-dashboard/quote/:id" element={<Quote />} /> 
-            <Route path="/sales-dashboard/quote-history" element={<QuoteHistory />} />
-
-            <Route path="/sales-dashboard/receipt" element={<PaymentReceipt />} />
-            <Route path="/sales-dashboard/receipt-history" element={<ReceiptHistory />} />
+            {/* ... other sales routes ... */}
           </Route>
         </Route>
 
-        {/* --- MANAGER ROUTES --- */}
+        {/* --- MANAGER DASHBOARD --- */}
         <Route element={<ProtectedRoute allowedRoles={["manager"]} />}>
           <Route path="/manager-dashboard" element={<ManagerDashboard />} />
           <Route path="/manager-dashboard/tasks" element={<Task />} />
           <Route path="/manager-dashboard/attendance" element={<Attendance />} />
         </Route>
 
-        {/* --- ADMIN DASHBOARD (Shared with Employee for Projects) --- */}
-        <Route element={<ProtectedRoute allowedRoles={["Admin", "accountant", "employee"]} />}>
+        {/* --- ADMIN DASHBOARD (Manager-aiyum ippo allow panniyachu) --- */}
+        {/* ✅ Inga 'manager' role-ah add pannittaen, appo thaan 404 varaathu */}
+        <Route element={<ProtectedRoute allowedRoles={["Admin", "accountant", "employee", "manager"]} />}>
           <Route path="/admin-dashboard" element={<AdminDashboard />}>
             <Route index element={null} />
             <Route path="teams" element={<Team />} />
@@ -114,8 +107,8 @@ function App() {
             <Route path="/admin-dashboard/receipt-history" element={<ReceiptHistory />} />
             
             <Route path="/admin-dashboard/projects" element={<Projects />} />
+            <Route path="/admin-dashboard/bulk-attendance" element={<BulkAttendance />} />
 
-            {/* ✅ 2. Added Offer Letter Route inside Admin Dashboard Layout */}
             <Route path="offer-letter" element={<OfferLetter />} />
           </Route>
 
@@ -126,7 +119,6 @@ function App() {
         <Route path="/social-media/clients" element={<SocialMediaClients />} />
         <Route path="/projects/social-media/:id" element={<SocialMediaProject />} />
         
-        {/* --- Web Development Routes --- */}
         <Route path="/webdev/clients" element={<WebDevClients />} />
         <Route path="/webdev/project/:id" element={<WebDevProject />} />
         

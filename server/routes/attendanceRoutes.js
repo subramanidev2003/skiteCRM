@@ -16,33 +16,67 @@ const router = express.Router();
 router.post("/checkin", checkin); 
 router.post("/checkout", checkout);
 
-// --- GET ALL (Manager Filtered & Payroll Ready) ---   
+// ✅ NEW: BULK MARK ATTENDANCE (Holidays & Sundays)
+// Ippo admin oru date-ah add panna ella employee-kum auto-ah present aagidum
+router.post('/bulk-mark', userAuth, adminAuth, async (req, res) => {
+    try {
+        const { date, employees, checkIn, checkOut, taskDescription } = req.body;
+
+        if (!date || !employees || !Array.isArray(employees)) {
+            return res.status(400).json({ msg: "Missing required bulk data" });
+        }
+
+        const startOfDay = new Date(date);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(date);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        // Ovvoru employee ID-kum loop panni records create pannuvom
+        const operations = employees.map(async (empId) => {
+            // Check if record already exists for this date to avoid duplicates
+            const existing = await Attendance.findOne({
+                userId: empId,
+                checkInTime: { $gte: startOfDay, $lte: endOfDay }
+            });
+
+            if (!existing) {
+                const newRecord = new Attendance({
+                    userId: empId,
+                    checkInTime: new Date(checkIn),
+                    checkOutTime: new Date(checkOut),
+                    taskDescription: taskDescription, // Ippo "Sunday" or "Holiday" nu vizhum
+                    status: "Present"
+                });
+                return newRecord.save();
+            }
+        });
+
+        await Promise.all(operations);
+        res.status(201).json({ msg: "Bulk attendance marked successfully!" });
+    } catch (error) {
+        console.error('Bulk attendance error:', error);
+        res.status(500).json({ msg: 'Server error during bulk operation' });
+    }
+});
+
+// --- GET ALL (Manager & Admin Full View) ---   
 router.get('/all', userAuth, async (req, res) => {
     try {
         let query = {};
 
-        // 1. Logged-in user details (middleware moolama kidaikum)
         const userRole = req.userRole ? req.userRole.toLowerCase() : '';
         const userDesignation = req.userDesignation ? req.userDesignation.toLowerCase() : '';
 
-        // 2. Access Control Check
-        // Manager-ah iruntha specific designations mattum kaattu
-        if (userRole === 'manager') {
-            const allowedDesignations = ['Web Developer', 'Web Developer(intern)', 'SEO(intern)'];
-            const eligibleUsers = await User.find({ designation: { $in: allowedDesignations } }).select('_id');
-            const userIds = eligibleUsers.map(u => u._id);
-            query.userId = { $in: userIds };
+        // ✅ UPDATED ACCESS CONTROL: 
+        // Admin, Manager, and Content Writer ippo FULL access (Ellaraiyum paarkalaam)
+        if (userRole === 'admin' || userRole === 'manager' || userDesignation.includes('content writ')) {
+            // query stays empty {} to fetch all records
         } 
-        // Admin illai Content Writer-ah irunthaal FULL access (No filters in query)
-        else if (userRole === 'admin' || userDesignation.includes('content writ')) {
-            // No additional filters, query stays empty {} to fetch all
-        } 
-        // Vera yaaraachum (Normal Employee) intha URL-ku vanthaal, avanga data mattum kaattu (Security)
+        // Others can only see their own records
         else {
             query.userId = req.userId;
         }
 
-        // Fetch Records
         const attendanceRecords = await Attendance.find(query)
             .populate('userId', 'name email designation salaryPerDay') 
             .sort({ checkInTime: -1 }); 

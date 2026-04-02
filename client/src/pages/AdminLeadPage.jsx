@@ -88,6 +88,16 @@ const AdminLeadPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [currentLead, setCurrentLead] = useState(location.state?.lead);
+   const storedUser = JSON.parse(
+    localStorage.getItem("adminUser") || 
+    localStorage.getItem("managerUser") || 
+    localStorage.getItem("userData") || '{}'
+  );
+  const isManager = storedUser?.role?.toLowerCase() === 'manager';
+  const handleBack = () => {
+    if (isManager) navigate('/admin-dashboard/leads');
+    else navigate(-1);
+  };
   
   const [isEditingPriority, setIsEditingPriority] = useState(false);
   const [tempPriority, setTempPriority] = useState(currentLead?.priority);
@@ -145,9 +155,9 @@ const AdminLeadPage = () => {
       {/* 1. HEADER */}
       <header className="modern-header">
         <div>
-            <div className="back-link" onClick={() => navigate(-1)}>
-                <ArrowLeft size={18} /> Back to Dashboard
-            </div>
+            <div className="back-link" onClick={handleBack}>
+            <ArrowLeft size={18} /> Back to Dashboard
+          </div>
         </div>
         
         <div className="header-content">

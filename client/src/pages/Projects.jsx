@@ -16,21 +16,31 @@ const Projects = () => {
   useEffect(() => {
       const role = localStorage.getItem('userRole');
       const employeeToken = localStorage.getItem('employeeToken');
+      const managerToken = localStorage.getItem('managerToken'); // ✅ Added Manager Token check
 
       if (role) {
-          setUserRole(role);
+          setUserRole(role.toLowerCase());
+      } else if (managerToken) {
+          setUserRole('manager'); // ✅ Set role as manager if token exists
       } else if (employeeToken) {
           setUserRole('employee');
       }
   }, []);
 
-  // --- DYNAMIC BACK HANDLER ---
+  // --- ✅ DYNAMIC BACK HANDLER (Updated for Manager) ---
   const handleBack = () => {
-      const role = localStorage.getItem('userRole');
+      // Fetching fresh role from storage for navigation
+      const storedUser = JSON.parse(localStorage.getItem('adminUser') || 
+                                   localStorage.getItem('managerUser') || 
+                                   localStorage.getItem('employeeUser') || '{}');
+      const role = storedUser.role ? storedUser.role.toLowerCase() : '';
+
       if (role === 'employee') {
           navigate('/employee-dashboard');
+      } else if (role === 'manager') {
+          navigate('/manager-dashboard'); // ✅ Managers go back to Manager dashboard
       } else {
-          navigate('/admin-dashboard');
+          navigate('/admin-dashboard'); // Admins and others go to Admin dashboard
       }
   };
 
@@ -41,19 +51,18 @@ const Projects = () => {
       window.location.reload();
   };
 
-  // ✅ Project Data List (Updated Path)
+  // ✅ Project Data List
   const projectList = [
     { 
       title: 'Social Media Marketing', 
       icon: <Share2 size={40} color="#FF4500" />, 
-      // 👇 மாற்றம்: இது நேரடியாக புதிய Workflow பக்கத்திற்குச் செல்லும்
       path: '/social-media/clients' 
     },
-   { 
-  title: 'Website Development', 
-  icon: <Globe size={40} color="#FF4500" />, 
-  path: '/webdev/clients'  // ✅ Updated Path
-},
+    { 
+      title: 'Website Development', 
+      icon: <Globe size={40} color="#FF4500" />, 
+      path: '/webdev/clients' 
+    },
     { 
       title: 'SEO', 
       icon: <Search size={40} color="#FF4500" />, 
@@ -69,8 +78,6 @@ const Projects = () => {
   return (
     <div className="admin-dashboard"> 
       
-      {/* --- HEADER SECTION --- */}
-
       {/* --- MAIN CONTENT --- */}
       <main className="main-content-child" style={{ padding: '30px' }}>
         

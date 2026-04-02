@@ -1,12 +1,13 @@
 import React, { useEffect } from 'react';
-import { Navigate, Outlet, useNavigate } from 'react-router-dom';
+import { Navigate, Outlet, useNavigate, useLocation } from 'react-router-dom';
 
 const ProtectedRoute = ({ allowedRoles }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   
-  // 1. Get ALL possible role credentials from LocalStorage
+  // 1. GET ALL POSSIBLE CREDENTIALS
   const adminToken = localStorage.getItem('adminToken');
-  const adminUserStr = localStorage.getItem('adminUser'); // or 'userData' if you changed login
+  const adminUserStr = localStorage.getItem('adminUser'); 
   
   const managerToken = localStorage.getItem('managerToken');
   const managerUserStr = localStorage.getItem('managerUser');
@@ -14,31 +15,48 @@ const ProtectedRoute = ({ allowedRoles }) => {
   const employeeToken = localStorage.getItem('employeeToken');
   const employeeUserStr = localStorage.getItem('employeeUser');
 
-  // Sales Credentials
   const salesToken = localStorage.getItem('salesToken');
   const salesUserStr = localStorage.getItem('salesUser');
 
-  // ✅ ADDED: Get Accountant Credentials
-  // Login.jsx-ல் 'userData' என்று சேமித்திருந்தால் அதையும் எடுக்கும்
   const accountantToken = localStorage.getItem('accountantToken');
-  const accountantUserStr = localStorage.getItem('userData') || localStorage.getItem('accountantUser');
+  // ✅ FIX: userData-ஐ accountant-க்கு மட்டும் use பண்ணாம,
+  // தனியா எடுக்கோம் - token verify பண்ணிட்டே use பண்ணோம்
+  const accountantUserStr = localStorage.getItem('accountantUser');
 
-  // 2. Determine which set of credentials to use
+  // 2. DETERMINE ACTIVE SESSION
+  // ✅ FIX: Token இருக்கற session மட்டும் pick பண்றோம்
   let token = null;
   let userStr = null;
 
-  if (adminToken && (adminUserStr || localStorage.getItem('userData'))) {
+  if (adminToken && adminUserStr) {
+    // Admin: adminToken + adminUser
     token = adminToken;
-    userStr = adminUserStr || localStorage.getItem('userData');
-  } 
-  else if (accountantToken && accountantUserStr) { // ✅ ADDED: Check Accountant
+    userStr = adminUserStr;
+  }
+  else if (adminToken && localStorage.getItem('userData')) {
+    // Admin: adminToken + userData
+    token = adminToken;
+    userStr = localStorage.getItem('userData');
+  }
+  else if (managerToken && managerUserStr) {
+    // ✅ Manager: managerToken + managerUser
+    token = managerToken;
+    userStr = managerUserStr;
+  }
+  else if (managerToken && localStorage.getItem('userData')) {
+    // ✅ Manager: managerToken + userData (login-ல userData save ஆனா)
+    token = managerToken;
+    userStr = localStorage.getItem('userData');
+  }
+  else if (accountantToken && accountantUserStr) {
     token = accountantToken;
     userStr = accountantUserStr;
   }
-  else if (managerToken && managerUserStr) {
-    token = managerToken;
-    userStr = managerUserStr;
-  } 
+  else if (accountantToken && localStorage.getItem('userData')) {
+    // Accountant: accountantToken + userData
+    token = accountantToken;
+    userStr = localStorage.getItem('userData');
+  }
   else if (salesToken && salesUserStr) {
     token = salesToken;
     userStr = salesUserStr;
@@ -48,7 +66,7 @@ const ProtectedRoute = ({ allowedRoles }) => {
     userStr = employeeUserStr;
   }
 
-  // 3. Parse user object safely
+  // 3. SAFE PARSE
   let user = null;
   if (userStr) {
     try {
@@ -60,26 +78,24 @@ const ProtectedRoute = ({ allowedRoles }) => {
     }
   }
 
-  // 4. Check if user is logged in at all
+  // 4. CHECK LOGGED IN STATUS
   if (!token || !user) {
-    console.log('❌ No valid session found, redirecting to login');
     return <Navigate to="/" replace />;
   }
 
-  // 5. Handle cross-tab logout (Storage Sync)
+  // 5. CROSS-TAB LOGOUT SYNC
   useEffect(() => {
     const handleStorageChange = () => {
       const admT = localStorage.getItem('adminToken');
-      const accT = localStorage.getItem('accountantToken'); // ✅ ADDED
+      const accT = localStorage.getItem('accountantToken');
       const mngT = localStorage.getItem('managerToken');
       const salesT = localStorage.getItem('salesToken');
       const empT = localStorage.getItem('employeeToken');
 
-      // If the user's specific token is cleared, boot them out
       const role = user.role.toLowerCase();
       
       if ((role === 'admin' && !admT) || 
-          (role === 'accountant' && !accT) || // ✅ ADDED
+          (role === 'accountant' && !accT) || 
           (role === 'manager' && !mngT) || 
           (role === 'sales' && !salesT) || 
           (role === 'employee' && !empT)) {
@@ -91,20 +107,27 @@ const ProtectedRoute = ({ allowedRoles }) => {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [navigate, user]);
 
-  // 6. Role-Based Access Control (RBAC)
+  // 6. ROLE-BASED ACCESS CONTROL (RBAC)
   if (allowedRoles && allowedRoles.length > 0) {
     const userRole = user.role.toLowerCase();
-    const isAllowed = allowedRoles.some(role => role.toLowerCase() === userRole);
+    // ✅ FIX: toLowerCase() - "MANAGER" → "manager" correct-ஆ compare ஆகும்
+    const userDesignation = (user.designation || "").toLowerCase();
+    
+    let isAllowed = allowedRoles.some(role => role.toLowerCase() === userRole);
+
+    // ✅ FIX: Manager + designation "manager" → admin routes allow
+    if (userRole === 'manager' && location.pathname.startsWith('/admin-dashboard')) {
+      if (userDesignation === 'manager') {
+        isAllowed = true; // ✅ "MANAGER" → toLowerCase → "manager" → allowed!
+      } else {
+        isAllowed = false;
+      }
+    }
 
     if (!isAllowed) {
-      console.log(`⚠️ Access Denied for role: ${userRole}. Required: ${allowedRoles}`);
+      console.log(`⚠️ Access Denied: ${userRole} | Designation: ${userDesignation}`);
       
-      // Redirect to their specific "Home" dashboard if they try to access a forbidden area
-      if (userRole === 'admin') return <Navigate to="/admin-dashboard" replace />;
-      
-      // ✅ ADDED: Accountant goes to Admin Dashboard (Restricted view)
-      if (userRole === 'accountant') return <Navigate to="/admin-dashboard" replace />;
-      
+      if (userRole === 'admin' || userRole === 'accountant') return <Navigate to="/admin-dashboard" replace />;
       if (userRole === 'manager') return <Navigate to="/manager-dashboard" replace />;
       if (userRole === 'sales') return <Navigate to="/sales-dashboard" replace />;
       if (userRole === 'employee') return <Navigate to="/employee-dashboard" replace />;
@@ -113,7 +136,6 @@ const ProtectedRoute = ({ allowedRoles }) => {
     }
   }
 
-  // If everything is fine, render the requested page
   return <Outlet />;
 };
 

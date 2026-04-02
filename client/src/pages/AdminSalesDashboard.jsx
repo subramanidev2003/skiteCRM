@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom"; // ✅ Import correct
 import {
   Target,
   Users,
@@ -17,11 +17,7 @@ const AdminSalesDashboard = () => {
   const [admin, setAdmin] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [leads, setLeads] = useState([]);
-  
-  // State to store list of Sales Agents (Optional if needed later)
   const [agents, setAgents] = useState([]);
-
-  // --- STATS STATE ---
   const [conversionRate, setConversionRate] = useState(0);
   const [closedCount, setClosedCount] = useState(0);
   const TARGET_GOAL = 50; 
@@ -30,33 +26,41 @@ const AdminSalesDashboard = () => {
     "Web Development", "SEO", "Paid Campaigns", "Personal Branding", "Full Digital Marketing"
   ];
 
-  // ✅ ADDED: 'email' field to form data
   const [formData, setFormData] = useState({
-    date: "", 
-    name: "", 
-    email: "", // ✨ New Email Field
-    companyName: "", 
-    phoneNumber: "", 
-    serviceType: "Web Development", 
-    business: "", 
-    location: "",
+    date: "", name: "", email: "",
+    companyName: "", phoneNumber: "", 
+    serviceType: "Web Development", business: "", location: "",
     assignedTo: "" 
   });
 
-  // 1. LOAD DATA
+  // ✅ FIX: Role-based back navigation
+  const storedUser = JSON.parse(
+    localStorage.getItem("adminUser") || 
+    localStorage.getItem("managerUser") || 
+    localStorage.getItem("userData") || '{}'
+  );
+  const isManager = storedUser?.role?.toLowerCase() === 'manager';
+  
+  const handleBack = () => {
+    if (isManager) navigate('/manager-dashboard'); // ✅ lowercase navigate
+    else navigate('/admin-dashboard');             // ✅ lowercase navigate
+  };
+
   useEffect(() => {
-    const storedAdmin = localStorage.getItem("adminUser");
+    const storedAdmin = 
+      localStorage.getItem("adminUser") || 
+      localStorage.getItem("managerUser") ||
+      localStorage.getItem("userData");
+
     if (storedAdmin) {
       setAdmin(JSON.parse(storedAdmin));
-      
-     fetch(`${API_BASE}/leads/admin/all`)
+      fetch(`${API_BASE}/leads/admin/all`)
         .then((res) => (res.ok ? res.json() : []))
         .then((data) => {
           const validLeads = Array.isArray(data) ? data : [];
           setLeads(validLeads);
           calculateStats(validLeads);
         });
-
     } else {
       navigate("/");
     }
@@ -64,9 +68,9 @@ const AdminSalesDashboard = () => {
 
   const calculateStats = (currentLeads) => {
     if (currentLeads.length === 0) {
-        setClosedCount(0);
-        setConversionRate(0);
-        return;
+      setClosedCount(0);
+      setConversionRate(0);
+      return;
     }
     const closed = currentLeads.filter(l => l.closing === "Yes").length;
     setClosedCount(closed);
@@ -80,35 +84,28 @@ const AdminSalesDashboard = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     const finalAgentId = formData.assignedTo || admin?._id || admin?.id;
-
     if (!finalAgentId) {
-        toast.error("Error: No Agent assigned.");
-        return;
+      toast.error("Error: No Agent assigned.");
+      return;
     }
-
     try {
       const response = await fetch(`${API_BASE}/leads/add`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...formData, salesAgentId: finalAgentId }),
       });
-
       const data = await response.json();
-
       if (response.ok) {
         const newLeads = [data.lead, ...leads];
         setLeads(newLeads);
         calculateStats(newLeads);
-        
         setIsModalOpen(false);
-        // ✅ RESET FORM including Email
         setFormData({
-            date: "", name: "", email: "", // Reset Email
-            companyName: "", phoneNumber: "", 
-            serviceType: "Web Development", business: "", location: "",
-            assignedTo: "" 
+          date: "", name: "", email: "",
+          companyName: "", phoneNumber: "", 
+          serviceType: "Web Development", business: "", location: "",
+          assignedTo: "" 
         });
         toast.success("Lead Added!");
       } else {
@@ -124,36 +121,31 @@ const AdminSalesDashboard = () => {
   return (
     <div className="dashboard-container1">
       <div className="dashboard-content">
-        <button className="back-btn" onClick={() => navigate('/admin-dashboard')} style={{marginBottom: '20px'}}>
-            <ArrowLeft size={20} /> Back to Admin Home
+
+        <button className="back-btn" onClick={handleBack} style={{marginBottom: '20px'}}>
+          <ArrowLeft size={20} /> Back to Dashboard
         </button>
 
-        {/* Stats & Overview */}
         <div className="stats-grid">
           <div className="stat-card">
             <div className="stat-icon target"><Target size={24} /></div>
-            <div className="stat-info"><h3>Company Targets</h3><p className="stat-number">{closedCount} / {TARGET_GOAL}</p></div>
-          </div>
-          <div 
-            className="stat-card"
-            onClick={() => navigate('/admin-dashboard/all-leads')} 
-            style={{ cursor: 'pointer' }}
-          >
-            <div className="stat-icon leads"><Users size={24} /></div>
             <div className="stat-info">
-                <h3>Total Company Leads</h3>
-                <p className="stat-number">{leads.length}</p>
+              <h3>Company Targets</h3>
+              <p className="stat-number">{closedCount} / {TARGET_GOAL}</p>
             </div>
           </div>
-          <div 
-            className="stat-card" 
-            onClick={() => navigate('/admin-dashboard/conversion')}
-            style={{ cursor: 'pointer' }} 
-          >
+          <div className="stat-card" onClick={() => navigate('/admin-dashboard/all-leads')} style={{ cursor: 'pointer' }}>
+            <div className="stat-icon leads"><Users size={24} /></div>
+            <div className="stat-info">
+              <h3>Total Company Leads</h3>
+              <p className="stat-number">{leads.length}</p>
+            </div>
+          </div>
+          <div className="stat-card" onClick={() => navigate('/admin-dashboard/conversion')} style={{ cursor: 'pointer' }}>
             <div className="stat-icon performance"><TrendingUp size={24} /></div>
             <div className="stat-info">
-                <h3>Total Conversion</h3>
-                <p className="stat-number">{conversionRate}%</p>
+              <h3>Total Conversion</h3>
+              <p className="stat-number">{conversionRate}%</p>
             </div>
           </div>
         </div>
@@ -175,7 +167,6 @@ const AdminSalesDashboard = () => {
         </div>
       </div>
 
-      {/* ✅ MODAL FORM WITH EMAIL */}
       {isModalOpen && (
         <div className="modal-overlay">
           <div className="modal-content">
@@ -183,68 +174,43 @@ const AdminSalesDashboard = () => {
               <h3>Add Lead (Admin)</h3>
               <button className="close-btn" onClick={() => setIsModalOpen(false)}><X size={20} /></button>
             </div>
-
             <form onSubmit={handleSubmit} className="lead-form">
               <div className="form-grid">
-                
-                {/* 1. DATE */}
                 <div className="form-group">
-                    <label>Date</label>
-                    <input type="date" name="date" required value={formData.date} onChange={handleChange} />
+                  <label>Date</label>
+                  <input type="date" name="date" required value={formData.date} onChange={handleChange} />
                 </div>
-                
-                {/* 2. CLIENT NAME */}
                 <div className="form-group">
-                    <label>Client Name</label>
-                    <input type="text" name="name" required placeholder="Client Name" value={formData.name} onChange={handleChange} />
+                  <label>Client Name</label>
+                  <input type="text" name="name" required placeholder="Client Name" value={formData.name} onChange={handleChange} />
                 </div>
-
-                {/* 3. EMAIL (✅ NEW FIELD) */}
                 <div className="form-group">
-                    <label>Email</label>
-                    <input 
-                        type="email" 
-                        name="email" 
-                        placeholder="Client Email (Optional)" 
-                        value={formData.email} 
-                        onChange={handleChange} 
-                    />
+                  <label>Email</label>
+                  <input type="email" name="email" placeholder="Client Email (Optional)" value={formData.email} onChange={handleChange} />
                 </div>
-
-                {/* 4. PHONE NUMBER */}
                 <div className="form-group">
-                    <label>Phone Number</label>
-                    <input type="tel" name="phoneNumber" required placeholder="Phone Number" value={formData.phoneNumber} onChange={handleChange} />
+                  <label>Phone Number</label>
+                  <input type="tel" name="phoneNumber" required placeholder="Phone Number" value={formData.phoneNumber} onChange={handleChange} />
                 </div>
-
-                {/* 5. COMPANY NAME */}
                 <div className="form-group">
-                    <label>Company Name</label>
-                    <input type="text" name="companyName" placeholder="Company Name" value={formData.companyName} onChange={handleChange} />
+                  <label>Company Name</label>
+                  <input type="text" name="companyName" placeholder="Company Name" value={formData.companyName} onChange={handleChange} />
                 </div>
-
-                {/* 6. SERVICE TYPE */}
                 <div className="form-group">
-                    <label>Service Type</label>
-                    <select name="serviceType" value={formData.serviceType} onChange={handleChange}>
-                        {serviceOptions.map((o) => (<option key={o} value={o}>{o}</option>))}
-                    </select>
+                  <label>Service Type</label>
+                  <select name="serviceType" value={formData.serviceType} onChange={handleChange}>
+                    {serviceOptions.map((o) => (<option key={o} value={o}>{o}</option>))}
+                  </select>
                 </div>
-
-                {/* 7. BUSINESS TYPE */}
                 <div className="form-group">
-                    <label>Business Type</label>
-                    <input type="text" name="business" placeholder="Business Type" value={formData.business} onChange={handleChange} />
+                  <label>Business Type</label>
+                  <input type="text" name="business" placeholder="Business Type" value={formData.business} onChange={handleChange} />
                 </div>
-
-                {/* 8. LOCATION */}
                 <div className="form-group">
-                    <label>Location</label>
-                    <input type="text" name="location" placeholder="City / Location" value={formData.location} onChange={handleChange} />
+                  <label>Location</label>
+                  <input type="text" name="location" placeholder="City / Location" value={formData.location} onChange={handleChange} />
                 </div>
-
               </div>
-
               <div className="form-actions">
                 <button type="button" className="btn-cancel" onClick={() => setIsModalOpen(false)}>Cancel</button>
                 <button type="submit" className="btn-submit">Save</button>

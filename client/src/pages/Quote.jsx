@@ -14,7 +14,18 @@ import skiteseal from '../assets/seal.png';
 const Quote = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const isSales = !!localStorage.getItem("salesUser");
+
+  // ✅ 1. DYNAMIC AUTH & ROLE CHECK
+  const adminToken = localStorage.getItem('adminToken');
+  const managerToken = localStorage.getItem('managerToken');
+  const salesToken = localStorage.getItem('salesToken');
+
+  const isSales = !!salesToken;
+  const isManager = !!managerToken;
+  const isAdmin = !!adminToken;
+
+  // Active Token for API Headers
+  const token = adminToken || managerToken || salesToken;
 
   const senderDetails = {
     gst: "33REAPS5023G1ZE",
@@ -43,13 +54,11 @@ const Quote = () => {
     gst: ''
   });
 
-  // Default empty item structure
   const [items, setItems] = useState([
     { description: '', subDescription: '', hsn: '', price: '', qty: '1' }
   ]);
 
   const [taxRate, setTaxRate] = useState(9);
-
   const [terms, setTerms] = useState(`50% advance payment required to start the project.
 Final 50% on project completion before deployment.
 The complete website will be built on our subdomain for preview and approval before final deployment.
@@ -57,15 +66,17 @@ Any additional page will be charged at Rs.1,500 per page.`);
 
   const [pageLoading, setPageLoading] = useState(false);
 
+  // ✅ 2. GENERATE QUOTE NO (Updated with Token)
   const generateNextQuoteNo = async () => {
     try {
-      const response = await fetch(`${API_BASE}/quote/all`);
+      const response = await fetch(`${API_BASE}/quote/all`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+      });
       const data = await response.json();
 
       if (response.ok && Array.isArray(data) && data.length > 0) {
         let maxNum = 0;
         let prefix = 'SKT'; 
-        
         data.forEach(q => {
           if (q.quoteNo) {
             const match = q.quoteNo.match(/^(.*?)(\d+)$/);
@@ -78,7 +89,6 @@ Any additional page will be charged at Rs.1,500 per page.`);
             }
           }
         });
-        
         const nextNum = maxNum > 0 ? maxNum + 1 : 45; 
         return `${prefix}${nextNum}`;
       }
@@ -96,7 +106,6 @@ Any additional page will be charged at Rs.1,500 per page.`);
       } else {
         const nextQuoteNo = await generateNextQuoteNo();
         setQuoteMeta(prev => ({ ...prev, quoteNo: nextQuoteNo }));
-        // When creating a new quote, pre-fill with a default example layout
         setItems([
           { 
               description: 'Search engine optimization (SEO)', 
@@ -111,10 +120,13 @@ Any additional page will be charged at Rs.1,500 per page.`);
     initializeData();
   }, [id]);
 
+  // ✅ 3. FETCH QUOTE (Updated with Token)
   const fetchQuoteById = async (quoteId) => {
     setPageLoading(true);
     try {
-      const response = await fetch(`${API_BASE}/quote/${quoteId}`);
+      const response = await fetch(`${API_BASE}/quote/${quoteId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+      });
       const data = await response.json();
 
       if (response.ok) {
@@ -130,10 +142,9 @@ Any additional page will be charged at Rs.1,500 per page.`);
         setClientDetails({
           name: cd.name || '',
           address: resolvedAddress,
-          gst: cd.gst || cd.gstin || ''         
+          gst: cd.gst || cd.gstin || ''          
         });
 
-        // ✅ FIX: Set items directly from DB if they exist, otherwise provide 1 empty row.
         if (data.items && data.items.length > 0) {
             setItems(data.items.map(item => ({
                 description: item.description || '',
@@ -182,6 +193,7 @@ Any additional page will be charged at Rs.1,500 per page.`);
   const addItem = () => setItems([...items, { description: '', subDescription: '', hsn: '', price: '', qty: '1' }]);
   const removeItem = (index) => setItems(items.filter((_, i) => i !== index));
 
+  // ✅ 4. SAVE QUOTE (Updated with Token)
   const saveQuoteToDB = async () => {
     if (!clientDetails.name) {
       toast.error("Please enter Client Name!");
@@ -209,16 +221,21 @@ Any additional page will be charged at Rs.1,500 per page.`);
 
     try {
       let response;
+      const headers = { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` // ✅ Send active token
+      };
+
       if (id) {
         response = await fetch(`${API_BASE}/quote/update/${id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: headers,
           body: JSON.stringify(quoteData)
         });
       } else {
         response = await fetch(`${API_BASE}/quote/create`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: headers,
           body: JSON.stringify(quoteData)
         });
       }
@@ -236,6 +253,18 @@ Any additional page will be charged at Rs.1,500 per page.`);
     } catch (error) {
       toast.error("Server Error");
     }
+  };
+
+  // ✅ 5. DYNAMIC BACK & HISTORY NAVIGATION
+  const handleBack = () => {
+      if (isSales) navigate('/sales-dashboard');
+      else if (isManager) navigate('/manager-dashboard');
+      else navigate('/admin-dashboard');
+  };
+
+  const handleHistory = () => {
+      if (isSales) navigate('/sales-dashboard/quote-history');
+      else navigate('/admin-dashboard/quote-history');
   };
 
   const getImageBase64 = (imgSrc) => {
@@ -321,7 +350,7 @@ Any additional page will be charged at Rs.1,500 per page.`);
       head: [['DESCRIPTION', 'DETAILS', 'PRICE', 'QTY', 'TOTAL']],
       body: validItems.map(item => {
         const p = parseFloat(item.price) || 0;
-        const qCalc = parseFloat(item.qty) || 1;
+        const qCalc = parseFloat(item.qty) || 1; 
         
         let descText = item.description;
         if (item.subDescription && item.subDescription.trim() !== '') {
@@ -399,9 +428,6 @@ Any additional page will be charged at Rs.1,500 per page.`);
     doc.save(fileName);
   };
 
-  const handleBack = () => navigate(isSales ? '/sales-dashboard' : '/admin-dashboard');
-  const handleHistory = () => navigate(isSales ? '/sales-dashboard/quote-history' : '/admin-dashboard/quote-history');
-
   if (pageLoading) return <div style={{ display: 'flex', justifyContent: 'center', height: '100vh', alignItems:'center' }}>Loading...</div>;
 
   return (
@@ -411,7 +437,7 @@ Any additional page will be charged at Rs.1,500 per page.`);
           <button onClick={handleBack} className="modern-back-btn"
             style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'white', border: '1px solid #e0e0e0', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '600', color: '#4b5563', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
             <ArrowLeft size={20} />
-            <span>{isSales ? 'Sales Panel' : 'Admin Dashboard'}</span>
+            <span>{isSales ? 'Sales Panel' : isManager ? 'Manager Panel' : 'Admin Dashboard'}</span>
           </button>
           <h2>{id ? 'Edit Quote' : 'Create Quote'}</h2>
         </div>
@@ -581,7 +607,7 @@ Any additional page will be charged at Rs.1,500 per page.`);
             <tbody>
               {items.map((item, i) => {
                   const p = parseFloat(item.price) || 0;
-                  const qCalc = parseFloat(item.qty) || 1;
+                  const qCalc = parseFloat(item.qty) || 1; 
                   
                   const priceDisplay = item.price === '' ? '' : `₹ ${p.toLocaleString('en-IN')}`;
                   const qtyDisplay = item.qty === '' ? '' : item.qty;

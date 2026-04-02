@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom'; 
-import { CalendarCheck, Megaphone, IndianRupee, FileText, ScrollText, Landmark, Briefcase, ReceiptText, FileCheck, Clock, MailOpen } from 'lucide-react';
+import { CalendarCheck, Megaphone, IndianRupee, FileText, ScrollText, Landmark, Briefcase, ReceiptText, FileCheck, Clock, MailOpen, Calendar } from 'lucide-react';
 import skitelogo from '../assets/skitelogo.png'; 
 import { API_BASE } from '../api';
 import './AdminDashboard.css'; 
@@ -19,8 +19,8 @@ export const TaskIcon = () => (
 );
 
 const DashboardCards = ({ handleCardClick, role, designation }) => {
-    // Check if user is Content Writer
     const isContentWriter = (designation || "").toLowerCase().includes("content writ");
+    const isManagerPerson = (role === 'manager' && (designation || '').toLowerCase() === 'manager');
 
     return (
         <div className="cards-container">
@@ -52,11 +52,16 @@ const DashboardCards = ({ handleCardClick, role, designation }) => {
                         <div className="card-title1">Offer Letter</div>
                         <div className="card-accent"></div>
                     </div>
+                    {/* ✅ Bulk Holiday Card */}
+                    <div className="card" onClick={() => handleCardClick('bulk-attendance')}>
+                        <div className="card-icon"><Calendar size={40} color="#FF4500" /></div>
+                        <div className="card-title1">Bulk Holiday</div>
+                        <div className="card-accent"></div>
+                    </div>
                 </>
             )}
 
-            {/* ATTENDANCE CARD: Visible for Admin OR Content Writer (Bhuvana) */}
-            {(role === 'admin' || isContentWriter) && (
+            {(role === 'admin' || isManagerPerson || isContentWriter) && (
                 <div className="card" onClick={() => handleCardClick('attendance')}>
                     <div className="card-icon"><CalendarCheck size={40} color="#FF4500" /></div>
                     <div className="card-title1">Attendance</div>
@@ -64,8 +69,7 @@ const DashboardCards = ({ handleCardClick, role, designation }) => {
                 </div>
             )}
 
-            {/* PROJECTS: Admin + Employee (Including Content Writers) */}
-            {(role === 'admin' || role === 'employee') && (
+            {(role === 'admin' || role === 'employee' || isManagerPerson) && (
                 <div className="card" onClick={() => handleCardClick('projects')}>
                     <div className="card-icon"><Briefcase size={40} color="#FF4500" /></div>
                     <div className="card-title1">Projects</div>
@@ -73,8 +77,7 @@ const DashboardCards = ({ handleCardClick, role, designation }) => {
                 </div>
             )}
 
-            {/* ADMIN + ACCOUNTANT CARDS */}
-            {(role === 'admin' || role === 'accountant') && (
+            {(role === 'admin' || role === 'accountant' || isManagerPerson) && (
                 <>
                     <div className="card" onClick={() => handleCardClick('payroll')}>
                         <div className="card-icon"><IndianRupee size={40} color="#FF4500" /></div>
@@ -116,30 +119,28 @@ const AdminDashboard = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [userRole, setUserRole] = useState('');
-    const [userDesignation, setUserDesignation] = useState(''); // ✅ Added State for Designation
+    const [userDesignation, setUserDesignation] = useState('');
 
     useEffect(() => {
         const adminToken = localStorage.getItem('adminToken');
         const accountantToken = localStorage.getItem('accountantToken');
         const employeeToken = localStorage.getItem('employeeToken');
-        const storedRole = localStorage.getItem('userRole');
+        const managerToken = localStorage.getItem('managerToken');
         
-        // Fetch User Details from LocalStorage to get Designation
-        const userData = JSON.parse(localStorage.getItem('employeeUser') || localStorage.getItem('adminUser') || '{}');
+        const userData = JSON.parse(
+            localStorage.getItem('adminUser') || 
+            localStorage.getItem('managerUser') || 
+            localStorage.getItem('accountantUser') ||
+            localStorage.getItem('employeeUser') || 
+            localStorage.getItem('userData') || '{}'
+        );
+        
         setUserDesignation(userData.designation || '');
+        const role = userData.role ? userData.role.toLowerCase() : '';
+        setUserRole(role);
 
-        if (!adminToken && !accountantToken && !employeeToken) {
+        if (!adminToken && !accountantToken && !employeeToken && !managerToken) {
             navigate('/');
-        } else {
-            if (storedRole) {
-                setUserRole(storedRole);
-            } else if (adminToken) {
-                setUserRole('admin');
-            } else if (accountantToken) {
-                setUserRole('accountant');
-            } else if (employeeToken) {
-                setUserRole('employee');
-            }
         }
     }, [navigate]);
 
@@ -175,7 +176,9 @@ const AdminDashboard = () => {
             'receipt': '/admin-dashboard/receipt',          
             'receipt-history': '/admin-dashboard/receipt-history',
             'accounts': '/admin-dashboard/accounts',
-            'offer-letter': '/admin-dashboard/offer-letter'
+            'offer-letter': '/admin-dashboard/offer-letter',
+            // ✅ Fix: Added the route for Bulk Attendance
+            'bulk-attendance': '/admin-dashboard/bulk-attendance' 
         };
         if (routes[type]) navigate(routes[type]);
     };
@@ -203,7 +206,7 @@ const AdminDashboard = () => {
                     <DashboardCards 
                         handleCardClick={handleCardClick} 
                         role={userRole} 
-                        designation={userDesignation} // ✅ Passing Designation
+                        designation={userDesignation} 
                     />
                 )}
                 <Outlet />

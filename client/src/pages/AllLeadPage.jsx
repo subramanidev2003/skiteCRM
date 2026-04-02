@@ -8,6 +8,16 @@ import { toast } from 'react-toastify';
 const AllLeadPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+   const storedUser = JSON.parse(
+    localStorage.getItem("adminUser") || 
+    localStorage.getItem("managerUser") || 
+    localStorage.getItem("userData") || '{}'
+  );
+  const isManager = storedUser?.role?.toLowerCase() === 'manager';
+  const handleBack = () => {
+    if (isManager) navigate('/admin-dashboard/leads');
+    else navigate(-1);
+  };
   const [leads, setLeads] = useState([]);      
   const [filteredLeads, setFilteredLeads] = useState([]); 
 
@@ -88,9 +98,9 @@ const AllLeadPage = () => {
         {/* 1. HEADER */}
         <div className="leads-header">
             <div className="header-left">
-                <button className="btn-back" onClick={() => navigate(-1)}>
-                    <ArrowLeft size={18} /> Back
-                </button>
+               <button className="btn-back" onClick={handleBack}>
+            <ArrowLeft size={18} /> Back
+          </button>
                 <div className="header-text">
                     <h2 className="page-title">All Leads Overview</h2>
                     {/* <p className="page-subtitle">Manage and track your sales leads</p> */}

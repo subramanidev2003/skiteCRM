@@ -10,6 +10,19 @@ import './AdminServiceType.css';
 const AdminServiceType = () => {
     const { serviceName } = useParams();
     const navigate = useNavigate();
+
+        // ✅ FIX: Role-based back navigation
+    const storedUser = JSON.parse(
+        localStorage.getItem("adminUser") || 
+        localStorage.getItem("managerUser") || 
+        localStorage.getItem("userData") || '{}'
+    );
+    const isManager = storedUser?.role?.toLowerCase() === 'manager';
+    const handleBack = () => {
+        if (isManager) navigate('/manager-dashboard');
+        else navigate('/admin-dashboard');
+    };
+
     const [leads, setLeads] = useState([]);
     const [filteredLeads, setFilteredLeads] = useState([]); 
     const [loading, setLoading] = useState(true);
@@ -125,7 +138,7 @@ const AdminServiceType = () => {
             
             {/* HEADER */}
             <div className="ad-page-header">
-                <button className="ad-btn-back" onClick={() => navigate('/admin-dashboard')}>
+                <button className="ad-btn-back" onClick={handleBack}>
                     <ArrowLeft size={18} /> Back to Dashboard
                 </button>
                 <div className="header-text" style={{ flex: 1, marginLeft: '20px' }}>

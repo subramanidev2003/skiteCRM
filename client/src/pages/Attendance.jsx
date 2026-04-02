@@ -22,6 +22,8 @@ const Attendance = () => {
 
   const managerUser = JSON.parse(localStorage.getItem('managerUser') || '{}');
   const isManager = !!managerToken;
+  
+  // ✅ Note: allowedDesignations ippo thevai illai, aana unga variable remove panna koodathunrathala appadiyae vachurukkaen.
   const allowedDesignations = ['Web Developer', 'Web Developer(intern)', 'SEO(intern)'];
 
   // ✅ ACTIVE TAB STATE
@@ -74,42 +76,49 @@ const Attendance = () => {
 
   // --- FETCH ATTENDANCE DATA ---
   const fetchAttendance = async () => {
-        try {
-            if (!token) {
-                setError("No authentication token found.");
-                setLoading(false);
-                return;
-            }
-            const storedUser = JSON.parse(localStorage.getItem('employeeUser') || localStorage.getItem('adminUser') || '{}');
-            const designation = (storedUser?.designation || "").toLowerCase();
-            const isContentWriter = designation.includes("content writ");
-            const isAdmin = !!adminToken;
-            let url = `${API_BASE}/attendance/all`;
-            
-            if (!isAdmin && !isContentWriter) {
-                url = `${API_BASE}/attendance/${storedUser._id || storedUser.id}`;
-            }
+      try {
+          if (!token) {
+              setError("No authentication token found.");
+              setLoading(false);
+              return;
+          }
+          const storedUser = JSON.parse(
+              localStorage.getItem('adminUser') || 
+              localStorage.getItem('managerUser') || 
+              localStorage.getItem('employeeUser') || 
+              '{}'
+          );
+          const designation = (storedUser?.designation || "").toLowerCase();
+          const isContentWriter = designation.includes("content writ");
+          const isAdmin = !!adminToken;
+          const isManagerUser = !!managerToken; 
 
-            const response = await fetch(url, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+          let url = `${API_BASE}/attendance/all`;
+          
+          if (!isAdmin && !isManagerUser && !isContentWriter) {
+              url = `${API_BASE}/attendance/${storedUser._id || storedUser.id}`;
+          }
 
-            if (response.ok) {
-                const data = await response.json();
-                setAttendance(Array.isArray(data) ? data : []);
-            } else {
-                const errorData = await response.json();
-                setError(errorData.msg || "Failed to fetch records.");
-            }
-            setLoading(false);
-        } catch (err) {
-            setError("Network error.");
-            setLoading(false);
-        }
+          const response = await fetch(url, {
+              method: "GET",
+              headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+              },
+          });
+
+          if (response.ok) {
+              const data = await response.json();
+              setAttendance(Array.isArray(data) ? data : []);
+          } else {
+              const errorData = await response.json();
+              setError(errorData.msg || "Failed to fetch records.");
+          }
+          setLoading(false);
+      } catch (err) {
+          setError("Network error.");
+          setLoading(false);
+      }
   };
 
   // --- ✅ NEW: CL SUMMARY LOGIC (Grouping All Employees) ---
@@ -128,7 +137,6 @@ const Attendance = () => {
       const allUsers = employees.employees || employees.users || employees || [];
       const approvedCLs = Array.isArray(leaves) ? leaves : [];
 
-      // Grouping by User ID to sum days
       const aggregated = allUsers.map(user => {
         const userLeaves = approvedCLs.filter(l => (l.userId?._id || l.userId) === user._id);
         const total = userLeaves.reduce((acc, curr) => {
@@ -154,20 +162,30 @@ const Attendance = () => {
     }
   }, [token, activeTab, clFromDate, clToDate]);
 
-  // FILTER LOGIC
+  // ✅ UPDATED FILTER LOGIC: Manager restriction removed, Future dates hidden, Multi-field Search added
   useEffect(() => {
     let result = attendance;
-    if (isManager) {
+
+    // 1. ✅ Fix for Future Sundays: Hide future dates
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+    result = result.filter((row) => new Date(row.checkInTime || row.date) <= todayEnd);
+
+    // 2. ✅ Global String Search: Name, Task, Designation, Duration
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
       result = result.filter((row) => {
-        const designation = row.designation || row.employeeDesignation || (row.userId && row.userId.designation);
-        return allowedDesignations.includes(designation);
+        const durationInfo = calculateDuration(row); // existing helper
+        return (
+          (row.employeeName || row.name || "").toLowerCase().includes(term) ||
+          (row.designation || "").toLowerCase().includes(term) ||
+          (row.taskDescription || "").toLowerCase().includes(term) ||
+          (durationInfo.text || "").toLowerCase().includes(term)
+        );
       });
     }
-    if (searchTerm) {
-      result = result.filter((row) =>
-        (row.employeeName || row.name || "").toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
+
+    // 3. ✅ Date Filters (Keep existing)
     if (fromDate) {
       const from = new Date(fromDate);
       from.setHours(0, 0, 0, 0);
@@ -178,9 +196,10 @@ const Attendance = () => {
       to.setHours(23, 59, 59, 999);
       result = result.filter((row) => new Date(row.checkInTime || row.date) <= to);
     }
+
     setFilteredAttendance(result);
     setCurrentPage(1); 
-  }, [attendance, searchTerm, fromDate, toDate, isManager]);
+  }, [attendance, searchTerm, fromDate, toDate]);
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -236,10 +255,10 @@ const Attendance = () => {
   };
 
   const deleteSingleRecord = async (id) => {
-     try {
-       await fetch(`${API_BASE}/attendance/deleterec/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` }});
-       return true;
-     } catch(e) { return false; }
+    try {
+      await fetch(`${API_BASE}/attendance/deleterec/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` }});
+      return true;
+    } catch(e) { return false; }
   };
 
   const deleteAllFilteredRecords = async () => {
@@ -262,7 +281,6 @@ const Attendance = () => {
 
       <h2 className="page-title">Attendance & Leave Management</h2>
 
-      {/* ✅ TAB NAVIGATION (Original UI) */}
       <div style={{display:'flex', gap:'20px', borderBottom:'2px solid #eee', marginBottom:'20px'}}>
           <button onClick={() => setActiveTab('attendance')} style={{padding:'10px 20px', borderBottom: activeTab === 'attendance' ? '3px solid #FF4500' : 'none', color: activeTab === 'attendance' ? '#FF4500' : '#666', fontWeight: 'bold', cursor:'pointer', background:'none', border:'none', display: 'flex', alignItems: 'center', gap: '8px'}}>
             <ListChecks size={18} /> Attendance Logs
@@ -280,7 +298,8 @@ const Attendance = () => {
           <>
             <div className="filter-container1">
                 <div className="filter-inputs">
-                <input type="text" placeholder="Search Name..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="search-input" />
+                {/* ✅ Global Search Placeholder */}
+                <input type="text" placeholder="Search name, task, or role..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="search-input" />
                 <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="date-input" />
                 <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="date-input" />
                 <button onClick={() => {setSearchTerm(""); setFromDate(""); setToDate("");}} className="clear-btn">Clear</button>
@@ -333,28 +352,22 @@ const Attendance = () => {
               style={{border:'none', outline:'none', padding:'5px', marginLeft:'5px'}}
             />
           </div>
-          
-          {/* ✅ Date Filters instead of Month Dropdown */}
           <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="date-input" title="From Date" />
           <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="date-input" title="To Date" />
-          
           <button onClick={() => {setLeaveSearch(""); setFromDate(""); setToDate("");}} className="clear-btn">Reset</button>
         </div>
       </div>
-      
-      {/* ✅ Passing the correct props here */}
       <Leaves searchTerm={leaveSearch} fromDate={fromDate} toDate={toDate} />
     </>
       ) : (
-        /* ✅ CL SUMMARY TAB CONTENT */
         <div className="cl-reports-tab">
           <div className="filter-container1" style={{background:'#fffbf0', border:'1px solid #ffe0b2', marginBottom:'20px'}}>
-             <div className="filter-inputs">
+            <div className="filter-inputs">
                 <label style={{fontSize:'14px', fontWeight:'600'}}>Filter Total CL by Date Range:</label>
                 <input type="date" value={clFromDate} onChange={e => setClFromDate(e.target.value)} className="date-input" />
                 <input type="date" value={clToDate} onChange={e => setClToDate(e.target.value)} className="date-input" />
                 <button onClick={() => {setClFromDate(""); setClToDate("");}} className="clear-btn">Reset</button>
-             </div>
+            </div>
           </div>
           <div className="table-container">
             <table className="attendance-table">
@@ -381,18 +394,18 @@ const Attendance = () => {
           <div className="att-modal-box" onClick={(e) => e.stopPropagation()}>
             <div className="att-modal-header"><h3>Details</h3><button onClick={() => setIsModalOpen(false)}><X/></button></div>
             <div className="att-modal-content">
-               <h3>{selectedAttendance.employeeName || selectedAttendance.name}</h3>
-               <p>Date: {formatDate(selectedAttendance.checkInTime || selectedAttendance.date)}</p>
-               {(() => {
-                   const { text, isAbsent, reason } = calculateDuration(selectedAttendance);
-                   return (
-                       <>
-                         <p>Work Duration: <strong>{isAbsent ? "—" : text}</strong></p>
-                         <p>Status: <strong>{selectedAttendance.isCL ? "Casual Leave" : (isAbsent ? `Absent (${reason})` : "Present / Half Day")}</strong></p>
-                       </>
-                   );
-               })()}
-               <p>Task: {selectedAttendance.taskDescription || "—"}</p>
+              <h3>{selectedAttendance.employeeName || selectedAttendance.name}</h3>
+              <p>Date: {formatDate(selectedAttendance.checkInTime || selectedAttendance.date)}</p>
+              {(() => {
+                  const { text, isAbsent, reason } = calculateDuration(selectedAttendance);
+                  return (
+                      <>
+                        <p>Work Duration: <strong>{isAbsent ? "—" : text}</strong></p>
+                        <p>Status: <strong>{selectedAttendance.isCL ? "Casual Leave" : (isAbsent ? `Absent (${reason})` : "Present / Half Day")}</strong></p>
+                      </>
+                  );
+              })()}
+              <p>Task: {selectedAttendance.taskDescription || "—"}</p>
             </div>
           </div>
         </div>
