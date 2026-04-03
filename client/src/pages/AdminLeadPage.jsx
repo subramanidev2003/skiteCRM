@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Check, X, Phone, User, Briefcase, MapPin, Calendar, 
   CreditCard, Activity, Tag, ClipboardCheck, MessageSquare, Lock, Mail, Link, ShoppingCart 
-} from 'lucide-react'; // ✅ Added ShoppingCart & Link
+} from 'lucide-react'; 
 import { toast } from 'react-toastify';
 import { API_BASE } from '../api';
 import './LeadPageModern.css'; 
@@ -112,8 +112,9 @@ const AdminLeadPage = () => {
   const getStatusColor = (val) => {
     if (!val) return '';
     const v = val.toLowerCase();
-    if (v === 'attend' || v === 'yes' || v === 'okay' || v === 'open') return 'green';
-    if (v === 'not attend' || v === 'no' || v === 'not' || v === 'rejected') return 'red';
+    // ✅ Updated to handle the new status colors
+    if (v === 'attend' || v === 'yes' || v === 'okay' || v === 'open' || v === 'completed') return 'green';
+    if (v === 'not attend' || v === 'no' || v === 'not' || v === 'rejected' || v === 'pending') return 'red';
     if (v === 'callback' || v === 'closed') return 'blue';
     return '';
   };
@@ -276,7 +277,6 @@ const AdminLeadPage = () => {
                     colorClass={getStatusColor(currentLead.followUpStatus)}
                 />
 
-                {/* ✅ Follow Up Responsibility instead of Lead Status */}
                 <ActionRow 
                     label="Follow Up Responsibility" icon={User} name="followUpResponsibility" 
                     value={currentLead.followUpResponsibility} 
@@ -284,7 +284,6 @@ const AdminLeadPage = () => {
                     onSave={updateField} 
                 />
 
-                {/* ✅ Order Status */}
                 <ActionRow 
                     label="Order Status" icon={ShoppingCart} name="orderStatus" 
                     value={currentLead.orderStatus} 
@@ -298,10 +297,25 @@ const AdminLeadPage = () => {
                     value={currentLead.requirement} type="text" onSave={updateField} 
                 />
 
-                {/* ✅ Remainder 2 Field added */}
                 <ActionRow 
-                    label="Remainder 2" icon={MessageSquare} name="remainder2" 
+                    label="Remainder 2 (Task)" icon={MessageSquare} name="remainder2" 
                     value={currentLead.remainder2} type="text" onSave={updateField} 
+                />
+
+                {/* ✅ NEW: Remainder 2 Date Picker */}
+                <ActionRow 
+                    label="Remainder 2 Date" icon={Calendar} name="remainder2Date" 
+                    value={currentLead.remainder2Date} type="date" onSave={updateField} 
+                    colorClass="blue"
+                />
+
+                {/* ✅ NEW: Remainder 2 Status (Action Needed) */}
+                <ActionRow 
+                    label="Follow-up Action" icon={Check} name="remainder2Status" 
+                    value={currentLead.remainder2Status || 'Pending'} 
+                    type="select" options={['Pending', 'Completed']} 
+                    onSave={updateField}
+                    colorClass={getStatusColor(currentLead.remainder2Status || 'Pending')}
                 />
 
                  <ActionRow 

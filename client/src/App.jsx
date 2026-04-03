@@ -43,6 +43,7 @@ import FixedInvoice from "./components/FixedInvoice.jsx";
 // ✅ 1. OfferLetter Import
 import OfferLetter from "./pages/OfferLetter.jsx";
 import BulkAttendance from "./pages/BulkAttendance.jsx";
+import AdminRemainderList from "./pages/AdminRemainderList.jsx";
 
 
 function App() {
@@ -110,6 +111,7 @@ function App() {
             <Route path="/admin-dashboard/bulk-attendance" element={<BulkAttendance />} />
 
             <Route path="offer-letter" element={<OfferLetter />} />
+            <Route path="/admin-dashboard/followups/:type" element={<AdminRemainderList />} />
           </Route>
 
           <Route path="/add-employee" element={<AddEmployee />} />

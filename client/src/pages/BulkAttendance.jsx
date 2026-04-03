@@ -13,19 +13,29 @@ const BulkAttendance = () => {
     const [isProcessing, setIsProcessing] = useState(false);
     const [progress, setProgress] = useState({ current: 0, total: 0 });
 
+    // ✅ FIXED: Correct Sunday Generator (No Timezone Issues)
     const addAllSundays = () => {
         const year = new Date().getFullYear();
         const sundays = [];
-        const date = new Date(year, 0, 1);
-        while (date.getFullYear() === year) {
-            if (date.getDay() === 0) {
-                sundays.push(new Date(date).toISOString().split('T')[0]);
+        // Loop through all days of the year
+        let d = new Date(year, 0, 1); // January 1st
+
+        while (d.getFullYear() === year) {
+            if (d.getDay() === 0) { // 0 is Sunday
+                // Manual format YYYY-MM-DD to avoid toISOString timezone shift
+                const yyyy = d.getFullYear();
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const dd = String(d.getDate()).padStart(2, '0');
+                const formattedDate = `${yyyy}-${mm}-${dd}`;
+                sundays.push(formattedDate);
             }
-            date.setDate(date.getDate() + 1);
+            d.setDate(d.getDate() + 1);
         }
+
         const uniqueHolidays = Array.from(new Set([...holidayDates, ...sundays]));
         setHolidayDates(uniqueHolidays.sort());
-        toast.info("All Sundays added to list!");
+        // BulkAttendance.jsx - Line 32 approx
+toast.info(`All Sundays for ${year} have been added successfully!`);
     };
 
     const addHoliday = () => {
@@ -47,17 +57,13 @@ const BulkAttendance = () => {
             const userData = await userRes.json();
             const employees = userData.employees || userData.users || userData || [];
 
-            // ❌ ✅ UPDATED INACTIVE LIST: Nandhini V added
+            // INACTIVE LIST: Exclusion logic
             const inactiveNames = ["Hemapriya P", "Akshar", "Prabhakaran", "sowmiya", "Nandhini V"];
             
             const activeEmployees = employees.filter(emp => {
                 const name = emp.name?.trim().toLowerCase();
                 const designation = (emp.designation || '').toLowerCase();
-
-                // Specific check for Prabhakaran Team Lead
                 if (name === "prabhakaran" && designation.includes("team lead")) return false;
-                
-                // General name check for others
                 return !inactiveNames.some(inactive => name === inactive.trim().toLowerCase());
             });
 
@@ -70,20 +76,24 @@ const BulkAttendance = () => {
                 const dayName = new Date(dateStr).toLocaleDateString('en-US', { weekday: 'long' });
                 const taskDesc = dayName === 'Sunday' ? "Sunday" : "Holiday";
 
+                // Standard work timings: 09:30 AM to 06:30 PM
+                const isoCheckIn = new Date(`${dateStr}T09:30:00`).toISOString();
+                const isoCheckOut = new Date(`${dateStr}T18:30:00`).toISOString();
+
                 await fetch(`${API_BASE}/attendance/bulk-mark`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({
                         date: dateStr,
                         employees: activeEmployees.map(emp => emp._id),
-                        checkIn: `${dateStr}T09:30:00`,
-                        checkOut: `${dateStr}T18:30:00`,
+                        checkIn: isoCheckIn,
+                        checkOut: isoCheckOut,
                         taskDescription: taskDesc
                     })
                 });
                 setProgress(prev => ({ ...prev, current: i + 1 }));
             }
-            toast.success("Done! Nandhini V and others skipped. ✅");
+            toast.success("Done! Attendance updated correctly. ✅");
             setHolidayDates([]);
         } catch (err) { toast.error(err.message); } finally { setIsProcessing(false); }
     };

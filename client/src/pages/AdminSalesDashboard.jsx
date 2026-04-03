@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom"; // ✅ Import correct
+import { useNavigate } from "react-router-dom"; 
 import {
   Target,
   Users,
@@ -7,6 +7,8 @@ import {
   Plus,
   X,
   ArrowLeft,
+  Bell,
+  History
 } from "lucide-react";
 import { API_BASE } from '../api';
 import "./AdminSalesDashboard.css"; 
@@ -22,6 +24,10 @@ const AdminSalesDashboard = () => {
   const [closedCount, setClosedCount] = useState(0);
   const TARGET_GOAL = 50; 
 
+  // ✅ NEW STATES FOR REMAINDERS
+  const [todayCount, setTodayCount] = useState(0);
+  const [overdueCount, setOverdueCount] = useState(0);
+
   const serviceOptions = [
     "Web Development", "SEO", "Paid Campaigns", "Personal Branding", "Full Digital Marketing"
   ];
@@ -33,7 +39,6 @@ const AdminSalesDashboard = () => {
     assignedTo: "" 
   });
 
-  // ✅ FIX: Role-based back navigation
   const storedUser = JSON.parse(
     localStorage.getItem("adminUser") || 
     localStorage.getItem("managerUser") || 
@@ -42,8 +47,8 @@ const AdminSalesDashboard = () => {
   const isManager = storedUser?.role?.toLowerCase() === 'manager';
   
   const handleBack = () => {
-    if (isManager) navigate('/manager-dashboard'); // ✅ lowercase navigate
-    else navigate('/admin-dashboard');             // ✅ lowercase navigate
+    if (isManager) navigate('/manager-dashboard'); 
+    else navigate('/admin-dashboard');            
   };
 
   useEffect(() => {
@@ -60,6 +65,19 @@ const AdminSalesDashboard = () => {
           const validLeads = Array.isArray(data) ? data : [];
           setLeads(validLeads);
           calculateStats(validLeads);
+          
+          // ✅ LOGIC FOR REMAINDER BADGES
+          const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+          
+          const todayReminders = validLeads.filter(l => 
+              l.remainder2Date === todayStr && l.remainder2Status !== 'Completed'
+          ).length;
+          setTodayCount(todayReminders);
+
+          const missedReminders = validLeads.filter(l => 
+              l.remainder2Date && l.remainder2Date < todayStr && l.remainder2Status !== 'Completed'
+          ).length;
+          setOverdueCount(missedReminders);
         });
     } else {
       navigate("/");
@@ -150,7 +168,32 @@ const AdminSalesDashboard = () => {
           </div>
         </div>
 
-        <div className="leads-section-header">
+        {/* ✅ NEW: REMAINDER CARDS SECTION */}
+        <div className="leads-section-header" style={{marginTop:'30px'}}>
+          <h2 className="section-title">FOLLOW-UP ACTIONS</h2>
+        </div>
+
+        <div className="stats-grid">
+          <div className="stat-card" onClick={() => navigate('/admin-dashboard/followups/today')} style={{ cursor: 'pointer', border: todayCount > 0 ? '2px solid #ef4444' : 'none' }}>
+            <div className="stat-icon target"><Bell size={24} /></div>
+            <div className="stat-info">
+              <h3>Main Remainder</h3>
+              <p className="stat-number" style={{color: todayCount > 0 ? '#ef4444' : 'inherit'}}>{todayCount}</p>
+            </div>
+            {todayCount > 0 && <span className="notification-badge" style={{background:'#ef4444', color:'white', padding:'2px 8px', borderRadius:'10px', fontSize:'12px', position:'absolute', top:'10px', right:'10px'}}>Today</span>}
+          </div>
+
+          <div className="stat-card" onClick={() => navigate('/admin-dashboard/followups/pending')} style={{ cursor: 'pointer' }}>
+            <div className="stat-icon performance"><History size={24} /></div>
+            <div className="stat-info">
+              <h3>Overview (Pending)</h3>
+              <p className="stat-number">{overdueCount}</p>
+            </div>
+            {overdueCount > 0 && <span className="notification-badge" style={{background:'#f59e0b', color:'white', padding:'2px 8px', borderRadius:'10px', fontSize:'12px', position:'absolute', top:'10px', right:'10px'}}>Missed</span>}
+          </div>
+        </div>
+
+        <div className="leads-section-header" style={{marginTop:'30px'}}>
           <h2 className="section-title">ALL LEADS OVERVIEW</h2>
           <button className="add-lead-btn" onClick={() => setIsModalOpen(true)}>
             <Plus size={18} /> Add New Lead
@@ -176,40 +219,19 @@ const AdminSalesDashboard = () => {
             </div>
             <form onSubmit={handleSubmit} className="lead-form">
               <div className="form-grid">
-                <div className="form-group">
-                  <label>Date</label>
-                  <input type="date" name="date" required value={formData.date} onChange={handleChange} />
-                </div>
-                <div className="form-group">
-                  <label>Client Name</label>
-                  <input type="text" name="name" required placeholder="Client Name" value={formData.name} onChange={handleChange} />
-                </div>
-                <div className="form-group">
-                  <label>Email</label>
-                  <input type="email" name="email" placeholder="Client Email (Optional)" value={formData.email} onChange={handleChange} />
-                </div>
-                <div className="form-group">
-                  <label>Phone Number</label>
-                  <input type="tel" name="phoneNumber" required placeholder="Phone Number" value={formData.phoneNumber} onChange={handleChange} />
-                </div>
-                <div className="form-group">
-                  <label>Company Name</label>
-                  <input type="text" name="companyName" placeholder="Company Name" value={formData.companyName} onChange={handleChange} />
-                </div>
+                <div className="form-group"><label>Date</label><input type="date" name="date" required value={formData.date} onChange={handleChange} /></div>
+                <div className="form-group"><label>Client Name</label><input type="text" name="name" required placeholder="Client Name" value={formData.name} onChange={handleChange} /></div>
+                <div className="form-group"><label>Email</label><input type="email" name="email" placeholder="Client Email (Optional)" value={formData.email} onChange={handleChange} /></div>
+                <div className="form-group"><label>Phone Number</label><input type="tel" name="phoneNumber" required placeholder="Phone Number" value={formData.phoneNumber} onChange={handleChange} /></div>
+                <div className="form-group"><label>Company Name</label><input type="text" name="companyName" placeholder="Company Name" value={formData.companyName} onChange={handleChange} /></div>
                 <div className="form-group">
                   <label>Service Type</label>
                   <select name="serviceType" value={formData.serviceType} onChange={handleChange}>
                     {serviceOptions.map((o) => (<option key={o} value={o}>{o}</option>))}
                   </select>
                 </div>
-                <div className="form-group">
-                  <label>Business Type</label>
-                  <input type="text" name="business" placeholder="Business Type" value={formData.business} onChange={handleChange} />
-                </div>
-                <div className="form-group">
-                  <label>Location</label>
-                  <input type="text" name="location" placeholder="City / Location" value={formData.location} onChange={handleChange} />
-                </div>
+                <div className="form-group"><label>Business Type</label><input type="text" name="business" placeholder="Business Type" value={formData.business} onChange={handleChange} /></div>
+                <div className="form-group"><label>Location</label><input type="text" name="location" placeholder="City / Location" value={formData.location} onChange={handleChange} /></div>
               </div>
               <div className="form-actions">
                 <button type="button" className="btn-cancel" onClick={() => setIsModalOpen(false)}>Cancel</button>

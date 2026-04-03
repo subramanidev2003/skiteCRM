@@ -4,14 +4,10 @@ const leadSchema = new mongoose.Schema({
   salesAgentId: {
     type: mongoose.Schema.Types.ObjectId,
     required: true
-    // ref: 'User' (Optional: Removed to allow Admin ID)
   },
   date: { type: String, required: true },
   name: { type: String, required: true },
-  
-  // ✅ Email சேர்க்கப்பட்டுள்ளது
   email: { type: String, required: false },
-
   companyName: { type: String },
   business: { type: String },
   location: { type: String },
@@ -34,19 +30,32 @@ const leadSchema = new mongoose.Schema({
     default: 'Not Attend',
     enum: ['Attend', 'Not Attend', 'Callback']
   },
+
+  // --- REMAINDER 2 SECTION UPDATED ---
   remainder2: { 
     type: String, 
     default: "" 
   },
+  // ✅ NEW: Remainder 2 Date (Date Picker storage)
+  remainder2Date: { 
+    type: String, 
+    default: "" 
+  },
+  // ✅ NEW: Remainder 2 Action Status
+  remainder2Status: { 
+    type: String, 
+    enum: ['Pending', 'Completed', ''], 
+    default: 'Pending' 
+  },
+
   followUpResponsibility: { 
     type: String, 
-    // Neenga dropdown la kudutha exact values
     enum: ['teleSales', 'sasi prakash', ''], 
     default: "" 
   },
   
   website: { type: String },
-orderStatus: { type: String, default: 'Open' },
+  orderStatus: { type: String, default: 'Open' },
   leadStatus: { 
     type: String, 
     default: 'Not', 
