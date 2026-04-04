@@ -6,23 +6,24 @@ import { toast } from 'react-toastify';
 
 const BulkAttendance = () => {
     const navigate = useNavigate();
-    const token = localStorage.getItem('adminToken');
+    
+    // ✅ FIX: Multiple roles kooda work aagura maadhiri token logic maathittaen
+    const token = localStorage.getItem('adminToken') || 
+                  localStorage.getItem('officerToken') || 
+                  localStorage.getItem('managerToken');
     
     const [holidayDates, setHolidayDates] = useState([]);
     const [selectedDate, setSelectedDate] = useState("");
     const [isProcessing, setIsProcessing] = useState(false);
     const [progress, setProgress] = useState({ current: 0, total: 0 });
 
-    // ✅ FIXED: Correct Sunday Generator (No Timezone Issues)
     const addAllSundays = () => {
         const year = new Date().getFullYear();
         const sundays = [];
-        // Loop through all days of the year
-        let d = new Date(year, 0, 1); // January 1st
+        let d = new Date(year, 0, 1); 
 
         while (d.getFullYear() === year) {
-            if (d.getDay() === 0) { // 0 is Sunday
-                // Manual format YYYY-MM-DD to avoid toISOString timezone shift
+            if (d.getDay() === 0) { 
                 const yyyy = d.getFullYear();
                 const mm = String(d.getMonth() + 1).padStart(2, '0');
                 const dd = String(d.getDate()).padStart(2, '0');
@@ -34,8 +35,7 @@ const BulkAttendance = () => {
 
         const uniqueHolidays = Array.from(new Set([...holidayDates, ...sundays]));
         setHolidayDates(uniqueHolidays.sort());
-        // BulkAttendance.jsx - Line 32 approx
-toast.info(`All Sundays for ${year} have been added successfully!`);
+        toast.info(`All Sundays for ${year} have been added successfully!`);
     };
 
     const addHoliday = () => {
@@ -49,15 +49,23 @@ toast.info(`All Sundays for ${year} have been added successfully!`);
 
     const processBulkAttendance = async () => {
         if (holidayDates.length === 0) return toast.error("No dates selected!");
+        // ✅ Login check before processing
+        if (!token) {
+            toast.error("Session expired. Please login again.");
+            navigate('/');
+            return;
+        }
+
         if (!window.confirm(`Mark attendance for ${holidayDates.length} days?`)) return;
 
         setIsProcessing(true);
         try {
-            const userRes = await fetch(`${API_BASE}/user/all`, { headers: { 'Authorization': `Bearer ${token}` } });
+            const userRes = await fetch(`${API_BASE}/user/all`, { 
+                headers: { 'Authorization': `Bearer ${token}` } 
+            });
             const userData = await userRes.json();
             const employees = userData.employees || userData.users || userData || [];
 
-            // INACTIVE LIST: Exclusion logic
             const inactiveNames = ["Hemapriya P", "Akshar", "Prabhakaran", "sowmiya", "Nandhini V"];
             
             const activeEmployees = employees.filter(emp => {
@@ -76,13 +84,15 @@ toast.info(`All Sundays for ${year} have been added successfully!`);
                 const dayName = new Date(dateStr).toLocaleDateString('en-US', { weekday: 'long' });
                 const taskDesc = dayName === 'Sunday' ? "Sunday" : "Holiday";
 
-                // Standard work timings: 09:30 AM to 06:30 PM
                 const isoCheckIn = new Date(`${dateStr}T09:30:00`).toISOString();
                 const isoCheckOut = new Date(`${dateStr}T18:30:00`).toISOString();
 
-                await fetch(`${API_BASE}/attendance/bulk-mark`, {
+                const res = await fetch(`${API_BASE}/attendance/bulk-mark`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    headers: { 
+                        'Content-Type': 'application/json', 
+                        'Authorization': `Bearer ${token}` 
+                    },
                     body: JSON.stringify({
                         date: dateStr,
                         employees: activeEmployees.map(emp => emp._id),
@@ -91,11 +101,18 @@ toast.info(`All Sundays for ${year} have been added successfully!`);
                         taskDescription: taskDesc
                     })
                 });
+
+                if (!res.ok) throw new Error(`Failed to mark attendance for ${dateStr}`);
+
                 setProgress(prev => ({ ...prev, current: i + 1 }));
             }
             toast.success("Done! Attendance updated correctly. ✅");
             setHolidayDates([]);
-        } catch (err) { toast.error(err.message); } finally { setIsProcessing(false); }
+        } catch (err) { 
+            toast.error(err.message); 
+        } finally { 
+            setIsProcessing(false); 
+        }
     };
 
     return (

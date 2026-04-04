@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Download, Plus, Trash2, Save, History } from 'lucide-react'; 
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import jsPDF from 'jspdf'; 
 import autoTable from 'jspdf-autotable'; 
 import { toast } from 'react-toastify'; 
@@ -13,19 +13,21 @@ import skiteseal from '../assets/seal.png';
 
 const Quote = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams();
 
-  // ✅ 1. DYNAMIC AUTH & ROLE CHECK
+  // ✅ FIXED: Officer check added
   const adminToken = localStorage.getItem('adminToken');
   const managerToken = localStorage.getItem('managerToken');
   const salesToken = localStorage.getItem('salesToken');
+  const officerToken = localStorage.getItem('officerToken');
 
   const isSales = !!salesToken;
   const isManager = !!managerToken;
+  const isOfficer = location.pathname.startsWith('/officer');
   const isAdmin = !!adminToken;
 
-  // Active Token for API Headers
-  const token = adminToken || managerToken || salesToken;
+  const token = adminToken || managerToken || salesToken || officerToken;
 
   const senderDetails = {
     gst: "33REAPS5023G1ZE",
@@ -66,7 +68,6 @@ Any additional page will be charged at Rs.1,500 per page.`);
 
   const [pageLoading, setPageLoading] = useState(false);
 
-  // ✅ 2. GENERATE QUOTE NO (Updated with Token)
   const generateNextQuoteNo = async () => {
     try {
       const response = await fetch(`${API_BASE}/quote/all`, {
@@ -120,7 +121,6 @@ Any additional page will be charged at Rs.1,500 per page.`);
     initializeData();
   }, [id]);
 
-  // ✅ 3. FETCH QUOTE (Updated with Token)
   const fetchQuoteById = async (quoteId) => {
     setPageLoading(true);
     try {
@@ -193,7 +193,6 @@ Any additional page will be charged at Rs.1,500 per page.`);
   const addItem = () => setItems([...items, { description: '', subDescription: '', hsn: '', price: '', qty: '1' }]);
   const removeItem = (index) => setItems(items.filter((_, i) => i !== index));
 
-  // ✅ 4. SAVE QUOTE (Updated with Token)
   const saveQuoteToDB = async () => {
     if (!clientDetails.name) {
       toast.error("Please enter Client Name!");
@@ -223,7 +222,7 @@ Any additional page will be charged at Rs.1,500 per page.`);
       let response;
       const headers = { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` // ✅ Send active token
+          'Authorization': `Bearer ${token}`
       };
 
       if (id) {
@@ -255,17 +254,25 @@ Any additional page will be charged at Rs.1,500 per page.`);
     }
   };
 
-  // ✅ 5. DYNAMIC BACK & HISTORY NAVIGATION
+  // ✅ FIXED: Officer-க்கு correct back & history paths
   const handleBack = () => {
-      if (isSales) navigate('/sales-dashboard');
+      if (isOfficer) navigate('/officer-dashboard');
+      else if (isSales) navigate('/sales-dashboard');
       else if (isManager) navigate('/manager-dashboard');
       else navigate('/admin-dashboard');
   };
 
   const handleHistory = () => {
-      if (isSales) navigate('/sales-dashboard/quote-history');
+      if (isOfficer) navigate('/officer/quote-history');
+      else if (isSales) navigate('/sales-dashboard/quote-history');
       else navigate('/admin-dashboard/quote-history');
   };
+
+  // ✅ Back button label
+  const backLabel = isOfficer ? 'Officer Panel'
+    : isSales ? 'Sales Panel'
+    : isManager ? 'Manager Panel'
+    : 'Admin Dashboard';
 
   const getImageBase64 = (imgSrc) => {
     return new Promise((resolve, reject) => {
@@ -437,7 +444,7 @@ Any additional page will be charged at Rs.1,500 per page.`);
           <button onClick={handleBack} className="modern-back-btn"
             style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'white', border: '1px solid #e0e0e0', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '600', color: '#4b5563', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
             <ArrowLeft size={20} />
-            <span>{isSales ? 'Sales Panel' : isManager ? 'Manager Panel' : 'Admin Dashboard'}</span>
+            <span>{backLabel}</span>
           </button>
           <h2>{id ? 'Edit Quote' : 'Create Quote'}</h2>
         </div>

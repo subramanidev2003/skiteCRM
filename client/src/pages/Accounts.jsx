@@ -1,16 +1,21 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ReceiptIndianRupee, TrendingUp, BarChart2 } from 'lucide-react'; // BarChart2 icon import
+import { useNavigate, useLocation } from 'react-router-dom';
+import { ArrowLeft, ReceiptIndianRupee, TrendingUp, BarChart2 } from 'lucide-react';
 import './Accounts.css';
 
 const Accounts = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // ✅ FIXED: Officer detect via pathname
+  const isOfficer = location.pathname.startsWith('/officer');
+  const base = isOfficer ? '/officer' : '/admin-dashboard';
 
   return (
     <div className="accounts-container">
       
       <div className="accounts-header">
-        <button className="back-btn" onClick={() => navigate('/admin-dashboard')}>
+        <button className="back-btn" onClick={() => navigate(isOfficer ? '/officer-dashboard' : '/admin-dashboard')}>
           <ArrowLeft size={24} color="#333" />
         </button>
         <h2>Accounts Department</h2>
@@ -19,7 +24,7 @@ const Accounts = () => {
       <div className="accounts-grid">
         
         {/* Card 1: Invoice Payment */}
-        <div className="account-card" onClick={() => navigate('/admin-dashboard/invoice-payment')}>
+        <div className="account-card" onClick={() => navigate(`${base}/invoice-payment`)}>
           <div className="icon-box orange">
             <ReceiptIndianRupee size={40} color="#fff" />
           </div>
@@ -28,7 +33,7 @@ const Accounts = () => {
         </div>
 
         {/* Card 2: Income & Expense */}
-        <div className="account-card" onClick={() => navigate('/admin-dashboard/income-expense')}>
+        <div className="account-card" onClick={() => navigate(`${base}/income-expense`)}>
           <div className="icon-box green">
             <TrendingUp size={40} color="#fff" />
           </div>
@@ -36,8 +41,8 @@ const Accounts = () => {
           <p>Track daily income and operational expenses.</p>
         </div>
 
-        {/* ✅ Card 3: NEW Profit Graph */}
-        <div className="account-card" onClick={() => navigate('/admin-dashboard/financial-graph')}>
+        {/* Card 3: Profit Graph */}
+        <div className="account-card" onClick={() => navigate(`${base}/financial-graph`)}>
           <div className="icon-box blue" style={{background: 'linear-gradient(135deg, #3b82f6, #2563eb)', boxShadow: '0 4px 15px rgba(59, 130, 246, 0.3)'}}>
             <BarChart2 size={40} color="#fff" />
           </div>

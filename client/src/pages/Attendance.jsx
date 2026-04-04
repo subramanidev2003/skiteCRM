@@ -15,18 +15,19 @@ const Attendance = () => {
   const navigate = useNavigate();
   
   // AUTH
-  const adminToken = localStorage.getItem('adminToken');
-  const managerToken = localStorage.getItem('managerToken');
+  const adminToken    = localStorage.getItem('adminToken');
+  const managerToken  = localStorage.getItem('managerToken');
   const employeeToken = localStorage.getItem('employeeToken');
-  const token = adminToken || managerToken || employeeToken; 
+  // ✅ FIX: officerToken add பண்ணினேன் — இல்லாட்டா token = null → forever loading
+  const officerToken  = localStorage.getItem('officerToken');
+  const token = adminToken || managerToken || officerToken || employeeToken;
 
   const managerUser = JSON.parse(localStorage.getItem('managerUser') || '{}');
   const isManager = !!managerToken;
-  
-  // ✅ Note: allowedDesignations ippo thevai illai, aana unga variable remove panna koodathunrathala appadiyae vachurukkaen.
+
   const allowedDesignations = ['Web Developer', 'Web Developer(intern)', 'SEO(intern)'];
 
-  // ✅ ACTIVE TAB STATE
+  // ACTIVE TAB STATE
   const [activeTab, setActiveTab] = useState('attendance'); 
 
   // STATE
@@ -36,7 +37,7 @@ const Attendance = () => {
   const [error, setError] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
   
-  // ✅ CL SUMMARY STATES (Added as per logic)
+  // CL SUMMARY STATES
   const [clSummary, setClSummary] = useState([]);
   const [clLoading, setClLoading] = useState(false);
   const [clFromDate, setClFromDate] = useState("");
@@ -82,20 +83,26 @@ const Attendance = () => {
               setLoading(false);
               return;
           }
+
+          // ✅ FIX: officerUser-ஐயும் parse பண்றோம்
           const storedUser = JSON.parse(
-              localStorage.getItem('adminUser') || 
-              localStorage.getItem('managerUser') || 
-              localStorage.getItem('employeeUser') || 
+              localStorage.getItem('adminUser')     ||
+              localStorage.getItem('managerUser')   ||
+              localStorage.getItem('officerUser')   ||
+              localStorage.getItem('employeeUser')  ||
               '{}'
           );
-          const designation = (storedUser?.designation || "").toLowerCase();
+
+          const designation  = (storedUser?.designation || "").toLowerCase();
           const isContentWriter = designation.includes("content writ");
-          const isAdmin = !!adminToken;
-          const isManagerUser = !!managerToken; 
+          const isAdmin      = !!adminToken;
+          const isManagerUser = !!managerToken;
+          // ✅ FIX: officer = admin போல் all attendance பார்க்கணும்
+          const isOfficer    = !!officerToken;
 
           let url = `${API_BASE}/attendance/all`;
-          
-          if (!isAdmin && !isManagerUser && !isContentWriter) {
+
+          if (!isAdmin && !isManagerUser && !isOfficer && !isContentWriter) {
               url = `${API_BASE}/attendance/${storedUser._id || storedUser.id}`;
           }
 
@@ -121,7 +128,7 @@ const Attendance = () => {
       }
   };
 
-  // --- ✅ NEW: CL SUMMARY LOGIC (Grouping All Employees) ---
+  // --- CL SUMMARY LOGIC ---
   const fetchCLSummary = async () => {
     setClLoading(true);
     try {
@@ -132,10 +139,10 @@ const Attendance = () => {
         })
       ]);
       const employees = await empRes.json();
-      const leaves = await leaveRes.json();
+      const leaves    = await leaveRes.json();
 
-      const allUsers = employees.employees || employees.users || employees || [];
-      const approvedCLs = Array.isArray(leaves) ? leaves : [];
+      const allUsers     = employees.employees || employees.users || employees || [];
+      const approvedCLs  = Array.isArray(leaves) ? leaves : [];
 
       const aggregated = allUsers.map(user => {
         const userLeaves = approvedCLs.filter(l => (l.userId?._id || l.userId) === user._id);
@@ -157,35 +164,35 @@ const Attendance = () => {
   useEffect(() => {
     if (token) {
       fetchPendingLeavesCount();
-      if (activeTab === 'attendance') fetchAttendance();
+      if (activeTab === 'attendance')    fetchAttendance();
       if (activeTab === 'cl-management') fetchCLSummary();
     }
   }, [token, activeTab, clFromDate, clToDate]);
 
-  // ✅ UPDATED FILTER LOGIC: Manager restriction removed, Future dates hidden, Multi-field Search added
+  // FILTER LOGIC
   useEffect(() => {
     let result = attendance;
 
-    // 1. ✅ Fix for Future Sundays: Hide future dates
+    // Hide future dates
     const todayEnd = new Date();
     todayEnd.setHours(23, 59, 59, 999);
     result = result.filter((row) => new Date(row.checkInTime || row.date) <= todayEnd);
 
-    // 2. ✅ Global String Search: Name, Task, Designation, Duration
+    // Global Search
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       result = result.filter((row) => {
-        const durationInfo = calculateDuration(row); // existing helper
+        const durationInfo = calculateDuration(row);
         return (
           (row.employeeName || row.name || "").toLowerCase().includes(term) ||
-          (row.designation || "").toLowerCase().includes(term) ||
+          (row.designation  || "").toLowerCase().includes(term) ||
           (row.taskDescription || "").toLowerCase().includes(term) ||
-          (durationInfo.text || "").toLowerCase().includes(term)
+          (durationInfo.text   || "").toLowerCase().includes(term)
         );
       });
     }
 
-    // 3. ✅ Date Filters (Keep existing)
+    // Date Filters
     if (fromDate) {
       const from = new Date(fromDate);
       from.setHours(0, 0, 0, 0);
@@ -201,13 +208,13 @@ const Attendance = () => {
     setCurrentPage(1); 
   }, [attendance, searchTerm, fromDate, toDate]);
 
-  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfLastItem  = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredAttendance.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredAttendance.length / itemsPerPage);
+  const currentItems     = filteredAttendance.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages       = Math.ceil(filteredAttendance.length / itemsPerPage);
 
   const goToNextPage = () => { if (currentPage < totalPages) setCurrentPage(prev => prev + 1); };
-  const goToPrevPage = () => { if (currentPage > 1) setCurrentPage(prev => prev - 1); };
+  const goToPrevPage = () => { if (currentPage > 1)          setCurrentPage(prev => prev - 1); };
 
   // --- HELPERS ---
   const formatDate = (dateString) => dateString ? new Date(dateString).toLocaleDateString() : "N/A";
@@ -220,23 +227,23 @@ const Attendance = () => {
 
   const calculateDuration = (row) => {
     if (row.isCL) return { text: "9h 0m", hours: 9, isAbsent: false, reason: "Casual Leave" };
-    const checkIn = row.checkInTime || row.checkIn;
+    const checkIn  = row.checkInTime  || row.checkIn;
     const checkOut = row.checkOutTime || row.checkOut;
     if (!checkIn) return { text: "0h 0m", hours: 0, isAbsent: false, reason: "" };
     const start = new Date(checkIn);
-    const end = checkOut ? new Date(checkOut) : new Date(); 
+    const end   = checkOut ? new Date(checkOut) : new Date(); 
     if (checkOut && start.toDateString() !== end.toDateString()) return { text: "Date Mismatch", hours: 0, isAbsent: true, reason: "Next Day Checkout" };
     if (checkOut && end.getHours() >= 21) return { text: "Late Checkout", hours: 0, isAbsent: true, reason: "After 9 PM" };
-    const diffMs = end - start;
-    const diffHrs = Math.floor(diffMs / 3600000); 
+    const diffMs   = end - start;
+    const diffHrs  = Math.floor(diffMs / 3600000); 
     const diffMins = Math.floor((diffMs % 3600000) / 60000); 
     return { text: `${diffHrs}h ${diffMins}m`, hours: diffMs / 3600000, isAbsent: false };
   };
 
   const renderStatusBadge = (row) => {
       const { hours, isAbsent, reason } = calculateDuration(row);
-      if (row.isCL) return <span style={{backgroundColor:'#e0f2fe', color:'#0369a1', padding:'4px 8px', borderRadius:'12px', fontSize:'0.75rem', fontWeight:'600'}}>Present (CL)</span>;
-      if (isAbsent) return <span style={{backgroundColor:'#fef2f2', color:'#991b1b', padding:'4px 8px', borderRadius:'12px', fontSize:'0.75rem', fontWeight:'600'}} title={reason}>Absent</span>;
+      if (row.isCL)   return <span style={{backgroundColor:'#e0f2fe', color:'#0369a1', padding:'4px 8px', borderRadius:'12px', fontSize:'0.75rem', fontWeight:'600'}}>Present (CL)</span>;
+      if (isAbsent)   return <span style={{backgroundColor:'#fef2f2', color:'#991b1b', padding:'4px 8px', borderRadius:'12px', fontSize:'0.75rem', fontWeight:'600'}} title={reason}>Absent</span>;
       if (hours >= 6) return <span style={{backgroundColor:'#d1fae5', color:'#065f46', padding:'4px 8px', borderRadius:'12px', fontSize:'0.75rem', fontWeight:'600'}}>Present</span>;
       if (hours >= 3) return <span style={{backgroundColor:'#ffedd5', color:'#9a3412', padding:'4px 8px', borderRadius:'12px', fontSize:'0.75rem', fontWeight:'600'}}>Half Day</span>;
       return <span style={{backgroundColor:'#fee2e2', color:'#991b1b', padding:'4px 8px', borderRadius:'12px', fontSize:'0.75rem', fontWeight:'600'}}>Short</span>;
@@ -262,20 +269,27 @@ const Attendance = () => {
   };
 
   const deleteAllFilteredRecords = async () => {
-    if(!window.confirm(`Delete ${filteredAttendance.length} records?`)) return;
+    if (!window.confirm(`Delete ${filteredAttendance.length} records?`)) return;
     setIsDeleting(true);
     const ids = filteredAttendance.map(r => r._id);
-    for(let id of ids) await deleteSingleRecord(id);
+    for (let id of ids) await deleteSingleRecord(id);
     setAttendance(prev => prev.filter(item => !ids.includes(item._id)));
     setIsDeleting(false);
     toast.success("Deleted records");
+  };
+
+  // ✅ FIX: Back button — officer-க்கு officer-dashboard-க்கு திரும்பணும்
+  const handleBack = () => {
+    if (officerToken) return navigate('/officer-dashboard');
+    if (managerToken)  return navigate('/manager-dashboard');
+    return navigate('/admin-dashboard');
   };
 
   return (
     <div className="attendance-page1">
       <button className="modern-back-btn" 
               style={{display: 'flex', alignItems: 'center', gap: '8px', background: 'white', border: '1px solid #e0e0e0', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '600', color: '#4b5563'}}
-              onClick={() => navigate(managerToken ? "/manager-dashboard" : "/admin-dashboard")}>
+              onClick={handleBack}>
         <ArrowLeft size={20} /> Back
       </button>
 
@@ -298,15 +312,15 @@ const Attendance = () => {
           <>
             <div className="filter-container1">
                 <div className="filter-inputs">
-                {/* ✅ Global Search Placeholder */}
-                <input type="text" placeholder="Search name, task, or role..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="search-input" />
-                <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="date-input" />
-                <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="date-input" />
-                <button onClick={() => {setSearchTerm(""); setFromDate(""); setToDate("");}} className="clear-btn">Clear</button>
+                  <input type="text" placeholder="Search name, task, or role..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="search-input" />
+                  <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="date-input" />
+                  <input type="date" value={toDate}   onChange={(e) => setToDate(e.target.value)}   className="date-input" />
+                  <button onClick={() => {setSearchTerm(""); setFromDate(""); setToDate("");}} className="clear-btn">Clear</button>
                 </div>
                 <div className="action-buttons">
-                {!isManager && <button className="delete-btn" onClick={deleteAllFilteredRecords} disabled={isDeleting}>{isDeleting ? "..." : "Delete All"}</button>}
-                <button onClick={downloadPDF} className="download-btn">Download PDF</button>
+                  {/* ✅ FIX: officer-க்கும் Delete All காட்டக்கூடாது — isManager மட்டும் hide, officer show */}
+                  {!isManager && <button className="delete-btn" onClick={deleteAllFilteredRecords} disabled={isDeleting}>{isDeleting ? "..." : "Delete All"}</button>}
+                  <button onClick={downloadPDF} className="download-btn">Download PDF</button>
                 </div>
             </div>
             {loading ? <div style={{padding:'20px', textAlign:'center'}}>Loading Attendance...</div> : (
@@ -335,37 +349,37 @@ const Attendance = () => {
             )}
             <div className="pagination-container" style={{display:'flex', justifyContent:'flex-end', marginTop:'15px', gap:'10px'}}>
                 <span>Page {currentPage} of {totalPages}</span>
-                <button onClick={goToPrevPage} disabled={currentPage===1} style={{padding:'5px 10px'}}><ChevronLeft/></button>
+                <button onClick={goToPrevPage} disabled={currentPage===1}          style={{padding:'5px 10px'}}><ChevronLeft/></button>
                 <button onClick={goToNextPage} disabled={currentPage===totalPages} style={{padding:'5px 10px'}}><ChevronRight/></button>
             </div>
           </>
       ) : activeTab === 'leaves' ? (
-    <>
-      <div className="filter-container1" style={{marginBottom:'20px', background:'#f9fafb', padding:'15px', borderRadius:'10px'}}>
-        <div className="filter-inputs" style={{display:'flex', gap:'15px'}}>
-          <div style={{display:'flex', alignItems:'center', background:'white', border:'1px solid #ddd', padding:'5px 10px', borderRadius:'8px'}}>
-            <Search size={16} color="#888" />
-            <input 
-              type="text" placeholder="Search Name..." 
-              value={leaveSearch} 
-              onChange={(e) => setLeaveSearch(e.target.value)} 
-              style={{border:'none', outline:'none', padding:'5px', marginLeft:'5px'}}
-            />
+        <>
+          <div className="filter-container1" style={{marginBottom:'20px', background:'#f9fafb', padding:'15px', borderRadius:'10px'}}>
+            <div className="filter-inputs" style={{display:'flex', gap:'15px'}}>
+              <div style={{display:'flex', alignItems:'center', background:'white', border:'1px solid #ddd', padding:'5px 10px', borderRadius:'8px'}}>
+                <Search size={16} color="#888" />
+                <input 
+                  type="text" placeholder="Search Name..." 
+                  value={leaveSearch} 
+                  onChange={(e) => setLeaveSearch(e.target.value)} 
+                  style={{border:'none', outline:'none', padding:'5px', marginLeft:'5px'}}
+                />
+              </div>
+              <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="date-input" title="From Date" />
+              <input type="date" value={toDate}   onChange={(e) => setToDate(e.target.value)}   className="date-input" title="To Date" />
+              <button onClick={() => {setLeaveSearch(""); setFromDate(""); setToDate("");}} className="clear-btn">Reset</button>
+            </div>
           </div>
-          <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="date-input" title="From Date" />
-          <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="date-input" title="To Date" />
-          <button onClick={() => {setLeaveSearch(""); setFromDate(""); setToDate("");}} className="clear-btn">Reset</button>
-        </div>
-      </div>
-      <Leaves searchTerm={leaveSearch} fromDate={fromDate} toDate={toDate} />
-    </>
+          <Leaves searchTerm={leaveSearch} fromDate={fromDate} toDate={toDate} />
+        </>
       ) : (
         <div className="cl-reports-tab">
           <div className="filter-container1" style={{background:'#fffbf0', border:'1px solid #ffe0b2', marginBottom:'20px'}}>
             <div className="filter-inputs">
                 <label style={{fontSize:'14px', fontWeight:'600'}}>Filter Total CL by Date Range:</label>
                 <input type="date" value={clFromDate} onChange={e => setClFromDate(e.target.value)} className="date-input" />
-                <input type="date" value={clToDate} onChange={e => setClToDate(e.target.value)} className="date-input" />
+                <input type="date" value={clToDate}   onChange={e => setClToDate(e.target.value)}   className="date-input" />
                 <button onClick={() => {setClFromDate(""); setClToDate("");}} className="clear-btn">Reset</button>
             </div>
           </div>

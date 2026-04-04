@@ -37,7 +37,7 @@ const Login = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleLogin = async (e) => {
+  const handleLogin = async (e) => {
         e.preventDefault();
         setStatus({ loading: true, error: '' });
         localStorage.clear(); 
@@ -55,11 +55,19 @@ const Login = () => {
                 setStatus({ loading: false, error: '' });
                 const role = data.user.role.toLowerCase(); 
                 
+                // ✅ targetPath mapping with officer role
                 let targetPath = '/employee-dashboard';
-                if (role === 'admin' || role === 'accountant') targetPath = '/admin-dashboard';
-                else if (role === 'manager') targetPath = '/manager-dashboard';
-                else if (role === 'sales') targetPath = '/sales-dashboard';
+                if (role === 'admin' || role === 'accountant') {
+                    targetPath = '/admin-dashboard';
+                } else if (role === 'manager') {
+                    targetPath = '/manager-dashboard';
+                } else if (role === 'sales') {
+                    targetPath = '/sales-dashboard';
+                } else if (role === 'officer') {
+                    targetPath = '/officer-dashboard'; // ✅ Officer-ah irundha officer dashboard poga vachutaen
+                }
 
+                // Session storage logic
                 localStorage.setItem(`${role}Token`, data.token);
                 localStorage.setItem('userRole', role);
                 localStorage.setItem(`${role}User`, JSON.stringify(data.user));

@@ -52,7 +52,6 @@ const DashboardCards = ({ handleCardClick, role, designation }) => {
                         <div className="card-title1">Offer Letter</div>
                         <div className="card-accent"></div>
                     </div>
-                    {/* ✅ Bulk Holiday Card */}
                     <div className="card" onClick={() => handleCardClick('bulk-attendance')}>
                         <div className="card-icon"><Calendar size={40} color="#FF4500" /></div>
                         <div className="card-title1">Bulk Holiday</div>
@@ -122,24 +121,30 @@ const AdminDashboard = () => {
     const [userDesignation, setUserDesignation] = useState('');
 
     useEffect(() => {
-        const adminToken = localStorage.getItem('adminToken');
+        const adminToken     = localStorage.getItem('adminToken');
         const accountantToken = localStorage.getItem('accountantToken');
-        const employeeToken = localStorage.getItem('employeeToken');
-        const managerToken = localStorage.getItem('managerToken');
-        
+        const employeeToken  = localStorage.getItem('employeeToken');
+        const managerToken   = localStorage.getItem('managerToken');
+        // ✅ FIX: officerToken check add பண்ணினேன் — இல்லாட்டா officer login page-க்கு போயிடுவாங்க
+        const officerToken   = localStorage.getItem('officerToken');
+
+        // ✅ FIX: officerUser-ஐயும் parse பண்றோம் — முன்னாடி இல்லாம இருந்தது
         const userData = JSON.parse(
-            localStorage.getItem('adminUser') || 
-            localStorage.getItem('managerUser') || 
-            localStorage.getItem('accountantUser') ||
-            localStorage.getItem('employeeUser') || 
-            localStorage.getItem('userData') || '{}'
+            localStorage.getItem('adminUser')     ||
+            localStorage.getItem('managerUser')   ||
+            localStorage.getItem('accountantUser')||
+            localStorage.getItem('officerUser')   ||
+            localStorage.getItem('employeeUser')  ||
+            localStorage.getItem('userData')      ||
+            '{}'
         );
-        
+
         setUserDesignation(userData.designation || '');
         const role = userData.role ? userData.role.toLowerCase() : '';
         setUserRole(role);
 
-        if (!adminToken && !accountantToken && !employeeToken && !managerToken) {
+        // ✅ FIX: officerToken-ஐயும் check பண்றோம்
+        if (!adminToken && !accountantToken && !employeeToken && !managerToken && !officerToken) {
             navigate('/');
         }
     }, [navigate]);
@@ -163,22 +168,21 @@ const AdminDashboard = () => {
 
     const handleCardClick = (type) => {
         const routes = {
-            'add': '/add-employee',
-            'teams': '/admin-dashboard/teams',
-            'tasks': '/admin-dashboard/tasks',
-            'projects': '/admin-dashboard/projects',
-            'attendance': '/admin-dashboard/attendance',
-            'leads': '/admin-dashboard/leads',
-            'payroll': '/admin-dashboard/payroll',
-            'invoice': '/admin-dashboard/invoice',
-            'fixed-invoice': '/admin-dashboard/fixed-invoice',
-            'quote': '/admin-dashboard/quote',
-            'receipt': '/admin-dashboard/receipt',          
-            'receipt-history': '/admin-dashboard/receipt-history',
-            'accounts': '/admin-dashboard/accounts',
-            'offer-letter': '/admin-dashboard/offer-letter',
-            // ✅ Fix: Added the route for Bulk Attendance
-            'bulk-attendance': '/admin-dashboard/bulk-attendance' 
+            'add':              '/add-employee',
+            'teams':            '/admin-dashboard/teams',
+            'tasks':            '/admin-dashboard/tasks',
+            'projects':         '/admin-dashboard/projects',
+            'attendance':       '/admin-dashboard/attendance',
+            'leads':            '/admin-dashboard/leads',
+            'payroll':          '/admin-dashboard/payroll',
+            'invoice':          '/admin-dashboard/invoice',
+            'fixed-invoice':    '/admin-dashboard/fixed-invoice',
+            'quote':            '/admin-dashboard/quote',
+            'receipt':          '/admin-dashboard/receipt',
+            'receipt-history':  '/admin-dashboard/receipt-history',
+            'accounts':         '/admin-dashboard/accounts',
+            'offer-letter':     '/admin-dashboard/offer-letter',
+            'bulk-attendance':  '/admin-dashboard/bulk-attendance',
         };
         if (routes[type]) navigate(routes[type]);
     };

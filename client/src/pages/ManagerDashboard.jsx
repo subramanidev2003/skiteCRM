@@ -389,12 +389,17 @@ const ManagerDashboard = () => {
             {/* LEAVE BUTTON */}
             <button
               onClick={() => setIsLeaveModalOpen(true)}
-              style={{ 
-                marginTop: '8px', padding: '10px 20px', borderRadius: '8px', border: 'none',
-                background: '#fff', color: '#ef4444', fontWeight: '600', fontSize: '14px',
-                cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
-                border: '1px solid #fecaca'
-              }}
+              style={{
+                background: '#fff',
+                color: '#ef4444',
+                fontWeight: '600',
+                fontSize: '14px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                border: '1px solid #fecaca' 
+      }}
             >
               <CalendarPlus size={16} /> Request Leave
             </button>

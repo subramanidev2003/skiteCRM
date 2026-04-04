@@ -1,11 +1,16 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, FileCheck } from 'lucide-react';
 
 const FixedInvoice = () => {
     const navigate = useNavigate();
+    const location = useLocation();
 
-    // ✅ FIXED CLIENTS DATA FULLY UPDATED
+    // Detect பண்ணுறோம் — officer-ஆ admin-ஆன்னு
+    const isOfficer = location.pathname.startsWith('/officer');
+    const invoicePath = isOfficer ? '/officer/invoice' : '/admin-dashboard/invoice';
+    const dashboardPath = isOfficer ? '/officer-dashboard' : '/admin-dashboard';
+
     const fixedClients = [
         {
             id: 'sr-automation',
@@ -20,7 +25,7 @@ const FixedInvoice = () => {
             items: [
                 { description: 'SEO SERVICE', hsn: '998319', price: '12000', qty: 1 }
             ],
-            taxRate: 9 // 18% GST (9% CGST + 9% SGST)
+            taxRate: 9
         },
         {
             id: 'sathyan',
@@ -35,7 +40,7 @@ const FixedInvoice = () => {
             items: [
                 { description: 'ONLINE CONTENT VIDEOS', hsn: '998433', price: '1000', qty: 12 }
             ],
-            taxRate: 9 // 18% GST (9% CGST + 9% SGST)
+            taxRate: 9
         },
         {
             id: 'corporate-concepts',
@@ -51,7 +56,7 @@ const FixedInvoice = () => {
                 { description: 'WEBSITE SEO', hsn: '998319', price: '12300', qty: 1 },
                 { description: 'LINKEDIN (PERSONAL BRANDING)', hsn: '998397', price: '7000', qty: 1 }
             ],
-            taxRate: 9 // 18% GST (9% CGST + 9% SGST)
+            taxRate: 9
         },
         {
             id: 'season-6',
@@ -66,12 +71,11 @@ const FixedInvoice = () => {
             items: [
                 { description: 'ONLINE CONTENT VIDEOS', hsn: '998433', price: '1750', qty: 4 }
             ],
-            taxRate: 0 // NO GST
+            taxRate: 0
         },
         {
             id: 'bala',
             name: 'BALA',
-            // BALA details baaki irukku, kidaichathum inga update pannikonga
             clientDetails: { name: 'BALAMURUGAN', addressLine1: '', addressLine2: '', location: '', gstNo: '' },
             items: [{ description: 'ONLINE CONTENT VIDEOS', hsn: '998433', price: '1000', qty: 20 }],
             taxRate: 0 
@@ -89,20 +93,20 @@ const FixedInvoice = () => {
             items: [
                 { description: 'ONLINE CONTENT VIDEOS', hsn: '998433', price: '1000', qty: 25 }
             ],
-            taxRate: 0 // NO GST
+            taxRate: 0
         }
     ];
 
     const handleClientClick = (client) => {
-        // State-il data-vai pass seigirom
-        navigate('/admin-dashboard/invoice', { state: { predefinedData: client } });
+        // ✅ FIX: isOfficer-ஆ பொறுத்து correct path-க்கு navigate ஆகும்
+        navigate(invoicePath, { state: { predefinedData: client } });
     };
 
     return (
         <div style={{ padding: '30px', backgroundColor: '#f9fafb', minHeight: '100vh', fontFamily: 'sans-serif' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '30px' }}>
                 <button
-                    onClick={() => navigate('/admin-dashboard')}
+                    onClick={() => navigate(dashboardPath)}
                     style={{
                         display: 'flex', alignItems: 'center', gap: '8px',
                         padding: '10px 15px', border: 'none', borderRadius: '6px',

@@ -1,27 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Trash2, Plus, Search, FileText, FileX } from 'lucide-react';
-import { useNavigate } from 'react-router-dom'; 
+import { useNavigate, useLocation } from 'react-router-dom'; 
 import { toast } from 'react-toastify';
 import { API_BASE } from '../api';
 import './Invoice.css'; 
 
 const QuoteHistory = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const isSalesUser = () => {
-    const salesUser = localStorage.getItem("salesUser");
-    return !!salesUser; 
-  };
+  // ✅ FIXED: Officer detect via pathname
+  const isOfficer = location.pathname.startsWith('/officer');
 
+  const isSalesUser = () => !!localStorage.getItem("salesUser");
   const isSales = isSalesUser(); 
 
   const [quotes, setQuotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  
-  const [activeTab, setActiveTab] = useState('gst'); // 'gst' or 'nongst'
+  const [activeTab, setActiveTab] = useState('gst');
 
-  // 1. Fetch Data
   const fetchQuotes = async () => {
     try {
       const response = await fetch(`${API_BASE}/quote/all`);
@@ -43,7 +41,6 @@ const QuoteHistory = () => {
     fetchQuotes();
   }, []);
 
-  // 2. Delete Quote
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this quote?")) return;
 
@@ -63,7 +60,6 @@ const QuoteHistory = () => {
     }
   };
 
-  // 3. FILTER & SORT LOGIC (✅ Sort added here by date)
   const filteredQuotes = quotes
     .filter(q => {
       const matchesSearch = 
@@ -78,34 +74,38 @@ const QuoteHistory = () => {
         return matchesSearch && !isGST;
       }
     })
-    // ✅ NEW: Sort by Date (Descending - Newest first)
     .sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  // ✅ Back Button Handler
+  // ✅ FIXED: Officer-க்கு correct paths
   const handleBack = () => {
-      navigate(isSales ? '/sales-dashboard' : '/admin-dashboard');
+      if (isOfficer) navigate('/officer-dashboard');
+      else if (isSales) navigate('/sales-dashboard');
+      else navigate('/admin-dashboard');
   };
 
-  // ✅ Create New Button Handler
   const handleCreateNew = () => {
-      navigate(isSales ? '/sales-dashboard/quote' : '/admin-dashboard/quote');
+      if (isOfficer) navigate('/officer/quote');
+      else if (isSales) navigate('/sales-dashboard/quote');
+      else navigate('/admin-dashboard/quote');
   };
 
-  // ✅ Row Click Handler
   const handleRowClick = (id) => {
-      const path = isSales 
-        ? `/sales-dashboard/quote/${id}` 
-        : `/admin-dashboard/quote/${id}`;
-      navigate(path);
+      if (isOfficer) navigate(`/officer/quote/${id}`);
+      else if (isSales) navigate(`/sales-dashboard/quote/${id}`);
+      else navigate(`/admin-dashboard/quote/${id}`);
   };
+
+  // ✅ Back button label
+  const backLabel = isOfficer ? 'Officer Panel'
+    : isSales ? 'Sales Panel'
+    : 'Admin Dashboard';
 
   return (
     <div style={{ padding: '30px', backgroundColor: '#f9fafb', minHeight: '100vh', fontFamily: 'sans-serif' }}>
       
-      {/* --- HEADER SECTION --- */}
+      {/* HEADER */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         
-        {/* SMART BACK BUTTON */}
         <button 
           onClick={handleBack}
           style={{ 
@@ -114,12 +114,11 @@ const QuoteHistory = () => {
             backgroundColor: '#e5e7eb', color: '#374151', cursor: 'pointer', fontWeight: '500' 
           }}
         >
-          <ArrowLeft size={18} /> {isSales ? 'Sales Panel' : 'Admin Dashboard'}
+          <ArrowLeft size={18} /> {backLabel}
         </button>
 
         <h1 style={{ fontSize: '24px', fontWeight: '600', color: '#111827', margin: 0 }}>Quote History</h1>
 
-        {/* SMART CREATE NEW BUTTON */}
         <button 
           onClick={handleCreateNew}
           style={{ 
@@ -133,7 +132,7 @@ const QuoteHistory = () => {
         </button>
       </div>
 
-      {/* --- TABS SECTION --- */}
+      {/* TABS */}
       <div style={{ display: 'flex', gap: '15px', marginBottom: '20px' }}>
         <button
           onClick={() => setActiveTab('gst')}
@@ -166,7 +165,7 @@ const QuoteHistory = () => {
         </button>
       </div>
 
-      {/* --- SEARCH BAR --- */}
+      {/* SEARCH */}
       <div style={{ 
         backgroundColor: 'white', padding: '15px 20px', borderRadius: '8px', 
         marginBottom: '25px', display: 'flex', alignItems: 'center', gap: '12px',
@@ -182,7 +181,7 @@ const QuoteHistory = () => {
         />
       </div>
 
-      {/* --- TABLE --- */}
+      {/* TABLE */}
       <div style={{ backgroundColor: 'white', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
         {loading ? (
           <p style={{ padding: '20px', textAlign: 'center', color: '#6b7280' }}>Loading quotes...</p>

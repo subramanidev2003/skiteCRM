@@ -1,43 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Plus, Trash2, TrendingUp, TrendingDown, FileText, CheckCircle, Filter } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { API_BASE } from '../api';
 import './IncomeExpense.css';
 
-// const API_BASE = 'https://skitecrm-1l7f.onrender.com/api';
-
 const IncomeExpense = () => {
   const navigate = useNavigate();
-  
-  // Data State
+  const location = useLocation();
+
+  // ✅ FIXED: Officer detect via pathname
+  const isOfficer = location.pathname.startsWith('/officer');
+  const base = isOfficer ? '/officer' : '/admin-dashboard';
+
   const [invoices, setInvoices] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [manualIncomes, setManualIncomes] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Date Filter State
   const [dateFilter, setDateFilter] = useState({
     from: new Date().toISOString().slice(0, 8) + '01', 
     to: new Date().toISOString().split('T')[0]         
   });
 
-  // --- FORMS STATE ---
-  // ✅ 1. NEW INCOME FORM STATE
   const [incomeForm, setIncomeForm] = useState({
     description: '',
     amount: '',
     date: new Date().toISOString().split('T')[0]
   });
 
-  // 2. EXPENSE FORM STATE
   const [expenseForm, setExpenseForm] = useState({ 
     description: '', 
     amount: '', 
     date: new Date().toISOString().split('T')[0] 
   });
 
-  // --- FETCH DATA ---
   const fetchData = async () => {
     try {
       const invRes = await fetch(`${API_BASE}/invoice/all`);
@@ -56,12 +53,10 @@ const IncomeExpense = () => {
 
   useEffect(() => { fetchData(); }, []);
 
-  // --- FILTER LOGIC ---
   const filterByDate = (data) => {
     if (!dateFilter.from || !dateFilter.to) return data;
     const from = new Date(dateFilter.from).setHours(0,0,0,0);
     const to = new Date(dateFilter.to).setHours(23,59,59,999);
-
     return data.filter(item => {
       const itemDate = new Date(item.date).getTime();
       return itemDate >= from && itemDate <= to;
@@ -72,33 +67,21 @@ const IncomeExpense = () => {
   const filteredExpenses = filterByDate(expenses);
   const filteredManualIncomes = filterByDate(manualIncomes);
 
-  // --- CALCULATIONS ---
   const invoiceIncome = filteredInvoices.reduce((acc, inv) => acc + (inv.paidAmount || 0), 0);
   const manualIncomeTotal = filteredManualIncomes.reduce((acc, curr) => acc + curr.amount, 0);
-  
-  // Total Income
   const totalIncome = invoiceIncome + manualIncomeTotal;
-  
-  // Total Expense
   const totalExpense = filteredExpenses.reduce((acc, curr) => acc + curr.amount, 0);
-  
-  // Net Balance
   const netBalance = totalIncome - totalExpense;
 
-  // --- HANDLERS ---
-  
-  // ✅ 2. HANDLE ADD INCOME (New Function)
   const handleAddIncome = async (e) => {
     e.preventDefault();
     if(!incomeForm.description || !incomeForm.amount) return toast.warning("Fill all fields");
-
     try {
       const res = await fetch(`${API_BASE}/transaction/add`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...incomeForm, type: 'income', category: 'General' }) 
       });
-
       if (res.ok) {
         toast.success("Income Added!");
         fetchData();
@@ -107,18 +90,15 @@ const IncomeExpense = () => {
     } catch (err) { toast.error("Server Error"); }
   };
 
-  // HANDLE ADD EXPENSE
   const handleAddExpense = async (e) => {
     e.preventDefault();
     if(!expenseForm.description || !expenseForm.amount) return toast.warning("Fill all fields");
-
     try {
       const res = await fetch(`${API_BASE}/transaction/add`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...expenseForm, type: 'expense', category: 'General' }) 
       });
-
       if (res.ok) {
         toast.success("Expense Added!");
         fetchData();
@@ -142,177 +122,126 @@ const IncomeExpense = () => {
       {/* HEADER */}
       <div className="ie-header">
         <div className="header-left">
-            <button className="modern-back-btn" onClick={() => navigate('/admin-dashboard/accounts')}>
-                <ArrowLeft size={20} />
-                <span>Back</span>
-            </button>
-            <h2>Accounts Overview</h2>
+          {/* ✅ FIXED: Back goes to correct accounts page */}
+          <button className="modern-back-btn" onClick={() => navigate(`${base}/accounts`)}>
+            <ArrowLeft size={20} />
+            <span>Back</span>
+          </button>
+          <h2>Accounts Overview</h2>
         </div>
         
         <div className="net-balance-card" style={{background: '#e0f2fe', border: '1px solid #bae6fd'}}>
-            <span style={{color: '#0284c7'}}>Total Revenue</span>
-            <h4 style={{margin:0, color: '#0369a1'}}>₹ {totalIncome.toLocaleString()}</h4>
+          <span style={{color: '#0284c7'}}>Total Revenue</span>
+          <h4 style={{margin:0, color: '#0369a1'}}>₹ {totalIncome.toLocaleString()}</h4>
         </div>
       </div>
 
       {/* FILTER BAR */}
       <div className="filter-bar">
         <div className="filter-group">
-            <Filter size={18} color="#555"/>
-            <span>Filter by Date:</span>
+          <Filter size={18} color="#555"/>
+          <span>Filter by Date:</span>
         </div>
         <div className="date-inputs">
-            <label>From:</label>
-            <input 
-                type="date" 
-                value={dateFilter.from} 
-                onChange={(e) => setDateFilter({...dateFilter, from: e.target.value})}
-            />
-            <label>To:</label>
-            <input 
-                type="date" 
-                value={dateFilter.to} 
-                onChange={(e) => setDateFilter({...dateFilter, to: e.target.value})}
-            />
+          <label>From:</label>
+          <input type="date" value={dateFilter.from} onChange={(e) => setDateFilter({...dateFilter, from: e.target.value})} />
+          <label>To:</label>
+          <input type="date" value={dateFilter.to} onChange={(e) => setDateFilter({...dateFilter, to: e.target.value})} />
         </div>
       </div>
 
       {/* GRID LAYOUT */}
       <div className="ie-grid-layout">
         
-        {/* --- LEFT COLUMN: INCOME --- */}
+        {/* LEFT COLUMN: INCOME */}
         <div className="column-section income-section">
-            <div className="section-header green-header">
-                <TrendingUp size={20} /> 
-                <div>
-                  <h3 style={{margin:0}}>Cash in Hand: ₹ {netBalance.toLocaleString()}</h3>
-                  <span style={{fontSize: '12px', fontWeight: 'normal'}}>(Income - Expense)</span>
-                </div>
+          <div className="section-header green-header">
+            <TrendingUp size={20} /> 
+            <div>
+              <h3 style={{margin:0}}>Cash in Hand: ₹ {netBalance.toLocaleString()}</h3>
+              <span style={{fontSize: '12px', fontWeight: 'normal'}}>(Income - Expense)</span>
             </div>
+          </div>
 
-            {/* ✅ 3. INCOME FORM (New Addition) */}
-            <form className="expense-form income-form-style" onSubmit={handleAddIncome} style={{marginBottom:'15px', padding:'10px', background:'#ecfdf5', borderRadius:'8px', border:'1px solid #d1fae5'}}>
-                <div className="input-row">
-                    <input 
-                        type="date" 
-                        value={incomeForm.date}
-                        onChange={(e) => setIncomeForm({...incomeForm, date: e.target.value})}
-                        style={{width: '130px'}} 
-                        required
-                    />
-                    <input 
-                        type="text" 
-                        placeholder="Income Description" 
-                        value={incomeForm.description}
-                        onChange={(e) => setIncomeForm({...incomeForm, description: e.target.value})}
-                        style={{flex: 2}}
-                        required
-                    />
-                    <input 
-                        type="number" 
-                        placeholder="Amount" 
-                        value={incomeForm.amount}
-                        onChange={(e) => setIncomeForm({...incomeForm, amount: e.target.value})}
-                        style={{flex: 1}}
-                        required
-                    />
-                    <button type="submit" style={{backgroundColor: '#10b981'}}><Plus size={18}/></button>
-                </div>
-            </form>
-
-            <div className="scrollable-list">
-                <h4 className="list-title">Income Sources</h4>
-                
-                {/* 1. Invoice Incomes */}
-                {filteredInvoices.filter(inv => (inv.paidAmount || 0) > 0).map(inv => (
-                    <div key={inv._id} className="income-item invoice-item">
-                        <div className="item-left">
-                            <FileText size={16} color="#555"/>
-                            <div>
-                                <span className="item-name">{inv.clientDetails.name}</span>
-                                <span className="item-sub">{new Date(inv.date).toLocaleDateString()}</span>
-                            </div>
-                        </div>
-                        <div className="item-amount green-text">
-                            + ₹ {inv.paidAmount.toLocaleString()}
-                        </div>
-                    </div>
-                ))}
-
-                {/* 2. Manual Incomes */}
-                {filteredManualIncomes.map(inc => (
-                    <div key={inc._id} className="income-item">
-                        <div className="item-left">
-                            <CheckCircle size={16} color="#10b981"/>
-                            <div>
-                                <span className="item-name">{inc.description}</span>
-                                <span className="item-sub">{new Date(inc.date).toLocaleDateString()}</span>
-                            </div>
-                        </div>
-                        <div className="item-right">
-                            <span className="item-amount green-text">+ ₹ {inc.amount.toLocaleString()}</span>
-                            <button onClick={() => handleDelete(inc._id)} className="icon-del"><Trash2 size={14}/></button>
-                        </div>
-                    </div>
-                ))}
+          <form className="expense-form income-form-style" onSubmit={handleAddIncome} style={{marginBottom:'15px', padding:'10px', background:'#ecfdf5', borderRadius:'8px', border:'1px solid #d1fae5'}}>
+            <div className="input-row">
+              <input type="date" value={incomeForm.date} onChange={(e) => setIncomeForm({...incomeForm, date: e.target.value})} style={{width: '130px'}} required />
+              <input type="text" placeholder="Income Description" value={incomeForm.description} onChange={(e) => setIncomeForm({...incomeForm, description: e.target.value})} style={{flex: 2}} required />
+              <input type="number" placeholder="Amount" value={incomeForm.amount} onChange={(e) => setIncomeForm({...incomeForm, amount: e.target.value})} style={{flex: 1}} required />
+              <button type="submit" style={{backgroundColor: '#10b981'}}><Plus size={18}/></button>
             </div>
+          </form>
+
+          <div className="scrollable-list">
+            <h4 className="list-title">Income Sources</h4>
+            
+            {filteredInvoices.filter(inv => (inv.paidAmount || 0) > 0).map(inv => (
+              <div key={inv._id} className="income-item invoice-item">
+                <div className="item-left">
+                  <FileText size={16} color="#555"/>
+                  <div>
+                    <span className="item-name">{inv.clientDetails.name}</span>
+                    <span className="item-sub">{new Date(inv.date).toLocaleDateString()}</span>
+                  </div>
+                </div>
+                <div className="item-amount green-text">
+                  + ₹ {inv.paidAmount.toLocaleString()}
+                </div>
+              </div>
+            ))}
+
+            {filteredManualIncomes.map(inc => (
+              <div key={inc._id} className="income-item">
+                <div className="item-left">
+                  <CheckCircle size={16} color="#10b981"/>
+                  <div>
+                    <span className="item-name">{inc.description}</span>
+                    <span className="item-sub">{new Date(inc.date).toLocaleDateString()}</span>
+                  </div>
+                </div>
+                <div className="item-right">
+                  <span className="item-amount green-text">+ ₹ {inc.amount.toLocaleString()}</span>
+                  <button onClick={() => handleDelete(inc._id)} className="icon-del"><Trash2 size={14}/></button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* --- RIGHT COLUMN: EXPENSE --- */}
+        {/* RIGHT COLUMN: EXPENSE */}
         <div className="column-section expense-section">
-            <div className="section-header red-header">
-                <TrendingDown size={20} />
-                <h3>Total Expense: ₹ {totalExpense.toLocaleString()}</h3>
-            </div>
+          <div className="section-header red-header">
+            <TrendingDown size={20} />
+            <h3>Total Expense: ₹ {totalExpense.toLocaleString()}</h3>
+          </div>
 
-            {/* EXPENSE FORM */}
-            <form className="expense-form" onSubmit={handleAddExpense}>
-                <div className="input-row">
-                    <input 
-                        type="date" 
-                        value={expenseForm.date}
-                        onChange={(e) => setExpenseForm({...expenseForm, date: e.target.value})}
-                        style={{width: '130px'}} 
-                        required
-                    />
-                    <input 
-                        type="text" 
-                        placeholder="Expense Description" 
-                        value={expenseForm.description}
-                        onChange={(e) => setExpenseForm({...expenseForm, description: e.target.value})}
-                        style={{flex: 2}}
-                        required
-                    />
-                    <input 
-                        type="number" 
-                        placeholder="Amount" 
-                        value={expenseForm.amount}
-                        onChange={(e) => setExpenseForm({...expenseForm, amount: e.target.value})}
-                        style={{flex: 1}}
-                        required
-                    />
-                    <button type="submit"><Plus size={18}/></button>
+          <form className="expense-form" onSubmit={handleAddExpense}>
+            <div className="input-row">
+              <input type="date" value={expenseForm.date} onChange={(e) => setExpenseForm({...expenseForm, date: e.target.value})} style={{width: '130px'}} required />
+              <input type="text" placeholder="Expense Description" value={expenseForm.description} onChange={(e) => setExpenseForm({...expenseForm, description: e.target.value})} style={{flex: 2}} required />
+              <input type="number" placeholder="Amount" value={expenseForm.amount} onChange={(e) => setExpenseForm({...expenseForm, amount: e.target.value})} style={{flex: 1}} required />
+              <button type="submit"><Plus size={18}/></button>
+            </div>
+          </form>
+
+          <div className="scrollable-list">
+            <h4 className="list-title">Expense List</h4>
+            {filteredExpenses.map(exp => (
+              <div key={exp._id} className="income-item expense-item">
+                <div className="item-left">
+                  <div className="dot red-dot"></div>
+                  <div>
+                    <span className="item-name">{exp.description}</span>
+                    <span className="item-sub">{new Date(exp.date).toLocaleDateString()}</span>
+                  </div>
                 </div>
-            </form>
-
-            <div className="scrollable-list">
-                <h4 className="list-title">Expense List</h4>
-                {filteredExpenses.map(exp => (
-                    <div key={exp._id} className="income-item expense-item">
-                        <div className="item-left">
-                            <div className="dot red-dot"></div>
-                            <div>
-                                <span className="item-name">{exp.description}</span>
-                                <span className="item-sub">{new Date(exp.date).toLocaleDateString()}</span>
-                            </div>
-                        </div>
-                        <div className="item-right">
-                            <span className="item-amount red-text">- ₹ {exp.amount.toLocaleString()}</span>
-                            <button onClick={() => handleDelete(exp._id)} className="icon-del"><Trash2 size={14}/></button>
-                        </div>
-                    </div>
-                ))}
-            </div>
+                <div className="item-right">
+                  <span className="item-amount red-text">- ₹ {exp.amount.toLocaleString()}</span>
+                  <button onClick={() => handleDelete(exp._id)} className="icon-del"><Trash2 size={14}/></button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
       </div>

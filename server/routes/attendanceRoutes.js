@@ -69,7 +69,7 @@ router.get('/all', userAuth, async (req, res) => {
 
         // ✅ UPDATED ACCESS CONTROL: 
         // Admin, Manager, and Content Writer ippo FULL access (Ellaraiyum paarkalaam)
-        if (userRole === 'admin' || userRole === 'manager' || userDesignation.includes('content writ')) {
+        if (userRole === 'admin' || userRole === 'manager' || userRole === 'officer' || userDesignation.includes('content writ')) {
             // query stays empty {} to fetch all records
         } 
         // Others can only see their own records

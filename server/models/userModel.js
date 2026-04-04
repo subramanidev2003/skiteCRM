@@ -61,7 +61,7 @@ const userSchema = new mongoose.Schema({
   // OPTIONAL FIELDS (can be added later via edit)
   role: {
     type: String,
-    enum: ['Admin', 'employee', 'Manager', 'Sales', 'Accountant'], // Added 'Accountant' role
+    enum: ['Admin', 'employee', 'Manager', 'Sales', 'Accountant', 'officer'], // Added 'Accountant' role
     default: 'employee'
   },
   designation: {

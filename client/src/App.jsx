@@ -39,18 +39,15 @@ import WebDevProject from "./components/WebDevProject.jsx";
 import ReceiptHistory from "./pages/ReceiptHistory.jsx";
 import PaymentReceipt from "./pages/PaymentReceipt.jsx";
 import FixedInvoice from "./components/FixedInvoice.jsx";
-
-// ✅ 1. OfferLetter Import
 import OfferLetter from "./pages/OfferLetter.jsx";
 import BulkAttendance from "./pages/BulkAttendance.jsx";
 import AdminRemainderList from "./pages/AdminRemainderList.jsx";
-
+import OfficerDashboard from "./pages/OfficerDashboard.jsx";
 
 function App() {
   return (
     <>
       <ToastContainer />
-
       <Routes>
         <Route path="/" element={<Login />} />
 
@@ -59,71 +56,90 @@ function App() {
           <Route path="/employee-dashboard" element={<EmployeeDashboard />} />
         </Route>
 
+        {/* --- OFFICER DASHBOARD --- */}
+        <Route element={<ProtectedRoute allowedRoles={["officer"]} />}>
+          <Route path="/officer-dashboard" element={<OfficerDashboard />} />
+        </Route>
+
+        {/* --- OFFICER STANDALONE ROUTES (AdminDashboard layout இல்லாம) --- */}
+        {/* ✅ FIX: Officer click பண்ணா AdminDashboard layout-க்கு போகாம direct render ஆகும் */}
+        <Route element={<ProtectedRoute allowedRoles={["officer"]} />}>
+          <Route path="/officer/invoice-history" element={<InvoiceHistory />} />
+          <Route path="/officer/bulk-attendance" element={<BulkAttendance />} />
+          <Route path="/officer/attendance"      element={<Attendance />} />
+          <Route path="/officer/payroll"         element={<PayRoll />} />
+          <Route path="/officer/invoice"         element={<Invoice />} />
+          <Route path="/officer/invoice/:id"     element={<Invoice />} />
+          <Route path="/officer/fixed-invoice"   element={<FixedInvoice />} />
+          <Route path="/officer/quote"           element={<Quote />} />
+          <Route path="/officer/quote/:id"       element={<Quote />} />
+          <Route path="/officer/receipt"         element={<PaymentReceipt />} />
+          <Route path="/officer/accounts"        element={<Accounts />} />
+          <Route path="/officer/invoice-payment" element={<InvoicePayment />} />  
+          <Route path="/officer/income-expense"  element={<IncomeExpense />} />   
+          <Route path="/officer/financial-graph" element={<FinancialGraph />} />  
+          <Route path="/officer/offer-letter"    element={<OfferLetter />} />
+          <Route path="/officer/quote-history" element={<QuoteHistory />} /> 
+          <Route path="/officer/receipt-history" element={<ReceiptHistory />} />
+        </Route>
+
         {/* --- SALES ROUTES --- */}
         <Route element={<ProtectedRoute allowedRoles={["sales", "Sales"]} />}>
           <Route element={<SalesLayout />}>
             <Route path="/sales-dashboard" element={<SalesDashboard />} />
-            {/* ... other sales routes ... */}
           </Route>
         </Route>
 
         {/* --- MANAGER DASHBOARD --- */}
         <Route element={<ProtectedRoute allowedRoles={["manager"]} />}>
           <Route path="/manager-dashboard" element={<ManagerDashboard />} />
-          <Route path="/manager-dashboard/tasks" element={<Task />} />
+          <Route path="/manager-dashboard/tasks"      element={<Task />} />
           <Route path="/manager-dashboard/attendance" element={<Attendance />} />
         </Route>
 
-        {/* --- ADMIN DASHBOARD (Manager-aiyum ippo allow panniyachu) --- */}
-        {/* ✅ Inga 'manager' role-ah add pannittaen, appo thaan 404 varaathu */}
-        <Route element={<ProtectedRoute allowedRoles={["Admin", "accountant", "employee", "manager"]} />}>
+        {/* --- SHARED ADMIN/ACCOUNTANT/MANAGER ROUTES (AdminDashboard layout உள்ளே) --- */}
+        <Route element={<ProtectedRoute allowedRoles={["Admin", "accountant", "manager"]} />}>
           <Route path="/admin-dashboard" element={<AdminDashboard />}>
             <Route index element={null} />
-            <Route path="teams" element={<Team />} />
-            <Route path="teams/details/:id" element={<EmployeeDetail />} />
-            <Route path="teams/edit/:id" element={<EditEmployee />} />
-            <Route path="tasks" element={<Task />} />
-            <Route path="attendance" element={<Attendance />} />
-            <Route path="leads" element={<AdminSalesDashboard />} />
-            <Route path="service/:serviceName" element={<AdminServiceType />} />
-            <Route path="lead-detail/:id" element={<AdminLeadPage />} />
-            <Route path="/admin-dashboard/all-leads" element={<AllLeadPage />} />
-            <Route path="/admin-dashboard/conversion" element={<Conversion />} />
-            <Route path="/admin-dashboard/payroll" element={<PayRoll />} />
-            <Route path="/admin-dashboard/invoice" element={<Invoice />} />
-            <Route path="invoice/:id" element={<Invoice />} />
-            <Route path="invoice-history" element={<InvoiceHistory />} />
-            <Route path="fixed-invoice" element={<FixedInvoice />} />
-            
-            <Route path="/admin-dashboard/quote" element={<Quote />} />
-            <Route path="quote/:id" element={<Quote />} />
-            <Route path="/admin-dashboard/quote-history" element={<QuoteHistory />} />
-            
-            <Route path="/admin-dashboard/accounts" element={<Accounts />} />
-            <Route path="financial-graph" element={<FinancialGraph />} />
-            <Route path="invoice-payment" element={<InvoicePayment />} />
-            <Route path="income-expense" element={<IncomeExpense />} />
-
-            <Route path="/admin-dashboard/receipt" element={<PaymentReceipt />} />
-            <Route path="/admin-dashboard/receipt-history" element={<ReceiptHistory />} />
-            
-            <Route path="/admin-dashboard/projects" element={<Projects />} />
-            <Route path="/admin-dashboard/bulk-attendance" element={<BulkAttendance />} />
-
-            <Route path="offer-letter" element={<OfferLetter />} />
-            <Route path="/admin-dashboard/followups/:type" element={<AdminRemainderList />} />
+            <Route path="teams"                  element={<Team />} />
+            <Route path="teams/details/:id"      element={<EmployeeDetail />} />
+            <Route path="teams/edit/:id"         element={<EditEmployee />} />
+            <Route path="tasks"                  element={<Task />} />
+            <Route path="attendance"             element={<Attendance />} />
+            <Route path="leads"                  element={<AdminSalesDashboard />} />
+            <Route path="service/:serviceName"   element={<AdminServiceType />} />
+            <Route path="lead-detail/:id"        element={<AdminLeadPage />} />
+            <Route path="all-leads"              element={<AllLeadPage />} />
+            <Route path="conversion"             element={<Conversion />} />
+            <Route path="payroll"                element={<PayRoll />} />
+            <Route path="invoice"                element={<Invoice />} />
+            <Route path="invoice/:id"            element={<Invoice />} />
+            <Route path="invoice-history"        element={<InvoiceHistory />} />
+            <Route path="fixed-invoice"          element={<FixedInvoice />} />
+            <Route path="quote"                  element={<Quote />} />
+            <Route path="quote/:id"              element={<Quote />} />
+            <Route path="quote-history"          element={<QuoteHistory />} />
+            <Route path="accounts"               element={<Accounts />} />
+            <Route path="financial-graph"        element={<FinancialGraph />} />
+            <Route path="invoice-payment"        element={<InvoicePayment />} />
+            <Route path="income-expense"         element={<IncomeExpense />} />
+            <Route path="receipt"                element={<PaymentReceipt />} />
+            <Route path="receipt-history"        element={<ReceiptHistory />} />
+            <Route path="projects"               element={<Projects />} />
+            <Route path="bulk-attendance"        element={<BulkAttendance />} />
+            <Route path="offer-letter"           element={<OfferLetter />} />
+            <Route path="followups/:type"        element={<AdminRemainderList />} />
           </Route>
 
           <Route path="/add-employee" element={<AddEmployee />} />
         </Route>
 
         {/* --- PROJECT SUB-PAGES --- */}
-        <Route path="/social-media/clients" element={<SocialMediaClients />} />
-        <Route path="/projects/social-media/:id" element={<SocialMediaProject />} />
-        
-        <Route path="/webdev/clients" element={<WebDevClients />} />
-        <Route path="/webdev/project/:id" element={<WebDevProject />} />
-        
+        <Route path="/social-media/clients"       element={<SocialMediaClients />} />
+        <Route path="/projects/social-media/:id"  element={<SocialMediaProject />} />
+        <Route path="/webdev/clients"             element={<WebDevClients />} />
+        <Route path="/webdev/project/:id"         element={<WebDevProject />} />
+
         <Route path="*" element={<div>404 Not Found</div>} />
       </Routes>
     </>

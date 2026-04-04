@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Download, Save, History } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { toast } from 'react-toastify';
 import { API_BASE } from '../api';
-import './Quote.css'; // reuse same CSS
+import './Quote.css';
 
 import skitelogo from '../assets/skite-logo.jpg';
 import skitesign from '../assets/sign.jpg';
@@ -13,7 +13,18 @@ import skiteseal from '../assets/seal.png';
 
 const PaymentReceipt = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // ✅ FIXED: Officer detect via pathname
+  const isOfficer = location.pathname.startsWith('/officer');
   const isSales = !!localStorage.getItem("salesUser");
+
+  const storedUser = JSON.parse(
+    localStorage.getItem("adminUser") ||
+    localStorage.getItem("managerUser") ||
+    localStorage.getItem("userData") || '{}'
+  );
+  const isManager = storedUser?.role?.toLowerCase() === 'manager';
 
   const senderDetails = {
     name: "SKITE",
@@ -53,7 +64,6 @@ const PaymentReceipt = () => {
 
   const paymentModes = ['Bank Transfer', 'UPI', 'Cash', 'Cheque', 'NEFT', 'RTGS', 'IMPS'];
 
-  // --- Save to DB ---
   const saveReceiptToDB = async () => {
     if (!clientDetails.name) { toast.error("Please enter Client Name!"); return; }
     if (!paymentDetails.amountPaid) { toast.error("Please enter Amount Paid!"); return; }
@@ -102,7 +112,6 @@ const PaymentReceipt = () => {
     });
   };
 
-  // --- PDF Generation ---
   const generatePDF = async () => {
     let fileName = prompt("Enter PDF File Name:", `Receipt_${receiptMeta.receiptNo}`);
     if (fileName === null) return;
@@ -113,10 +122,8 @@ const PaymentReceipt = () => {
     const orange = [255, 69, 0];
     const lightOrange = [255, 239, 234];
 
-    // --- LOGO ---
     try { const lb = await getImageBase64(skitelogo); doc.addImage(lb, 'PNG', 14, 10, 40, 29); } catch (e) {}
 
-    // --- Company Info ---
     doc.setFontSize(10); doc.setFont("helvetica", "bold"); doc.setTextColor(0);
     doc.text("SKITE", 14, 43);
     doc.setFontSize(8); doc.setFont("helvetica", "normal");
@@ -124,15 +131,12 @@ const PaymentReceipt = () => {
     doc.text(`Email: ${senderDetails.email}  |  Phone: ${senderDetails.phone}`, 14, 53);
     doc.text(`GSTIN: ${senderDetails.gst}`, 14, 58);
 
-    // --- RECEIPT Title ---
     doc.setFontSize(26); doc.setTextColor(...orange); doc.setFont("helvetica", "bold");
     doc.text("RECEIPT", 196, 22, { align: 'right' });
 
-    // --- Orange line separator ---
     doc.setDrawColor(...orange); doc.setLineWidth(0.8);
     doc.line(14, 63, 196, 63);
 
-    // --- Receipt Meta Box ---
     doc.setFillColor(...lightOrange);
     doc.roundedRect(130, 68, 66, 22, 2, 2, 'F');
     doc.setFontSize(9); doc.setTextColor(...orange); doc.setFont("helvetica", "bold");
@@ -143,7 +147,6 @@ const PaymentReceipt = () => {
     const d = new Date(receiptMeta.date);
     doc.text(`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`, 163, 82);
 
-    // --- RECEIVED FROM ---
     doc.setFontSize(9); doc.setTextColor(...orange); doc.setFont("helvetica", "bold");
     doc.text("RECEIVED FROM:", 14, 75);
     doc.setFontSize(11); doc.setTextColor(0); doc.setFont("helvetica", "bold");
@@ -157,24 +160,22 @@ const PaymentReceipt = () => {
     }
     if (clientDetails.gst) { doc.text(`GSTIN: ${clientDetails.gst}`, 14, cy); cy += 5; }
 
-    // --- Orange line ---
     doc.setDrawColor(...orange); doc.setLineWidth(0.5);
     doc.line(14, Math.max(cy + 2, 95), 196, Math.max(cy + 2, 95));
 
     let tableY = Math.max(cy + 7, 100);
 
-    // --- Payment Details Table ---
-    const amountPaid = parseFloat(paymentDetails.amountPaid) || 0;
-    const balanceAmount = parseFloat(paymentDetails.balanceAmount) || 0;
+    const amountPaidVal = parseFloat(paymentDetails.amountPaid) || 0;
+    const balanceAmountVal = parseFloat(paymentDetails.balanceAmount) || 0;
 
     const tableBody = [
       ['Description / Service', paymentDetails.description || 'Payment Received'],
       ['Payment Mode', paymentDetails.paymentMode],
       ['UTR / Transaction No', paymentDetails.utrNo || '-'],
-      ['Amount Paid', `₹ ${amountPaid.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`],
+      ['Amount Paid', `₹ ${amountPaidVal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`],
     ];
-    if (balanceAmount > 0) {
-      tableBody.push(['Balance Amount', `₹ ${balanceAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`]);
+    if (balanceAmountVal > 0) {
+      tableBody.push(['Balance Amount', `₹ ${balanceAmountVal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`]);
     }
 
     autoTable(doc, {
@@ -193,23 +194,20 @@ const PaymentReceipt = () => {
 
     let currentY = doc.lastAutoTable.finalY + 5;
 
-    // --- TOTAL PAID Box ---
     doc.setFillColor(...orange);
     doc.roundedRect(14, currentY, 182, 12, 2, 2, 'F');
     doc.setFontSize(12); doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold");
     doc.text("TOTAL AMOUNT RECEIVED", 20, currentY + 8);
-    doc.text(`₹ ${amountPaid.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, 193, currentY + 8, { align: 'right' });
+    doc.text(`₹ ${amountPaidVal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, 193, currentY + 8, { align: 'right' });
 
     currentY += 20;
 
-    // --- Amount in Words ---
     doc.setFontSize(9); doc.setTextColor(100); doc.setFont("helvetica", "italic");
-    const inWords = numberToWords(amountPaid);
+    const inWords = numberToWords(amountPaidVal);
     doc.text(`Amount in Words: ${inWords} Only`, 14, currentY);
 
     currentY += 12;
 
-    // --- Bank Details ---
     doc.setFontSize(10); doc.setTextColor(0); doc.setFont("helvetica", "bold");
     doc.text("Our Bank Details:", 14, currentY);
     doc.setFont("helvetica", "normal"); doc.setFontSize(9);
@@ -219,7 +217,6 @@ const PaymentReceipt = () => {
 
     if (currentY + 50 > 280) { doc.addPage(); currentY = 20; }
 
-    // --- Seal & Sign ---
     try { const sl = await getImageBase64(skiteseal); doc.addImage(sl, 'PNG', 75, currentY - 8, 50, 55); } catch (e) {}
     doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(0);
     doc.text("for SKITE", 150, currentY + 5);
@@ -227,7 +224,6 @@ const PaymentReceipt = () => {
     doc.setFont("helvetica", "bold");
     doc.text("Authorised Signatory", 150, currentY + 38);
 
-    // --- Footer ---
     doc.setDrawColor(...orange); doc.setLineWidth(0.5);
     doc.line(14, 285, 196, 285);
     doc.setFontSize(8); doc.setTextColor(150); doc.setFont("helvetica", "normal");
@@ -236,7 +232,6 @@ const PaymentReceipt = () => {
     doc.save(fileName);
   };
 
-  // Number to Words helper
   const numberToWords = (num) => {
     const a = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
     const b = ['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
@@ -256,36 +251,37 @@ const PaymentReceipt = () => {
     return result;
   };
 
-// ✅ புதியது - இதை போடுங்க
-const storedUser = JSON.parse(
-  localStorage.getItem("adminUser") || 
-  localStorage.getItem("managerUser") || 
-  localStorage.getItem("userData") || '{}'
-);
-const isManager = storedUser?.role?.toLowerCase() === 'manager';
+  // ✅ FIXED: Officer-க்கு correct back & history paths
+  const handleBack = () => {
+    if (isOfficer) navigate('/officer-dashboard');
+    else if (isSales) navigate('/sales-dashboard');
+    else if (isManager) navigate('/manager-dashboard');
+    else navigate('/admin-dashboard');
+  };
 
-const handleBack = () => {
-  if (isSales) navigate('/sales-dashboard');
-  else if (isManager) navigate('/manager-dashboard');
-  else navigate('/admin-dashboard');
-};
+  const handleHistory = () => {
+    if (isOfficer) navigate('/officer/receipt-history');
+    else if (isSales) navigate('/sales-dashboard/receipt-history');
+    else navigate('/admin-dashboard/receipt-history');
+  };
 
-const handleHistory = () => {
-  if (isSales) navigate('/sales-dashboard/receipt-history');
-  else navigate('/admin-dashboard/receipt-history');
-};
+  // ✅ Back button label
+  const backLabel = isOfficer ? 'Officer Panel'
+    : isSales ? 'Sales Panel'
+    : isManager ? 'Manager Panel'
+    : 'Admin Dashboard';
+
   const amountPaid = parseFloat(paymentDetails.amountPaid) || 0;
   const balanceAmount = parseFloat(paymentDetails.balanceAmount) || 0;
 
   return (
     <div className="quote-container">
-      {/* HEADER */}
       <div className="quote-header-nav">
         <div className="quote-header-left">
           <button onClick={handleBack} className="modern-back-btn"
             style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'white', border: '1px solid #e0e0e0', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '600', color: '#4b5563', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
             <ArrowLeft size={20} />
-            <span>{isSales ? 'Sales Panel' : 'Admin Dashboard'}</span>
+            <span>{backLabel}</span>
           </button>
           <h2>Payment Receipt</h2>
         </div>
@@ -305,8 +301,6 @@ const handleHistory = () => {
       <div className="quote-workspace">
         {/* LEFT: FORM */}
         <div className="quote-form">
-
-          {/* Receipt Details */}
           <div className="form-section">
             <h3>Receipt Details</h3>
             <div className="row-inputs" style={{ display: 'flex', gap: '12px' }}>
@@ -323,7 +317,6 @@ const handleHistory = () => {
             </div>
           </div>
 
-          {/* Client Details */}
           <div className="form-section">
             <h3>Client Details</h3>
             <div className="input-group">
@@ -347,7 +340,6 @@ const handleHistory = () => {
             </div>
           </div>
 
-          {/* Payment Details */}
           <div className="form-section">
             <h3>Payment Details</h3>
             <div className="input-group">
@@ -391,7 +383,6 @@ const handleHistory = () => {
 
         {/* RIGHT: PREVIEW */}
         <div className="quote-preview">
-          {/* Header */}
           <div className="preview-header">
             <div className="preview-company">
               <div className="company-logo-box"><span>SKITE</span></div>
@@ -407,7 +398,6 @@ const handleHistory = () => {
             </div>
           </div>
 
-          {/* Client */}
           <div className="preview-client">
             <h4>RECEIVED FROM:</h4>
             <p style={{ fontWeight: 'bold', fontSize: '1.1em' }}>{clientDetails.name || 'Client Name'}</p>
@@ -417,7 +407,6 @@ const handleHistory = () => {
             {clientDetails.gst && <p style={{ fontWeight: '500' }}>GSTIN: {clientDetails.gst}</p>}
           </div>
 
-          {/* Payment Table */}
           <table className="preview-table">
             <tbody>
               <tr>
@@ -449,18 +438,15 @@ const handleHistory = () => {
             </tbody>
           </table>
 
-          {/* Total Box */}
           <div style={{ background: '#FF4500', color: 'white', padding: '14px 20px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '15px 0', fontWeight: '700', fontSize: '1.1em' }}>
             <span>TOTAL AMOUNT RECEIVED</span>
             <span>₹ {amountPaid.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
           </div>
 
-          {/* Amount in Words */}
           <p style={{ fontSize: '0.85em', color: '#666', fontStyle: 'italic', marginBottom: '15px' }}>
             {amountPaid > 0 ? `${numberToWords(amountPaid)} Only` : ''}
           </p>
 
-          {/* Footer note */}
           <div style={{ textAlign: 'center', marginTop: '20px', paddingTop: '15px', borderTop: '1px solid #eee' }}>
             <p style={{ fontSize: '0.8em', color: '#999' }}>This is a Computer Generated Receipt</p>
           </div>

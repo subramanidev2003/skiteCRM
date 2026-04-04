@@ -64,9 +64,9 @@ const Projects = () => {
       path: '/webdev/clients' 
     },
     { 
-      title: 'SEO', 
+      title: 'SEO',                               // ✅ path updated
       icon: <Search size={40} color="#FF4500" />, 
-      path: '/projects/seo' 
+      path: '/seo/clients'                        // ✅ /projects/seo → /seo/clients
     },
     { 
       title: 'Meta Ads', 

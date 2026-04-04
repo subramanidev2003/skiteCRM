@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Trash2, Plus, Search } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { API_BASE } from '../api';
 import './Invoice.css';
 
 const ReceiptHistory = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // ✅ FIXED: Officer detect via pathname
+  const isOfficer = location.pathname.startsWith('/officer');
   const isSales = !!localStorage.getItem("salesUser");
 
   const [receipts, setReceipts] = useState([]);
@@ -46,15 +50,33 @@ const ReceiptHistory = () => {
     (r.receiptNo || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // ✅ FIXED: Officer-க்கு correct paths
+  const handleBack = () => {
+    if (isOfficer) navigate('/officer-dashboard');
+    else if (isSales) navigate('/sales-dashboard');
+    else navigate('/admin-dashboard');
+  };
+
+  const handleCreateNew = () => {
+    if (isOfficer) navigate('/officer/receipt');
+    else if (isSales) navigate('/sales-dashboard/receipt');
+    else navigate('/admin-dashboard/receipt');
+  };
+
+  // ✅ Back button label
+  const backLabel = isOfficer ? 'Officer Panel'
+    : isSales ? 'Sales Panel'
+    : 'Admin Dashboard';
+
   return (
     <div style={{ padding: '30px', backgroundColor: '#f9fafb', minHeight: '100vh', fontFamily: 'sans-serif' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <button onClick={() => navigate(isSales ? '/sales-dashboard' : '/admin-dashboard')}
+        <button onClick={handleBack}
           style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 15px', border: 'none', borderRadius: '6px', backgroundColor: '#e5e7eb', color: '#374151', cursor: 'pointer', fontWeight: '500' }}>
-          <ArrowLeft size={18} /> {isSales ? 'Sales Panel' : 'Admin Dashboard'}
+          <ArrowLeft size={18} /> {backLabel}
         </button>
         <h1 style={{ fontSize: '24px', fontWeight: '600', color: '#111827', margin: 0 }}>Receipt History</h1>
-        <button onClick={() => navigate(isSales ? '/sales-dashboard/receipt' : '/admin-dashboard/receipt')}
+        <button onClick={handleCreateNew}
           style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', border: 'none', borderRadius: '6px', backgroundColor: '#FF4500', color: 'white', cursor: 'pointer', fontWeight: '600', boxShadow: '0 2px 5px rgba(255,69,0,0.3)' }}>
           <Plus size={18} /> Create New
         </button>
