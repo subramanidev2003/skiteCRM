@@ -55,6 +55,7 @@ import contentRoutes from './routes/contentRoutes.js';
 import webDevRoutes from './routes/webdevRoutes.js';
 import leaveRoutes from './routes/leavesRoutes.js';
 import receiptRoutes from "./routes/receiptRoutes.js";
+import seoRoutes from './routes/seoRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -120,6 +121,7 @@ app.use('/api/content', contentRoutes);
 app.use('/api/webdev', webDevRoutes);
 app.use('/api/leaves', leaveRoutes);
 app.use("/api/receipt", receiptRoutes);
+app.use('/api/seo', seoRoutes);
 
 // 8. ❌ 404 HANDLER (Ithu thaan KADAISIYA irukkanum)
 app.use((req, res) => {

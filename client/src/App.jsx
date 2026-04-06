@@ -43,6 +43,8 @@ import OfferLetter from "./pages/OfferLetter.jsx";
 import BulkAttendance from "./pages/BulkAttendance.jsx";
 import AdminRemainderList from "./pages/AdminRemainderList.jsx";
 import OfficerDashboard from "./pages/OfficerDashboard.jsx";
+import SEOClients from "./components/SEOClients.jsx";
+import SEOProject from "./components/SEOProject.jsx";
 
 function App() {
   return (
@@ -139,6 +141,8 @@ function App() {
         <Route path="/projects/social-media/:id"  element={<SocialMediaProject />} />
         <Route path="/webdev/clients"             element={<WebDevClients />} />
         <Route path="/webdev/project/:id"         element={<WebDevProject />} />
+        <Route path="/seo/clients" element={<SEOClients />} />
+        <Route path="/seo/project/:id" element={<SEOProject />} />
 
         <Route path="*" element={<div>404 Not Found</div>} />
       </Routes>

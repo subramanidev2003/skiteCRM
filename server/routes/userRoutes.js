@@ -6,6 +6,7 @@ import adminAuth from "../middleware/adminAuth.js";
 import { 
     getUserdata, 
     getAllEmployees, 
+    getSEOSpecialists,
     getEmployeeDetails, 
     deleteUser,
     updateUser // Import the new update function
@@ -35,6 +36,7 @@ const upload = multer({ storage: storage });
 
 userRouter.get("/data", userAuth, getUserdata);
 userRouter.get('/all', userAuth, getAllEmployees);
+userRouter.get('/users/seo', getSEOSpecialists);
 userRouter.get("/:id", userAuth, getEmployeeDetails);
 userRouter.delete("/delete/:id", userAuth, adminAuth, deleteUser); 
 

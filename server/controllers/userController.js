@@ -221,3 +221,22 @@ export const updateUser = async (req, res) => {
         return res.status(500).json({ message: 'Server error while updating' });
     }
 };
+// ================================
+// 6. GET SEO SPECIALISTS ONLY
+// ================================
+export const getSEOSpecialists = async (req, res) => {
+    try {
+        // designation field-la 'SEO' nu irukkura staff-ah mattum filter pannuthu (Case Insensitive)
+        const seoSpecialists = await userModel.find({ 
+            designation: { $regex: /SEO/i } 
+        })
+        .select('name _id') // Dropdown-ku idhu rendu podhum
+        .sort({ name: 1 });
+
+        return res.status(200).json(seoSpecialists);
+
+    } catch (error) {
+        console.error("Error fetching SEO specialists:", error);
+        return res.status(500).json({ message: 'Server error' });
+    }
+};
