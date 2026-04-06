@@ -64,7 +64,7 @@ const fetchSpecialists = async () => {
     } catch(err) { 
         console.error("Error fetching SEO staff:", err); 
     }
-};
+};      
 
     const handleSaveClientDetails = async () => {
         try {
